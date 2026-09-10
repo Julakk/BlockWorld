@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>MiniCraft</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>BlockWorld</title>
 <style>
   html, body { margin: 0; padding: 0; overflow: hidden; background: #87CEEB; font-family: 'Segoe UI', Arial, sans-serif; }
   canvas { display: block; }
@@ -17,75 +18,69 @@
   #crosshair::before { width: 2px; height: 20px; left: 9px; }
   #crosshair::after { width: 20px; height: 2px; top: 9px; }
 
-  #hotbar {
-    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 6px; z-index: 10; background: rgba(0,0,0,0.3);
-    padding: 8px; border-radius: 8px;
-  }
+  #hotbarWrap { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  #hotbar { display: flex; gap: 6px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; }
   .slot {
-    width: 48px; height: 48px; border: 2px solid rgba(255,255,255,0.5);
+    width: 42px; height: 42px; border: 2px solid rgba(255,255,255,0.5);
     border-radius: 4px; display: flex; align-items: center; justify-content: center;
     font-size: 10px; color: white; text-shadow: 1px 1px 2px black; cursor: pointer;
     position: relative;
   }
   .slot.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.8); }
-  .slot .swatch { width: 32px; height: 32px; border-radius: 2px; }
-  .slot .key { position: absolute; top: 1px; left: 3px; font-size: 9px; opacity: 0.8; }
+  .slot .swatch { width: 28px; height: 28px; border-radius: 2px; }
+  .slot .key { position: absolute; top: 1px; left: 3px; font-size: 8px; opacity: 0.8; }
+  .slot .cnt { position: absolute; bottom: 0px; right: 2px; font-size: 10px; font-weight: bold; }
+  .slot.empty .swatch { opacity: 0.35; }
 
-  #crosshair, #hotbar, #hud, #hint { user-select: none; }
+  #craftPanel { display: none; gap: 6px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; }
+  .craftBtn { color: white; font-size: 11px; text-shadow: 1px 1px 2px black; background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.4); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+  .craftBtn:active { background: rgba(255,255,255,0.3); }
 
   #hud {
     position: fixed; top: 12px; left: 12px; z-index: 10; color: white;
-    text-shadow: 1px 1px 2px black; font-size: 13px; line-height: 1.5;
-    background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px;
+    text-shadow: 1px 1px 2px black; font-size: 12px; line-height: 1.5;
+    background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; width: 160px;
   }
+  .barLabel { display: flex; justify-content: space-between; margin-top: 4px; }
+  .barBg { width: 100%; height: 8px; background: rgba(0,0,0,0.4); border-radius: 4px; overflow: hidden; margin-top: 2px; }
+  .barFill { height: 100%; transition: width 0.2s; }
+  #healthFill { background: #e33; }
+  #hungerFill { background: #e89b30; }
+
+  #topRight { position: fixed; top: 12px; right: 12px; z-index: 10; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  #fps { color: #9f9; font-size: 11px; text-shadow: 1px 1px 2px black; }
+  .smallBtn { color: white; font-size: 11px; text-shadow: 1px 1px 2px black; background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.4); border-radius: 6px; padding: 5px 9px; cursor: pointer; }
+  #eatBtn:disabled, .craftBtn:disabled { opacity: 0.4; cursor: default; }
+  #saveMsg { color: #ffd54a; font-size: 11px; text-shadow: 1px 1px 2px black; }
 
   #hint {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
     color: white; text-align: center; text-shadow: 2px 2px 4px black;
-    z-index: 20; background: rgba(0,0,0,0.55); padding: 24px 32px; border-radius: 10px;
-    font-size: 15px; line-height: 1.8; cursor: pointer;
+    z-index: 20; background: rgba(0,0,0,0.6); padding: 22px 28px; border-radius: 10px;
+    font-size: 13px; line-height: 1.7; cursor: pointer; max-width: 90vw;
   }
-  #hint h1 { margin: 0 0 8px 0; font-size: 26px; }
+  #hint h1 { margin: 0 0 8px 0; font-size: 24px; }
   #hint b { color: #ffd54a; }
 
-  #fps { position: fixed; top: 12px; right: 12px; z-index: 10; color: #9f9; font-size: 12px; text-shadow: 1px 1px 2px black; }
+  #deadMsg {
+    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+    color: #ff5555; font-size: 26px; font-weight: bold; text-shadow: 2px 2px 6px black;
+    z-index: 25; display: none; pointer-events: none;
+  }
 
   /* Touch controls */
-  #joystickZone {
-    position: fixed; left: 24px; bottom: 24px; width: 130px; height: 130px;
-    z-index: 15; touch-action: none;
-  }
-  #joystickBase {
-    position: absolute; inset: 0; border-radius: 50%;
-    background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4);
-  }
-  #joystickStick {
-    position: absolute; width: 54px; height: 54px; border-radius: 50%;
-    background: rgba(255,255,255,0.55); border: 2px solid rgba(255,255,255,0.8);
-    left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none;
-  }
-  #lookZone {
-    position: fixed; right: 0; top: 0; width: 100%; height: 100%;
-    z-index: 5; touch-action: none;
-  }
-  #touchActionBtns {
-    position: fixed; right: 20px; bottom: 90px; z-index: 15;
-    display: flex; flex-direction: column; gap: 12px; align-items: center;
-  }
-  #touchJumpBtn {
-    position: fixed; right: 24px; bottom: 24px; z-index: 15;
-    width: 64px; height: 64px; border-radius: 50%;
-    background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.5);
-    color: white; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px black;
-    display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none;
-  }
-  .touchBtn {
-    width: 60px; height: 60px; border-radius: 50%;
-    background: rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.5);
-    color: white; font-size: 22px; display: flex; align-items: center; justify-content: center;
-    touch-action: none; user-select: none;
-  }
+  #joystickZone { position: fixed; left: 20px; bottom: 24px; width: 120px; height: 120px; z-index: 15; touch-action: none; }
+  #joystickBase { position: absolute; inset: 0; border-radius: 50%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); }
+  #joystickStick { position: absolute; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.55); border: 2px solid rgba(255,255,255,0.8); left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+  #lookZone { position: fixed; right: 0; top: 0; width: 100%; height: 100%; z-index: 5; touch-action: none; }
+  #touchActionBtns { position: fixed; right: 20px; bottom: 88px; z-index: 15; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  #touchJumpBtn { position: fixed; right: 22px; bottom: 22px; z-index: 15; width: 58px; height: 58px; border-radius: 50%;
+    background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.5); color: white; font-size: 11px; font-weight: bold;
+    text-shadow: 1px 1px 2px black; display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none; }
+  .touchBtn { width: 56px; height: 56px; border-radius: 50%; background: rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.5);
+    color: white; font-size: 20px; display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none; }
   #touchBreakBtn { background: rgba(200,60,60,0.45); }
   #touchPlaceBtn { background: rgba(60,160,60,0.45); }
 </style>
@@ -93,22 +88,47 @@
 <body>
 
 <div id="hint">
-  <h1>⛏️ MiniCraft</h1>
+  <h1>⛏️ BlockWorld</h1>
   <span class="desktopOnly">Klik untuk mulai bermain<br>
   <b>WASD</b> gerak &nbsp; <b>Spasi</b> lompat &nbsp; <b>Mouse</b> lihat sekitar<br>
-  <b>Klik Kiri</b> hancurkan blok &nbsp; <b>Klik Kanan</b> pasang blok<br>
-  <b>1-6</b> pilih jenis blok &nbsp; <b>Esc</b> keluar dari mode main</span>
+  <b>Klik Kiri</b> hancurkan blok / serang &nbsp; <b>Klik Kanan</b> pasang blok<br>
+  <b>1-8</b> pilih blok &nbsp; <b>Esc</b> keluar mode main</span>
   <span class="mobileOnly" style="display:none">Tap untuk mulai bermain<br>
-  <b>Joystick kiri</b> gerak &nbsp; <b>Tombol bulat</b> lompat<br>
-  <b>Geser layar</b> buat nengok<br>
-  <b>Tombol merah</b> hancurkan &nbsp; <b>Tombol hijau</b> pasang blok<br>
-  Tap slot di bawah buat pilih jenis blok</span>
+  <b>Joystick kiri</b> gerak &nbsp; <b>Tombol bulat</b> lompat &nbsp; <b>Geser layar</b> nengok<br>
+  <b>Tombol merah</b> hancurkan/serang &nbsp; <b>Tombol hijau</b> pasang blok</span>
+  <br><br>
+  Dunia BlockWorld gak terbatas — jalan terus bakal muncul area baru.<br>
+  Hati-hati sama <b>lava</b> (nyakitin) dan <b>zombie</b> yang muncul malam hari.<br>
+  Jaga lapar biar gak kelaparan, makan apel dari daun pohon.
 </div>
 
+<div id="deadMsg">💀 Kamu mati... respawn</div>
+
 <div id="crosshair" style="display:none;"></div>
-<div id="hotbar" style="display:none;"></div>
-<div id="hud" style="display:none;">Blok: <span id="blockCount">0</span> ditambang</div>
-<div id="fps" style="display:none;"></div>
+
+<div id="hotbarWrap" style="display:none;">
+  <div id="craftPanel">
+    <div class="craftBtn" id="craftGlass">🧪 1 Pasir → 1 Kaca</div>
+    <div class="craftBtn" id="craftBrick">🧱 1 Batu → 1 Bata</div>
+  </div>
+  <div id="hotbar"></div>
+</div>
+
+<div id="hud" style="display:none;">
+  <div>⛏️ <span id="blockCount">0</span> ditambang &nbsp; <span id="timeIcon">☀️</span></div>
+  <div class="barLabel"><span>❤️ Nyawa</span><span id="healthNum">100</span></div>
+  <div class="barBg"><div class="barFill" id="healthFill" style="width:100%"></div></div>
+  <div class="barLabel"><span>🍗 Lapar</span><span id="hungerNum">100</span></div>
+  <div class="barBg"><div class="barFill" id="hungerFill" style="width:100%"></div></div>
+</div>
+
+<div id="topRight" style="display:none;">
+  <div id="fps"></div>
+  <button class="smallBtn" id="eatBtn">🍎 Makan (<span id="appleCount">0</span>)</button>
+  <button class="smallBtn" id="craftToggleBtn">🛠️ Crafting</button>
+  <button class="smallBtn" id="saveBtn">💾 Simpan</button>
+  <span id="saveMsg"></span>
+</div>
 
 <div id="lookZone" style="display:none;"></div>
 <div id="joystickZone" style="display:none;">
@@ -124,81 +144,101 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function() {
-  // ---------- Setup ----------
-  // ---------- Mobile detection (must run before renderer/world setup) ----------
+  // ================= MOBILE DETECTION (must run first) =================
   const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
+  // ================= SCENE / RENDERER =================
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x87CEEB);
-  scene.fog = new THREE.Fog(0x87CEEB, isMobile ? 25 : 40, isMobile ? 55 : 90);
+  const DAY_COLOR = new THREE.Color(0x87CEEB);
+  const NIGHT_COLOR = new THREE.Color(0x0a1330);
+  scene.fog = new THREE.Fog(0x87CEEB, isMobile ? 22 : 38, isMobile ? 50 : 85);
 
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMap.enabled = !isMobile;
+  renderer.shadowMap.enabled = false; // shadows off for everyone: too many chunk-streamed blocks
   document.body.appendChild(renderer.domElement);
 
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
   scene.add(hemiLight);
   const sunLight = new THREE.DirectionalLight(0xffffff, 0.9);
   sunLight.position.set(50, 80, 30);
-  sunLight.castShadow = !isMobile;
-  sunLight.shadow.camera.left = -60;
-  sunLight.shadow.camera.right = 60;
-  sunLight.shadow.camera.top = 60;
-  sunLight.shadow.camera.bottom = -60;
-  sunLight.shadow.mapSize.set(1024, 1024);
   scene.add(sunLight);
 
-  // ---------- Block types ----------
+  if (isMobile) {
+    document.querySelectorAll('.desktopOnly').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.mobileOnly').forEach(el => el.style.display = 'inline');
+  }
+
+  // ================= BLOCK TYPES =================
   const BLOCK_TYPES = {
-    grass: { color: 0x5fb83a, top: 0x6ec93f, name: 'Rumput' },
-    dirt:  { color: 0x8a5a2b, top: 0x8a5a2b, name: 'Tanah' },
-    stone: { color: 0x8c8c8c, top: 0x8c8c8c, name: 'Batu' },
-    wood:  { color: 0x6b4423, top: 0x8a5a2b, name: 'Kayu' },
-    leaves:{ color: 0x2f8f2f, top: 0x2f8f2f, name: 'Daun' },
-    sand:  { color: 0xdccb7a, top: 0xdccb7a, name: 'Pasir' },
+    grass:  { color: 0x5fb83a, name: 'Rumput' },
+    dirt:   { color: 0x8a5a2b, name: 'Tanah' },
+    stone:  { color: 0x8c8c8c, name: 'Batu' },
+    wood:   { color: 0x6b4423, name: 'Kayu' },
+    leaves: { color: 0x2f8f2f, name: 'Daun' },
+    sand:   { color: 0xdccb7a, name: 'Pasir' },
+    glass:  { color: 0xbfe7ea, name: 'Kaca', transparent: true, opacity: 0.45 },
+    brick:  { color: 0x9a3d2f, name: 'Bata' },
+    water:  { color: 0x2b6fd1, name: 'Air', transparent: true, opacity: 0.55, liquid: true },
+    lava:   { color: 0xdd4b16, name: 'Lava', liquid: true, emissive: 0x7a1e00 },
   };
-  const HOTBAR = ['grass', 'dirt', 'stone', 'wood', 'leaves', 'sand'];
+  const HOTBAR = ['grass', 'dirt', 'stone', 'wood', 'leaves', 'sand', 'glass', 'brick'];
   let selectedIndex = 0;
 
   const boxGeo = new THREE.BoxGeometry(1, 1, 1);
   const materialCache = {};
   function getMaterial(type) {
     if (!materialCache[type]) {
-      materialCache[type] = new THREE.MeshLambertMaterial({ color: BLOCK_TYPES[type].color });
+      const def = BLOCK_TYPES[type];
+      const opts = { color: def.color };
+      if (def.transparent) { opts.transparent = true; opts.opacity = def.opacity; }
+      if (def.emissive) opts.emissive = def.emissive;
+      materialCache[type] = new THREE.MeshLambertMaterial(opts);
     }
     return materialCache[type];
   }
 
-  // ---------- World storage ----------
-  // key "x,y,z" -> { mesh, type }
-  const world = new Map();
+  // ================= INVENTORY =================
+  const inventory = {};
+  HOTBAR.forEach(t => inventory[t] = 0);
+  inventory.apple = 0;
+
+  // ================= WORLD / CHUNK SYSTEM =================
+  const CHUNK_SIZE = 8;
+  const RENDER_RADIUS = isMobile ? 1 : 2;
+  const world = new Map();        // "x,y,z" -> {mesh, type}   (currently rendered blocks)
+  const worldDiffs = new Map();   // "x,y,z" -> type ('' = removed) (persists edits)
+  const loadedChunks = new Map(); // "cx,cz" -> [keys]
   const worldGroup = new THREE.Group();
   scene.add(worldGroup);
 
   function key(x, y, z) { return x + ',' + y + ',' + z; }
+  function seededRandom(x, z, salt) {
+    const n = Math.sin(x * 127.1 + z * 311.7 + salt * 74.7) * 43758.5453;
+    return n - Math.floor(n);
+  }
+  function pseudoNoise(x, z) {
+    return (
+      Math.sin(x * 0.15) * 2 + Math.cos(z * 0.18) * 2 +
+      Math.sin((x + z) * 0.08) * 3 + Math.sin(x * 0.05) * Math.cos(z * 0.05) * 2
+    );
+  }
+  function groundHeightAt(x, z) { return Math.round(pseudoNoise(x, z)) + 6; }
 
-  function addBlock(x, y, z, type, animate) {
+  function createBlockMesh(x, y, z, type, animate) {
     const k = key(x, y, z);
     if (world.has(k)) return;
     const mesh = new THREE.Mesh(boxGeo, getMaterial(type));
     mesh.position.set(x, y, z);
-    if (!isMobile) {
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-    }
     mesh.userData = { x, y, z, type };
-    if (animate) {
-      mesh.scale.set(0.01, 0.01, 0.01);
-      mesh.userData.spawnT = performance.now();
-    }
+    if (animate) { mesh.scale.set(0.01, 0.01, 0.01); mesh.userData.spawnT = performance.now(); }
     worldGroup.add(mesh);
     world.set(k, { mesh, type });
   }
-
-  function removeBlock(x, y, z) {
+  function destroyBlockMesh(x, y, z) {
     const k = key(x, y, z);
     const b = world.get(k);
     if (!b) return;
@@ -206,95 +246,174 @@
     world.delete(k);
   }
 
-  // ---------- Terrain generation (simple pseudo-noise) ----------
-  function pseudoNoise(x, z) {
-    // combine a few sine waves for smooth-ish rolling terrain
-    return (
-      Math.sin(x * 0.15) * 2 +
-      Math.cos(z * 0.18) * 2 +
-      Math.sin((x + z) * 0.08) * 3 +
-      Math.sin(x * 0.05) * Math.cos(z * 0.05) * 2
-    );
+  function placeGenBlock(x, y, z, type, keysInChunk) {
+    const k = key(x, y, z);
+    if (worldDiffs.has(k)) {
+      const d = worldDiffs.get(k);
+      if (d === '') return;
+      type = d;
+    }
+    createBlockMesh(x, y, z, type, false);
+    keysInChunk.push(k);
   }
 
-  const WORLD_SIZE = isMobile ? 13 : 24; // half-extent
-  function generateWorld() {
-    for (let x = -WORLD_SIZE; x <= WORLD_SIZE; x++) {
-      for (let z = -WORLD_SIZE; z <= WORLD_SIZE; z++) {
-        const h = Math.round(pseudoNoise(x, z)) + 6;
+  function generateChunk(cx, cz) {
+    const ck = cx + ',' + cz;
+    if (loadedChunks.has(ck)) return;
+    const keysInChunk = [];
+    const x0 = cx * CHUNK_SIZE, z0 = cz * CHUNK_SIZE;
+    for (let x = x0; x < x0 + CHUNK_SIZE; x++) {
+      for (let z = z0; z < z0 + CHUNK_SIZE; z++) {
+        const h = groundHeightAt(x, z);
         for (let y = 0; y <= h; y++) {
-          let type;
-          if (y === h) type = (h <= 5) ? 'sand' : 'grass';
-          else if (y >= h - 2) type = 'dirt';
-          else type = 'stone';
-          addBlock(x, y, z, type, false);
+          let type = (y === h) ? (h <= 4 ? 'sand' : 'grass') : (y >= h - 2 ? 'dirt' : 'stone');
+          placeGenBlock(x, y, z, type, keysInChunk);
         }
-        // occasional tree
-        if (h > 5 && Math.random() < 0.02) {
-          const th = 4 + Math.floor(Math.random() * 2);
-          for (let ty = 1; ty <= th; ty++) addBlock(x, h + ty, z, 'wood', false);
-          for (let lx = -2; lx <= 2; lx++) {
-            for (let lz = -2; lz <= 2; lz++) {
+        if (h < 4) {
+          for (let y = h + 1; y <= 4; y++) placeGenBlock(x, y, z, 'water', keysInChunk);
+        } else if (h <= 6 && seededRandom(x, z, 2) < 0.004) {
+          placeGenBlock(x, h, z, 'lava', keysInChunk);
+        } else if (h > 5 && seededRandom(x, z, 1) < 0.02) {
+          const th = 4 + Math.floor(seededRandom(x, z, 3) * 2);
+          for (let ty = 1; ty <= th; ty++) placeGenBlock(x, h + ty, z, 'wood', keysInChunk);
+          for (let lx = -2; lx <= 2; lx++)
+            for (let lz = -2; lz <= 2; lz++)
               for (let ly = th; ly <= th + 2; ly++) {
-                if (Math.abs(lx) + Math.abs(lz) + Math.abs(ly - th - 1) <= 3 && Math.random() < 0.85) {
-                  addBlock(x + lx, h + ly, z + lz, 'leaves', false);
+                if (Math.abs(lx) + Math.abs(lz) + Math.abs(ly - th - 1) <= 3 && seededRandom(x + lx * 13, z + lz * 7, ly + 4) < 0.85) {
+                  placeGenBlock(x + lx, h + ly, z + lz, 'leaves', keysInChunk);
                 }
               }
-            }
-          }
         }
       }
     }
+    // apply player-built blocks in this chunk that aren't part of base terrain
+    for (const [k, type] of worldDiffs) {
+      if (type === '' || world.has(k)) continue;
+      const parts = k.split(',').map(Number);
+      const dx = parts[0], dz = parts[2];
+      if (dx >= x0 && dx < x0 + CHUNK_SIZE && dz >= z0 && dz < z0 + CHUNK_SIZE) {
+        createBlockMesh(dx, parts[1], dz, type, false);
+        keysInChunk.push(k);
+      }
+    }
+    loadedChunks.set(ck, keysInChunk);
   }
-  generateWorld();
 
-  function groundHeightAt(x, z) {
-    return Math.round(pseudoNoise(Math.round(x), Math.round(z))) + 6;
+  function unloadChunk(ck) {
+    const keys = loadedChunks.get(ck);
+    if (!keys) return;
+    for (const k of keys) {
+      const b = world.get(k);
+      if (b) { worldGroup.remove(b.mesh); world.delete(k); }
+    }
+    loadedChunks.delete(ck);
   }
 
-  // Show mobile-specific hint text
-  if (isMobile) {
-    document.querySelectorAll('.desktopOnly').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.mobileOnly').forEach(el => el.style.display = 'inline');
+  let lastChunkUpdate = 0;
+  function updateChunks(px, pz, force) {
+    const now = performance.now();
+    if (!force && now - lastChunkUpdate < 500) return;
+    lastChunkUpdate = now;
+    const pcx = Math.floor(px / CHUNK_SIZE), pcz = Math.floor(pz / CHUNK_SIZE);
+    const needed = new Set();
+    for (let dx = -RENDER_RADIUS; dx <= RENDER_RADIUS; dx++) {
+      for (let dz = -RENDER_RADIUS; dz <= RENDER_RADIUS; dz++) {
+        const cx = pcx + dx, cz = pcz + dz;
+        const ck = cx + ',' + cz;
+        needed.add(ck);
+        if (!loadedChunks.has(ck)) generateChunk(cx, cz);
+      }
+    }
+    for (const ck of Array.from(loadedChunks.keys())) {
+      if (!needed.has(ck)) unloadChunk(ck);
+    }
   }
 
-  // ---------- Player controller (first person) ----------
+  // mining / placing (records diffs + inventory)
+  function mineBlockAt(x, y, z, type) {
+    if (BLOCK_TYPES[type].liquid) return; // can't mine liquids
+    worldDiffs.set(key(x, y, z), '');
+    destroyBlockMesh(x, y, z);
+    if (inventory[type] !== undefined) inventory[type]++;
+    if (type === 'leaves') {
+      if (seededRandom(x + performance.now() % 1000, z, 9) < 0.18) inventory.apple = (inventory.apple || 0) + 1;
+    }
+    refreshHotbarUI();
+    minedCount++;
+    document.getElementById('blockCount').textContent = minedCount;
+  }
+  function placeBlockAt(x, y, z, type) {
+    if (world.has(key(x, y, z))) return false;
+    if (!inventory[type] || inventory[type] <= 0) return false;
+    inventory[type]--;
+    worldDiffs.set(key(x, y, z), type);
+    createBlockMesh(x, y, z, type, true);
+    const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
+    const ck = cx + ',' + cz;
+    if (loadedChunks.has(ck)) loadedChunks.get(ck).push(key(x, y, z));
+    refreshHotbarUI();
+    return true;
+  }
+
+  // ================= HOTBAR / CRAFT UI =================
+  const hotbarEl = document.getElementById('hotbar');
+  function refreshHotbarUI() {
+    hotbarEl.innerHTML = '';
+    HOTBAR.forEach((type, i) => {
+      const cnt = inventory[type] || 0;
+      const slot = document.createElement('div');
+      slot.className = 'slot' + (i === selectedIndex ? ' active' : '') + (cnt === 0 ? ' empty' : '');
+      slot.innerHTML = `<span class="key">${i + 1}</span><div class="swatch" style="background:#${BLOCK_TYPES[type].color.toString(16).padStart(6,'0')}"></div><span class="cnt">${cnt}</span>`;
+      slot.title = BLOCK_TYPES[type].name;
+      slot.addEventListener('click', () => { selectedIndex = i; refreshHotbarUI(); });
+      hotbarEl.appendChild(slot);
+    });
+    document.getElementById('appleCount').textContent = inventory.apple || 0;
+    document.getElementById('eatBtn').disabled = !(inventory.apple > 0);
+  }
+  refreshHotbarUI();
+
+  document.getElementById('craftToggleBtn').addEventListener('click', () => {
+    const p = document.getElementById('craftPanel');
+    p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
+  });
+  document.getElementById('craftGlass').addEventListener('click', () => {
+    if (inventory.sand > 0) { inventory.sand--; inventory.glass = (inventory.glass || 0) + 1; refreshHotbarUI(); }
+  });
+  document.getElementById('craftBrick').addEventListener('click', () => {
+    if (inventory.stone > 0) { inventory.stone--; inventory.brick = (inventory.brick || 0) + 1; refreshHotbarUI(); }
+  });
+  document.getElementById('eatBtn').addEventListener('click', () => {
+    if (inventory.apple > 0) { inventory.apple--; player.hunger = Math.min(100, player.hunger + 25); refreshHotbarUI(); }
+  });
+
+  // ================= PLAYER =================
   const player = {
-    pos: new THREE.Vector3(0, groundHeightAt(0, 0) + 3, 0),
-    velY: 0,
-    yaw: 0,
-    pitch: 0,
-    onGround: false,
-    speed: 6,
+    pos: new THREE.Vector3(0.5, 0, 0.5),
+    velY: 0, yaw: 0, pitch: 0, onGround: false, speed: 6,
+    health: 100, hunger: 100, fallStartY: 0, wasOnGround: true, lastLavaTick: 0,
   };
-  camera.position.copy(player.pos);
+  let minedCount = 0;
 
   const keysDown = {};
   document.addEventListener('keydown', (e) => {
     keysDown[e.code] = true;
     const num = parseInt(e.key);
-    if (num >= 1 && num <= HOTBAR.length) {
-      selectedIndex = num - 1;
-      updateHotbarUI();
-    }
+    if (num >= 1 && num <= HOTBAR.length) { selectedIndex = num - 1; refreshHotbarUI(); }
   });
   document.addEventListener('keyup', (e) => { keysDown[e.code] = false; });
 
-  // Playing-state (desktop = pointer lock, mobile = tap-to-start flag)
   const canvas = renderer.domElement;
   const hint = document.getElementById('hint');
   let mobilePlaying = false;
-
-  function isPlaying() {
-    return isMobile ? mobilePlaying : (document.pointerLockElement === canvas);
-  }
+  function isPlaying() { return isMobile ? mobilePlaying : (document.pointerLockElement === canvas); }
 
   function setUIVisible(playing) {
     hint.style.display = playing ? 'none' : 'flex';
     document.getElementById('crosshair').style.display = playing ? 'block' : 'none';
-    document.getElementById('hotbar').style.display = playing ? 'flex' : 'none';
+    document.getElementById('hotbarWrap').style.display = playing ? 'flex' : 'none';
     document.getElementById('hud').style.display = playing ? 'block' : 'none';
-    document.getElementById('fps').style.display = playing ? 'block' : 'none';
+    document.getElementById('topRight').style.display = playing ? 'flex' : 'none';
     document.getElementById('joystickZone').style.display = (playing && isMobile) ? 'block' : 'none';
     document.getElementById('lookZone').style.display = (playing && isMobile) ? 'block' : 'none';
     document.getElementById('touchJumpBtn').style.display = (playing && isMobile) ? 'flex' : 'none';
@@ -302,21 +421,13 @@
   }
 
   hint.addEventListener('click', () => {
-    if (isMobile) {
-      mobilePlaying = true;
-      setUIVisible(true);
-    } else {
-      canvas.requestPointerLock();
-    }
+    if (isMobile) { mobilePlaying = true; setUIVisible(true); }
+    else canvas.requestPointerLock();
   });
   canvas.addEventListener('click', () => {
     if (!isMobile && document.pointerLockElement !== canvas) canvas.requestPointerLock();
   });
-
-  document.addEventListener('pointerlockchange', () => {
-    setUIVisible(document.pointerLockElement === canvas);
-  });
-
+  document.addEventListener('pointerlockchange', () => { setUIVisible(document.pointerLockElement === canvas); });
   document.addEventListener('mousemove', (e) => {
     if (isMobile || document.pointerLockElement !== canvas) return;
     player.yaw -= e.movementX * 0.0022;
@@ -324,24 +435,21 @@
     player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, player.pitch));
   });
 
-  // ---------- Mobile touch: look drag ----------
+  // ================= TOUCH CONTROLS =================
+  const joyAxis = { x: 0, y: 0 };
+  let touchJump = false;
   if (isMobile) {
     const lookZone = document.getElementById('lookZone');
     let lookTouchId = null, lastLookX = 0, lastLookY = 0;
-
     lookZone.addEventListener('touchstart', (e) => {
       if (!isPlaying()) return;
-      const t = e.changedTouches[0];
-      lookTouchId = t.identifier;
-      lastLookX = t.clientX; lastLookY = t.clientY;
+      const t = e.changedTouches[0]; lookTouchId = t.identifier; lastLookX = t.clientX; lastLookY = t.clientY;
     }, { passive: true });
-
     lookZone.addEventListener('touchmove', (e) => {
       if (lookTouchId === null) return;
       for (const t of e.changedTouches) {
         if (t.identifier === lookTouchId) {
-          const dx = t.clientX - lastLookX;
-          const dy = t.clientY - lastLookY;
+          const dx = t.clientX - lastLookX, dy = t.clientY - lastLookY;
           lastLookX = t.clientX; lastLookY = t.clientY;
           player.yaw -= dx * 0.0045;
           player.pitch -= dy * 0.0045;
@@ -349,172 +457,298 @@
         }
       }
     }, { passive: true });
-
-    function endLook(e) {
-      for (const t of e.changedTouches) {
-        if (t.identifier === lookTouchId) lookTouchId = null;
-      }
-    }
+    function endLook(e) { for (const t of e.changedTouches) if (t.identifier === lookTouchId) lookTouchId = null; }
     lookZone.addEventListener('touchend', endLook);
     lookZone.addEventListener('touchcancel', endLook);
 
-    // ---------- Joystick ----------
     const joyZone = document.getElementById('joystickZone');
     const joyStick = document.getElementById('joystickStick');
     let joyTouchId = null;
-    const JOY_RADIUS = 50;
-
-    joyZone.addEventListener('touchstart', (e) => {
-      const t = e.changedTouches[0];
-      joyTouchId = t.identifier;
-      updateJoystick(t);
-    }, { passive: true });
-
-    joyZone.addEventListener('touchmove', (e) => {
-      for (const t of e.changedTouches) {
-        if (t.identifier === joyTouchId) updateJoystick(t);
-      }
-    }, { passive: true });
-
+    const JOY_RADIUS = 46;
+    joyZone.addEventListener('touchstart', (e) => { joyTouchId = e.changedTouches[0].identifier; updateJoystick(e.changedTouches[0]); }, { passive: true });
+    joyZone.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === joyTouchId) updateJoystick(t); }, { passive: true });
     function updateJoystick(t) {
       const rect = joyZone.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      let dx = t.clientX - cx;
-      let dy = t.clientY - cy;
+      let dx = t.clientX - (rect.left + rect.width / 2), dy = t.clientY - (rect.top + rect.height / 2);
       const dist = Math.min(JOY_RADIUS, Math.hypot(dx, dy));
       const angle = Math.atan2(dy, dx);
-      dx = Math.cos(angle) * dist;
-      dy = Math.sin(angle) * dist;
+      dx = Math.cos(angle) * dist; dy = Math.sin(angle) * dist;
       joyStick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-      // normalized axes: -1..1
-      joyAxis.x = dx / JOY_RADIUS;
-      joyAxis.y = dy / JOY_RADIUS;
+      joyAxis.x = dx / JOY_RADIUS; joyAxis.y = dy / JOY_RADIUS;
     }
-
     function resetJoystick(e) {
-      for (const t of e.changedTouches) {
-        if (t.identifier === joyTouchId) {
-          joyTouchId = null;
-          joyAxis.x = 0; joyAxis.y = 0;
-          joyStick.style.transform = 'translate(-50%, -50%)';
-        }
+      for (const t of e.changedTouches) if (t.identifier === joyTouchId) {
+        joyTouchId = null; joyAxis.x = 0; joyAxis.y = 0; joyStick.style.transform = 'translate(-50%, -50%)';
       }
     }
     joyZone.addEventListener('touchend', resetJoystick);
     joyZone.addEventListener('touchcancel', resetJoystick);
 
-    // ---------- Jump button ----------
-    const jumpBtn = document.getElementById('touchJumpBtn');
-    jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); touchJump = true; }, { passive: false });
-    jumpBtn.addEventListener('touchend', () => { touchJump = false; });
-
-    // ---------- Break / place buttons ----------
-    document.getElementById('touchBreakBtn').addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      doBlockAction('break');
-    }, { passive: false });
-    document.getElementById('touchPlaceBtn').addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      doBlockAction('place');
-    }, { passive: false });
+    document.getElementById('touchJumpBtn').addEventListener('touchstart', (e) => { e.preventDefault(); touchJump = true; }, { passive: false });
+    document.getElementById('touchJumpBtn').addEventListener('touchend', () => { touchJump = false; });
+    document.getElementById('touchBreakBtn').addEventListener('touchstart', (e) => { e.preventDefault(); doBlockAction('break'); }, { passive: false });
+    document.getElementById('touchPlaceBtn').addEventListener('touchstart', (e) => { e.preventDefault(); doBlockAction('place'); }, { passive: false });
   }
-  const joyAxis = { x: 0, y: 0 };
-  let touchJump = false;
 
-  // ---------- Raycasting for block interaction ----------
+  // ================= RAYCAST ACTIONS =================
   const raycaster = new THREE.Raycaster();
   raycaster.far = 7;
-  let minedCount = 0;
+  const mobRaycaster = new THREE.Raycaster();
+  mobRaycaster.far = 5;
 
   function doBlockAction(action) {
     if (!isPlaying()) return;
+    if (action === 'break') {
+      mobRaycaster.setFromCamera({ x: 0, y: 0 }, camera);
+      const mobHits = mobRaycaster.intersectObjects(mobGroup.children, true);
+      if (mobHits.length > 0) {
+        let obj = mobHits[0].object;
+        while (obj && !obj.userData.mobRef) obj = obj.parent;
+        if (obj) { attackMob(obj.userData.mobRef, 25); return; }
+      }
+    }
     raycaster.setFromCamera({ x: 0, y: 0 }, camera);
     const intersects = raycaster.intersectObjects(worldGroup.children);
     if (intersects.length === 0) return;
     const hit = intersects[0];
-    const { x, y, z } = hit.object.userData;
-
+    const { x, y, z, type } = hit.object.userData;
     if (action === 'break') {
-      removeBlock(x, y, z);
-      minedCount++;
-      document.getElementById('blockCount').textContent = minedCount;
+      mineBlockAt(x, y, z, type);
     } else if (action === 'place') {
       const n = hit.face.normal;
-      const nx = x + Math.round(n.x);
-      const ny = y + Math.round(n.y);
-      const nz = z + Math.round(n.z);
-      const dx = Math.abs(nx - player.pos.x);
-      const dy = Math.abs(ny - player.pos.y);
-      const dz = Math.abs(nz - player.pos.z);
-      if (!(dx < 0.6 && dz < 0.6 && dy < 1.8)) {
-        addBlock(nx, ny, nz, HOTBAR[selectedIndex], true);
-      }
+      const nx = x + Math.round(n.x), ny = y + Math.round(n.y), nz = z + Math.round(n.z);
+      const dx = Math.abs(nx - player.pos.x), dy = Math.abs(ny - player.pos.y), dz = Math.abs(nz - player.pos.z);
+      if (!(dx < 0.6 && dz < 0.6 && dy < 1.8)) placeBlockAt(nx, ny, nz, HOTBAR[selectedIndex]);
     }
   }
-
   canvas.addEventListener('mousedown', (e) => {
     if (isMobile || document.pointerLockElement !== canvas) return;
     doBlockAction(e.button === 0 ? 'break' : 'place');
   });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  // ---------- Hotbar UI ----------
-  const hotbarEl = document.getElementById('hotbar');
-  function updateHotbarUI() {
-    hotbarEl.innerHTML = '';
-    HOTBAR.forEach((type, i) => {
-      const slot = document.createElement('div');
-      slot.className = 'slot' + (i === selectedIndex ? ' active' : '');
-      slot.innerHTML = `<span class="key">${i + 1}</span><div class="swatch" style="background:#${BLOCK_TYPES[type].color.toString(16).padStart(6,'0')}"></div>`;
-      slot.title = BLOCK_TYPES[type].name;
-      slot.addEventListener('click', () => { selectedIndex = i; updateHotbarUI(); });
-      hotbarEl.appendChild(slot);
-    });
-  }
-  updateHotbarUI();
-
-  // ---------- Collision helpers ----------
+  // ================= COLLISION =================
   function isSolid(x, y, z) {
-    return world.has(key(Math.round(x), Math.round(y), Math.round(z)));
+    const k = key(Math.round(x), Math.round(y), Math.round(z));
+    const b = world.get(k);
+    return b && !BLOCK_TYPES[b.type].liquid;
   }
-
+  function liquidAt(x, y, z) {
+    const b = world.get(key(Math.round(x), Math.round(y), Math.round(z)));
+    return b && BLOCK_TYPES[b.type].liquid ? b.type : null;
+  }
   function collidesAt(pos) {
-    const half = 0.3;
-    const feet = pos.y - 1.6;
-    const head = pos.y - 0.1;
-    for (let dy of [feet + 0.1, feet + 0.9, head]) {
-      for (let dx of [-half, half]) {
-        for (let dz of [-half, half]) {
+    const half = 0.3, feet = pos.y - 1.6, head = pos.y - 0.1;
+    for (const dy of [feet + 0.1, feet + 0.9, head])
+      for (const dx of [-half, half])
+        for (const dz of [-half, half])
           if (isSolid(pos.x + dx, dy, pos.z + dz)) return true;
-        }
-      }
-    }
     return false;
   }
+  function findGroundY(x, z, startY) {
+    for (let y = Math.ceil(startY) + 3; y > startY - 8; y--) {
+      if (world.has(key(Math.round(x), y, Math.round(z)))) return y + 1;
+    }
+    return groundHeightAt(Math.round(x), Math.round(z)) + 1;
+  }
 
-  // ---------- Animation loop ----------
+  // ================= MOBS =================
+  const mobGroup = new THREE.Group();
+  scene.add(mobGroup);
+  const mobs = [];
+  const MAX_CHICKENS = 5, MAX_ZOMBIES = 4;
+
+  function makeChickenMesh() {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }));
+    body.scale.set(0.55, 0.5, 0.7);
+    const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xdd3333 }));
+    head.scale.set(0.25, 0.25, 0.25);
+    head.position.set(0, 0.3, 0.35);
+    g.add(body); g.add(head);
+    return g;
+  }
+  function makeZombieMesh() {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x3f7d3f }));
+    body.scale.set(0.5, 1.2, 0.35);
+    body.position.y = 0.1;
+    const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x2e5c2e }));
+    head.scale.set(0.4, 0.4, 0.4);
+    head.position.y = 0.85;
+    g.add(body); g.add(head);
+    return g;
+  }
+
+  function spawnMob(type) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 10 + Math.random() * 8;
+    const x = Math.round(player.pos.x + Math.cos(angle) * dist);
+    const z = Math.round(player.pos.z + Math.sin(angle) * dist);
+    const y = findGroundY(x, z, player.pos.y);
+    const group = type === 'chicken' ? makeChickenMesh() : makeZombieMesh();
+    group.position.set(x, y, z);
+    const mobRef = { group, type, pos: new THREE.Vector3(x, y, z), velY: 0, dir: Math.random() * Math.PI * 2, nextDirT: 0, health: 100, lastAttackT: 0 };
+    group.userData.mobRef = mobRef;
+    group.traverse(o => { o.userData.mobRef = mobRef; });
+    mobGroup.add(group);
+    mobs.push(mobRef);
+  }
+
+  function attackMob(mob, dmg) {
+    mob.health -= dmg;
+    if (mob.health <= 0) {
+      mobGroup.remove(mob.group);
+      const idx = mobs.indexOf(mob);
+      if (idx >= 0) mobs.splice(idx, 1);
+    }
+  }
+
+  function updateMobs(dt, now, isNight) {
+    for (let i = mobs.length - 1; i >= 0; i--) {
+      const m = mobs[i];
+      const distToPlayer = Math.hypot(m.pos.x - player.pos.x, m.pos.z - player.pos.z);
+      // despawn far away or zombies at daybreak
+      if (distToPlayer > 45 || (m.type === 'zombie' && !isNight)) {
+        mobGroup.remove(m.group); mobs.splice(i, 1); continue;
+      }
+      if (m.type === 'chicken') {
+        if (now > m.nextDirT) { m.dir = Math.random() * Math.PI * 2; m.nextDirT = now + 2000 + Math.random() * 3000; }
+        const spd = 1.2 * dt;
+        m.pos.x += Math.cos(m.dir) * spd; m.pos.z += Math.sin(m.dir) * spd;
+      } else {
+        if (distToPlayer < 14) {
+          const ang = Math.atan2(player.pos.z - m.pos.z, player.pos.x - m.pos.x);
+          m.dir = ang;
+          if (distToPlayer > 1.3) {
+            const spd = 2.0 * dt;
+            m.pos.x += Math.cos(m.dir) * spd; m.pos.z += Math.sin(m.dir) * spd;
+          } else if (now - m.lastAttackT > 1000) {
+            m.lastAttackT = now; player.health = Math.max(0, player.health - 10);
+          }
+        }
+      }
+      const gy = findGroundY(m.pos.x, m.pos.z, m.pos.y);
+      m.pos.y += (gy - m.pos.y) * Math.min(1, dt * 8);
+      m.group.position.copy(m.pos);
+      m.group.rotation.y = -m.dir + Math.PI / 2;
+    }
+  }
+
+  let lastMobSpawnCheck = 0;
+  function maybeSpawnMobs(now, isNight) {
+    if (now - lastMobSpawnCheck < 4000) return;
+    lastMobSpawnCheck = now;
+    const chickens = mobs.filter(m => m.type === 'chicken').length;
+    const zombies = mobs.filter(m => m.type === 'zombie').length;
+    if (!isNight && chickens < MAX_CHICKENS && Math.random() < 0.6) spawnMob('chicken');
+    if (isNight && zombies < MAX_ZOMBIES && Math.random() < 0.7) spawnMob('zombie');
+  }
+
+  // ================= DAY / NIGHT =================
+  const CYCLE_SECONDS = 180;
+  let elapsed = 0;
+  let brightness = 1;
+  function updateDayNight(dt) {
+    elapsed += dt;
+    const phase = (elapsed % CYCLE_SECONDS) / CYCLE_SECONDS;
+    brightness = Math.max(0.12, (Math.sin(phase * Math.PI * 2 - Math.PI / 2) + 1) / 2);
+    const c = new THREE.Color();
+    c.lerpColors(NIGHT_COLOR, DAY_COLOR, brightness);
+    scene.background = c;
+    scene.fog.color = c;
+    hemiLight.intensity = 0.25 + 0.85 * brightness;
+    sunLight.intensity = 0.15 + 0.85 * brightness;
+    document.getElementById('timeIcon').textContent = brightness < 0.35 ? '🌙' : '☀️';
+    return brightness < 0.35;
+  }
+
+  // ================= SAVE / LOAD (window.storage) =================
+  const SAVE_KEY = 'blockworld-save-v1';
+  async function saveGame() {
+    try {
+      const data = {
+        diffs: Array.from(worldDiffs.entries()),
+        inventory, pos: [player.pos.x, player.pos.y, player.pos.z],
+        yaw: player.yaw, health: player.health, hunger: player.hunger, minedCount,
+      };
+      const res = await window.storage.set(SAVE_KEY, JSON.stringify(data), false);
+      const msg = document.getElementById('saveMsg');
+      msg.textContent = res ? 'Tersimpan!' : 'Gagal simpan';
+      setTimeout(() => msg.textContent = '', 2000);
+    } catch (err) {
+      const msg = document.getElementById('saveMsg');
+      msg.textContent = 'Gagal simpan';
+      setTimeout(() => msg.textContent = '', 2000);
+    }
+  }
+  async function loadGame() {
+    try {
+      const res = await window.storage.get(SAVE_KEY, false);
+      if (!res || !res.value) return false;
+      const data = JSON.parse(res.value);
+      worldDiffs.clear();
+      (data.diffs || []).forEach(([k, v]) => worldDiffs.set(k, v));
+      Object.assign(inventory, data.inventory || {});
+      if (data.pos) player.pos.set(data.pos[0], data.pos[1], data.pos[2]);
+      if (typeof data.yaw === 'number') player.yaw = data.yaw;
+      if (typeof data.health === 'number') player.health = data.health;
+      if (typeof data.hunger === 'number') player.hunger = data.hunger;
+      if (typeof data.minedCount === 'number') minedCount = data.minedCount;
+      return true;
+    } catch (err) { return false; }
+  }
+  document.getElementById('saveBtn').addEventListener('click', saveGame);
+
+  // ================= HUD UPDATE =================
+  function updateHud() {
+    document.getElementById('healthNum').textContent = Math.round(player.health);
+    document.getElementById('healthFill').style.width = Math.max(0, player.health) + '%';
+    document.getElementById('hungerNum').textContent = Math.round(player.hunger);
+    document.getElementById('hungerFill').style.width = Math.max(0, player.hunger) + '%';
+  }
+
+  function respawnPlayer() {
+    document.getElementById('deadMsg').style.display = 'block';
+    setTimeout(() => document.getElementById('deadMsg').style.display = 'none', 1500);
+    player.health = 100; player.hunger = 70;
+    player.pos.set(0.5, findGroundY(0, 0, 20) + 1, 0.5);
+    player.velY = 0;
+  }
+
+  // ================= INIT WORLD (after load attempt) =================
+  async function init() {
+    const loaded = await loadGame();
+    updateChunks(player.pos.x, player.pos.z, true);
+    if (!loaded) {
+      player.pos.y = findGroundY(0, 0, 20) + 2;
+    }
+    refreshHotbarUI();
+    animate();
+  }
+
+  // ================= MAIN LOOP =================
   const clock = new THREE.Clock();
-  let frameCount = 0, fpsTimer = 0;
+  let frameCount = 0, fpsTimer = 0, lastAutosave = 0;
 
   function animate() {
     requestAnimationFrame(animate);
     const dt = Math.min(clock.getDelta(), 0.05);
+    const now = performance.now();
 
-    // FPS counter
     frameCount++; fpsTimer += dt;
     if (fpsTimer >= 0.5) {
       document.getElementById('fps').textContent = Math.round(frameCount / fpsTimer) + ' FPS';
       frameCount = 0; fpsTimer = 0;
     }
 
-    if (isPlaying()) {
-      // movement direction from yaw (matches actual camera facing direction)
+    const isNight = updateDayNight(dt);
+
+    if (isPlaying() && player.health > 0) {
       const forward = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
       const right = new THREE.Vector3(Math.sin(player.yaw + Math.PI / 2), 0, Math.cos(player.yaw + Math.PI / 2));
       let move = new THREE.Vector3();
       if (isMobile) {
-        // joystick: y-axis = forward/back, x-axis = strafe
         move.addScaledVector(forward, -joyAxis.y);
         move.addScaledVector(right, joyAxis.x);
         if (move.lengthSq() > 1) move.normalize();
@@ -527,55 +761,83 @@
         if (move.lengthSq() > 0) move.normalize().multiplyScalar(player.speed * dt);
       }
 
-      // try X and Z separately for simple wall sliding
+      const inLiquid = liquidAt(player.pos.x, player.pos.y - 1, player.pos.z);
       const tryPos = player.pos.clone();
-      tryPos.x += move.x;
-      if (!collidesAt(tryPos)) player.pos.x = tryPos.x;
-      tryPos.copy(player.pos);
-      tryPos.z += move.z;
-      if (!collidesAt(tryPos)) player.pos.z = tryPos.z;
+      tryPos.x += move.x; if (!collidesAt(tryPos)) player.pos.x = tryPos.x;
+      tryPos.copy(player.pos); tryPos.z += move.z; if (!collidesAt(tryPos)) player.pos.z = tryPos.z;
 
-      // gravity + jump
-      player.velY -= 20 * dt;
-      if ((keysDown['Space'] || touchJump) && player.onGround) {
-        player.velY = 8;
+      const gravity = inLiquid === 'water' ? 7 : 20;
+      player.velY -= gravity * dt;
+      if (inLiquid === 'water') player.velY = Math.max(player.velY, -3);
+      if ((keysDown['Space'] || touchJump) && (player.onGround || inLiquid === 'water')) {
+        player.velY = inLiquid === 'water' ? 3.2 : 8;
         player.onGround = false;
       }
-      const tryY = player.pos.clone();
-      tryY.y += player.velY * dt;
+      const tryY = player.pos.clone(); tryY.y += player.velY * dt;
       if (!collidesAt(tryY)) {
-        player.pos.y = tryY.y;
-        player.onGround = false;
+        if (!player.onGround && player.velY < -0.1 && inLiquid !== 'water') { /* falling, track handled below */ }
+        player.pos.y = tryY.y; player.onGround = false;
       } else {
-        if (player.velY < 0) player.onGround = true;
+        if (player.velY < 0) {
+          if (!player.wasOnGround) {
+            const fallDist = player.fallStartY - player.pos.y;
+            if (fallDist > 4) player.health = Math.max(0, player.health - (fallDist - 4) * 6);
+          }
+          player.onGround = true;
+        }
         player.velY = 0;
       }
+      if (!player.wasOnGround && !player.onGround) { /* still airborne */ }
+      if (player.wasOnGround && !player.onGround) player.fallStartY = player.pos.y;
+      player.wasOnGround = player.onGround;
+
+      // lava damage
+      const feetLiquid = liquidAt(player.pos.x, player.pos.y - 1.5, player.pos.z);
+      if (feetLiquid === 'lava' && now - player.lastLavaTick > 400) {
+        player.lastLavaTick = now; player.health = Math.max(0, player.health - 6);
+      }
+
+      // hunger
+      player.hunger = Math.max(0, player.hunger - (100 / 600) * dt);
+      if (player.hunger <= 0) player.health = Math.max(0, player.health - 2 * dt);
+      else if (player.hunger > 60 && player.health < 100) player.health = Math.min(100, player.health + 2 * dt);
 
       camera.position.copy(player.pos);
       camera.rotation.order = 'YXZ';
       camera.rotation.y = player.yaw;
       camera.rotation.x = player.pitch;
+
+      updateChunks(player.pos.x, player.pos.z, false);
+      maybeSpawnMobs(now, isNight);
+      updateMobs(dt, now, isNight);
+
+      if (player.health <= 0) respawnPlayer();
+
+      if (now - lastAutosave > 20000) { lastAutosave = now; saveGame(); }
     }
 
-    // pop-in animation for newly placed blocks
-    const now = performance.now();
+    updateHud();
+
+    const t = performance.now();
     worldGroup.children.forEach((m) => {
       if (m.userData.spawnT) {
-        const t = Math.min(1, (now - m.userData.spawnT) / 120);
-        m.scale.setScalar(t);
-        if (t >= 1) delete m.userData.spawnT;
+        const tt = Math.min(1, (t - m.userData.spawnT) / 120);
+        m.scale.setScalar(tt);
+        if (tt >= 1) delete m.userData.spawnT;
       }
     });
 
     renderer.render(scene, camera);
   }
-  animate();
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
+  window.addEventListener('beforeunload', () => { saveGame(); });
+
+  init();
 })();
 </script>
 </body>
