@@ -57,12 +57,63 @@
 
   #hint {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    color: white; text-align: center; text-shadow: 2px 2px 4px black;
-    z-index: 20; background: rgba(0,0,0,0.6); padding: 22px 28px; border-radius: 10px;
-    font-size: 13px; line-height: 1.7; cursor: pointer; max-width: 90vw;
+    color: white; text-align: center; text-shadow: 1px 1px 3px black;
+    z-index: 20; background: linear-gradient(160deg, rgba(20,28,20,0.92), rgba(10,14,10,0.92));
+    padding: 28px 30px 22px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+    font-size: 13px; line-height: 1.7; cursor: pointer; max-width: 92vw; width: 380px;
   }
-  #hint h1 { margin: 0 0 8px 0; font-size: 24px; }
+  #hint h1 {
+    margin: 0 0 2px 0; font-size: 32px; letter-spacing: 0.5px;
+    background: linear-gradient(90deg, #8ee06a, #ffd54a);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: none; filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.6));
+  }
+  #hint .tagline { display: block; color: #b9c9b4; font-size: 12px; margin-bottom: 16px; }
   #hint b { color: #ffd54a; }
+  #playBtnFace {
+    margin: 6px auto 16px; padding: 10px 0; width: 80%; border-radius: 999px;
+    background: linear-gradient(180deg, #6fce4a, #4a9e30); border: 1px solid rgba(255,255,255,0.3);
+    font-weight: bold; font-size: 14px; box-shadow: 0 4px 0 #2f6e1c, 0 6px 10px rgba(0,0,0,0.4);
+    animation: pulseBtn 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+  #hint .controlsBox { text-align: left; background: rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; font-size: 12px; margin-bottom: 10px; }
+  #hint .noteBox { font-size: 11.5px; color: #d8d0b0; text-align: left; }
+  #patchNotesLink {
+    display: inline-block; margin-top: 14px; font-size: 11px; color: #9fd8ff;
+    text-decoration: underline; cursor: pointer;
+  }
+
+  #versionBadge {
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 21;
+    background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); border-radius: 999px;
+    color: #fff; font-size: 11px; padding: 4px 12px; cursor: pointer; text-shadow: 1px 1px 2px black;
+    display: flex; align-items: center; gap: 6px;
+  }
+  #versionBadge .dot { width: 7px; height: 7px; border-radius: 50%; background: #ff5555; box-shadow: 0 0 6px #ff5555; animation: dotBlink 1.4s infinite; }
+  @keyframes dotBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  #patchModal {
+    position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,0.55);
+    display: none; align-items: center; justify-content: center;
+  }
+  #patchCard {
+    width: min(420px, 88vw); max-height: 78vh; overflow-y: auto;
+    background: #14181a; border: 1px solid rgba(255,255,255,0.15); border-radius: 14px;
+    color: white; text-shadow: none; padding: 18px 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  #patchCard h2 { margin: 0 0 4px 0; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+  #patchCloseBtn { cursor: pointer; font-size: 16px; color: #aaa; padding: 2px 8px; }
+  #patchCard .patchSub { color: #999; font-size: 11px; margin-bottom: 14px; }
+  .patchEntry { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+  .patchEntry .patchBadge {
+    flex-shrink: 0; font-size: 10px; font-weight: bold; color: #14181a; background: #8ee06a;
+    border-radius: 6px; padding: 3px 7px; min-width: 34px; text-align: center;
+  }
+  .patchEntry.newest .patchBadge { background: #ffd54a; }
+  .patchEntry ul { margin: 4px 0 0 0; padding-left: 16px; font-size: 12px; color: #ddd; line-height: 1.5; }
+  .patchEntry .patchTitle { font-size: 13px; font-weight: bold; color: #fff; }
 
   #deadMsg {
     position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
@@ -87,19 +138,94 @@
 </head>
 <body>
 
+<div id="versionBadge"><span class="dot"></span> BlockWorld v2.0 — Lihat Update</div>
+
 <div id="hint">
   <h1>⛏️ BlockWorld</h1>
-  <span class="desktopOnly">Klik untuk mulai bermain<br>
-  <b>WASD</b> gerak &nbsp; <b>Spasi</b> lompat &nbsp; <b>Mouse</b> lihat sekitar<br>
-  <b>Klik Kiri</b> hancurkan blok / serang &nbsp; <b>Klik Kanan</b> pasang blok<br>
-  <b>1-8</b> pilih blok &nbsp; <b>Esc</b> keluar mode main</span>
-  <span class="mobileOnly" style="display:none">Tap untuk mulai bermain<br>
-  <b>Joystick kiri</b> gerak &nbsp; <b>Tombol bulat</b> lompat &nbsp; <b>Geser layar</b> nengok<br>
-  <b>Tombol merah</b> hancurkan/serang &nbsp; <b>Tombol hijau</b> pasang blok</span>
-  <br><br>
-  Dunia BlockWorld gak terbatas — jalan terus bakal muncul area baru.<br>
-  Hati-hati sama <b>lava</b> (nyakitin) dan <b>zombie</b> yang muncul malam hari.<br>
-  Jaga lapar biar gak kelaparan, makan apel dari daun pohon.
+  <span class="tagline">Bangun, jelajahi, dan bertahan hidup</span>
+
+  <div id="playBtnFace">▶ <span class="desktopOnly">KLIK UNTUK MAIN</span><span class="mobileOnly" style="display:none">TAP UNTUK MAIN</span></div>
+
+  <div class="controlsBox">
+    <span class="desktopOnly">
+      <b>WASD</b> gerak &nbsp; <b>Spasi</b> lompat &nbsp; <b>Mouse</b> lihat sekitar<br>
+      <b>Klik Kiri</b> hancurkan/serang &nbsp; <b>Klik Kanan</b> pasang blok<br>
+      <b>1-8</b> pilih blok &nbsp; <b>Esc</b> keluar mode main
+    </span>
+    <span class="mobileOnly" style="display:none">
+      <b>Joystick kiri</b> gerak &nbsp; <b>Tombol bulat</b> lompat<br>
+      <b>Geser layar</b> buat nengok<br>
+      <b>Tombol merah</b> hancurkan/serang &nbsp; <b>Tombol hijau</b> pasang blok
+    </span>
+  </div>
+
+  <div class="noteBox">
+    🌍 Dunia gak terbatas — jalan terus, area baru otomatis muncul<br>
+    🌋 Hati-hati <b>lava</b>, dan <b>zombie</b> yang keluar malam hari<br>
+    🍗 Jaga lapar — makan apel hasil dari nebang daun pohon
+  </div>
+
+  <div id="patchNotesLink">📋 Lihat semua update &amp; perbaikan</div>
+</div>
+
+<div id="patchModal">
+  <div id="patchCard">
+    <h2>📋 Riwayat Update <span id="patchCloseBtn">✕</span></h2>
+    <div class="patchSub">Semua perubahan yang udah ditambahin ke BlockWorld</div>
+
+    <div class="patchEntry newest">
+      <div class="patchBadge">v2.0</div>
+      <div>
+        <div class="patchTitle">BlockWorld — Update Besar</div>
+        <ul>
+          <li>Ganti nama jadi BlockWorld + tampilan menu baru</li>
+          <li>Dunia tak terbatas (chunk streaming otomatis)</li>
+          <li>Siklus siang &amp; malam</li>
+          <li>Sistem nyawa (❤️) dan lapar (🍗)</li>
+          <li>Blok baru: air, lava, kaca, bata</li>
+          <li>Inventory nyata — harus nambang dulu baru bisa pasang</li>
+          <li>Crafting sederhana (pasir→kaca, batu→bata)</li>
+          <li>Mob: ayam (siang) &amp; zombie (malam) + sistem serang</li>
+          <li>Save/Load otomatis (progress kesimpen)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="patchEntry">
+      <div class="patchBadge">v1.2</div>
+      <div>
+        <div class="patchTitle">Perbaikan Kontrol &amp; Performa</div>
+        <ul>
+          <li>Benerin arah analog/WASD yang kebalik (maju jadi maju beneran)</li>
+          <li>Matiin shadow &amp; kecilin dunia khusus di HP biar gak berat</li>
+          <li>Batasin resolusi render di HP</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="patchEntry">
+      <div class="patchBadge">v1.1</div>
+      <div>
+        <div class="patchTitle">Dukungan HP</div>
+        <ul>
+          <li>Kontrol sentuh: joystick gerak, geser layar buat nengok</li>
+          <li>Tombol lompat, hancurkan, dan pasang blok versi sentuh</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="patchEntry">
+      <div class="patchBadge">v1.0</div>
+      <div>
+        <div class="patchTitle">Rilis Awal</div>
+        <ul>
+          <li>Dunia voxel dengan terrain &amp; pohon</li>
+          <li>Kontrol first-person + hancurkan/pasang blok</li>
+          <li>Hotbar 6 jenis blok</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="deadMsg">💀 Kamu mati... respawn</div>
@@ -424,6 +550,17 @@
     if (isMobile) { mobilePlaying = true; setUIVisible(true); }
     else canvas.requestPointerLock();
   });
+
+  // Patch notes modal
+  const patchModal = document.getElementById('patchModal');
+  const patchCard = document.getElementById('patchCard');
+  function openPatchNotes(e) { if (e) e.stopPropagation(); patchModal.style.display = 'flex'; }
+  function closePatchNotes(e) { if (e) e.stopPropagation(); patchModal.style.display = 'none'; }
+  document.getElementById('versionBadge').addEventListener('click', openPatchNotes);
+  document.getElementById('patchNotesLink').addEventListener('click', openPatchNotes);
+  document.getElementById('patchCloseBtn').addEventListener('click', closePatchNotes);
+  patchCard.addEventListener('click', (e) => e.stopPropagation());
+  patchModal.addEventListener('click', closePatchNotes);
   canvas.addEventListener('click', () => {
     if (!isMobile && document.pointerLockElement !== canvas) canvas.requestPointerLock();
   });
