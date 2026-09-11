@@ -33,10 +33,15 @@ jobs:
       - name: Point Bubblewrap to preinstalled JDK & Android SDK (skip interactive prompts)
         run: bubblewrap updateConfig --jdkPath="$JAVA_HOME" --androidSdkPath="/usr/local/lib/android/sdk"
 
-      - name: Restore keystore from secret
+      - name: Generate keystore (baru tiap build, gak butuh secret)
         run: |
           mkdir -p android-twa
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android-twa/android.keystore
+          keytool -genkeypair -v \
+            -keystore android-twa/android.keystore \
+            -alias android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass blockworld123 \
+            -dname "CN=Julakk, OU=BlockWorld, O=Julakk, L=Unknown, S=Unknown, C=ID"
 
       - name: Generate Android project from twa-manifest.json
         working-directory: android-twa
@@ -45,8 +50,8 @@ jobs:
       - name: Build signed APK/AAB
         working-directory: android-twa
         env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.BUBBLEWRAP_KEYSTORE_PASSWORD }}
-          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.BUBBLEWRAP_KEY_PASSWORD }}
+          BUBBLEWRAP_KEYSTORE_PASSWORD: blockworld123
+          BUBBLEWRAP_KEY_PASSWORD: blockworld123
         run: bubblewrap build --skipPwaValidation
 
       - name: Rename output
