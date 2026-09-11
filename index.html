@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#141a14">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>BlockWorld</title>
 <style>
   html, body { margin: 0; padding: 0; overflow: hidden; background: #87CEEB; font-family: 'Segoe UI', Arial, sans-serif; }
@@ -894,15 +898,30 @@
     if (!playing) cancelMining();
   }
 
+  async function tryFullscreen() {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+    if (req) { try { await req.call(el); } catch (e) {} }
+  }
+  function isFullscreenActive() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+  }
+
   hint.addEventListener('click', async () => {
     if (isMobile) {
-      try { if (canvas.requestFullscreen) await canvas.requestFullscreen(); } catch (e) {}
+      await tryFullscreen();
       try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (e) {}
       mobilePlaying = true;
       setUIVisible(true);
     } else {
       canvas.requestPointerLock();
     }
+  });
+  // Kalau HP dukung fullscreen tapi sempat keluar (misal user geser dari tepi layar), coba masuk lagi
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(evt => {
+    document.addEventListener(evt, () => {
+      if (isMobile && mobilePlaying && !isFullscreenActive()) tryFullscreen();
+    });
   });
 
   // Patch notes modal
@@ -1569,6 +1588,12 @@
 
   init();
 })();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
