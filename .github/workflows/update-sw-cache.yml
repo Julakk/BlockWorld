@@ -1,0 +1,41 @@
+name: Update Service Worker Cache Version
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'manifest.json'
+      - 'icon-192.png'
+      - 'icon-512.png'
+
+jobs:
+  bump-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute content hash and update sw.js
+        run: |
+          HASH=$(cat index.html manifest.json icon-192.png icon-512.png | sha256sum | cut -c1-10)
+          echo "Content hash: $HASH"
+          sed -i "s/const CACHE_NAME = '[^']*';/const CACHE_NAME = 'blockworld-v-$HASH';/" sw.js
+          cat sw.js | head -1
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet sw.js; then
+            echo "Tidak ada perubahan cache version, skip commit."
+          else
+            git add sw.js
+            git commit -m "Auto-bump service worker cache version [skip ci]"
+            git push
+          fi
