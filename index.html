@@ -145,6 +145,14 @@
     z-index: 25; display: none; pointer-events: none;
   }
 
+  #toastMsg {
+    position: fixed; top: 22%; left: 50%; transform: translate(-50%, -50%);
+    color: #ffd54a; font-size: 14px; font-weight: bold; text-shadow: 1px 1px 4px black;
+    background: rgba(0,0,0,0.55); padding: 6px 14px; border-radius: 6px;
+    z-index: 25; display: none; pointer-events: none; white-space: nowrap;
+    transition: opacity 0.2s ease;
+  }
+
   #rotateOverlay {
     position: fixed; inset: 0; z-index: 50; background: rgba(5,8,6,0.97);
     display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -334,10 +342,16 @@
       <span>Efek Suara</span>
       <input type="checkbox" id="sfxCheck" checked>
     </div>
+
+    <div class="settingsRow">
+      <span>Reset Dunia / Save (slot aktif)</span>
+      <span class="smallBtn" id="resetWorldBtn" style="color:#ff8080;">🗑️ Reset</span>
+    </div>
   </div>
 </div>
 
 <div id="deadMsg">💀 Kamu mati... respawn</div>
+<div id="toastMsg"></div>
 
 <div id="rotateOverlay">
   <div class="icon">📱</div>
@@ -649,10 +663,20 @@
   }
 
   // mining / placing (records diffs + inventory)
+  // worldDiffsPrev: kalau taruh-lalu-bongkar blok yang sama, kembalikan (atau hapus) diff-nya
+  // langsung alih-alih numpuk entry mubazir di save saat sesi main lama.
+  const worldDiffsPrev = new Map();
   const minedByType = {};
   function mineBlockAt(x, y, z, type) {
     if (BLOCK_TYPES[type].liquid) return; // can't mine liquids
-    worldDiffs.set(key(x, y, z), '');
+    const k = key(x, y, z);
+    if (worldDiffsPrev.has(k)) {
+      const prev = worldDiffsPrev.get(k);
+      worldDiffsPrev.delete(k);
+      if (prev === undefined) worldDiffs.delete(k); else worldDiffs.set(k, prev);
+    } else {
+      worldDiffs.set(k, '');
+    }
     destroyBlockMesh(x, y, z);
     if (inventory[type] !== undefined) inventory[type]++;
     if (type === 'leaves') {
@@ -665,10 +689,12 @@
     sfxMine();
   }
   function placeBlockAt(x, y, z, type) {
-    if (world.has(key(x, y, z))) return false;
+    const k = key(x, y, z);
+    if (world.has(k)) return false;
     if (!inventory[type] || inventory[type] <= 0) return false;
     inventory[type]--;
-    worldDiffs.set(key(x, y, z), type);
+    if (!worldDiffsPrev.has(k)) worldDiffsPrev.set(k, worldDiffs.has(k) ? worldDiffs.get(k) : undefined);
+    worldDiffs.set(k, type);
     createBlockMesh(x, y, z, type, true);
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
     const ck = cx + ',' + cz;
@@ -755,6 +781,7 @@
     if (willOpen) refreshCraftPanel();
   });
   document.getElementById('eatBtn').addEventListener('click', () => {
+    if (player.hunger >= 100) { showToast('Hunger sudah penuh'); return; }
     const f = bestFood();
     if (!f) return;
     inventory[f]--; player.hunger = Math.min(100, player.hunger + FOOD_VALUES[f]); refreshHotbarUI();
@@ -825,7 +852,7 @@
       b.addEventListener('click', async () => {
         await saveGame();
         activeSlot = n;
-        try { await window.storage.set('blockworld-active-slot', String(n), false); } catch (e) {}
+        try { await storage.set('blockworld-active-slot', String(n), false); } catch (e) {}
         await loadGame();
         refreshHotbarUI();
         refreshSlotRow();
@@ -844,6 +871,11 @@
     const file = e.target.files[0];
     if (file) importSaveFile(file);
     e.target.value = '';
+  });
+  document.getElementById('resetWorldBtn').addEventListener('click', async () => {
+    if (!confirm('Yakin mau reset dunia & save di slot ' + activeSlot + '? Progress slot ini akan hilang permanen.')) return;
+    try { await storage.delete(slotKey(activeSlot)); } catch (e) {}
+    location.reload();
   });
 
   // ================= PLAYER =================
@@ -1068,7 +1100,11 @@
     const def = BLOCK_TYPES[ud.type];
     if (def.liquid) return;
     const tier = def.tier || 0;
-    if (tier > currentToolTier()) return;
+    if (tier > currentToolTier()) {
+      const needName = TOOL_NAMES[tier] || 'alat lebih baik';
+      showToast(`⛏️ Butuh ${needName}!`);
+      return;
+    }
     miningTarget = { x: ud.x, y: ud.y, z: ud.z, type: ud.type };
     miningProgress = 0;
     miningBreakTime = def.hardness / toolSpeedMult(currentToolTier());
@@ -1354,7 +1390,28 @@
     mmCtx.beginPath(); mmCtx.arc(size / 2, size / 2, 3, 0, Math.PI * 2); mmCtx.fill();
   }
 
-  // ================= SAVE / LOAD (window.storage) =================
+  // ================= SAVE / LOAD (localStorage, fallback ke window.storage kalau tersedia) =================
+  // Pakai window.storage kalau berjalan di lingkungan artifact Claude (biar tetap kompatibel),
+  // tapi default ke localStorage biar tetap jalan kalau di-deploy sebagai website/PWA berdiri sendiri.
+  const storage = (window.storage && typeof window.storage.get === 'function') ? window.storage : {
+    async get(key) {
+      const v = localStorage.getItem(key);
+      if (v === null) throw new Error('Key not found: ' + key);
+      return { key, value: v };
+    },
+    async set(key, value) {
+      try { localStorage.setItem(key, value); return { key, value }; }
+      catch (e) { return null; }
+    },
+    async delete(key) {
+      localStorage.removeItem(key);
+      return { key, deleted: true };
+    },
+    async list(prefix) {
+      const keys = Object.keys(localStorage).filter(k => !prefix || k.startsWith(prefix));
+      return { keys };
+    }
+  };
   function buildSaveData() {
     return {
       diffs: Array.from(worldDiffs.entries()),
@@ -1380,7 +1437,7 @@
   }
   async function saveGame() {
     try {
-      const res = await window.storage.set(slotKey(activeSlot), JSON.stringify(buildSaveData()), false);
+      const res = await storage.set(slotKey(activeSlot), JSON.stringify(buildSaveData()), false);
       const msg = document.getElementById('saveMsg');
       msg.textContent = res ? 'Tersimpan!' : 'Gagal simpan';
       setTimeout(() => msg.textContent = '', 2000);
@@ -1392,10 +1449,10 @@
   }
   async function loadGame() {
     try {
-      let res = await window.storage.get(slotKey(activeSlot), false);
+      let res = await storage.get(slotKey(activeSlot), false);
       if ((!res || !res.value) && activeSlot === 1) {
         // migrasi dari save versi lama
-        try { res = await window.storage.get('blockworld-save-v1', false); } catch (e) {}
+        try { res = await storage.get('blockworld-save-v1', false); } catch (e) {}
       }
       if (!res || !res.value) return false;
       applySaveData(JSON.parse(res.value));
@@ -1434,6 +1491,20 @@
     document.getElementById('coords').textContent = `X:${Math.round(player.pos.x)} Y:${Math.round(player.pos.y)} Z:${Math.round(player.pos.z)}`;
   }
 
+  let toastTimer = null;
+  function showToast(text) {
+    const el = document.getElementById('toastMsg');
+    el.textContent = text;
+    el.style.display = 'block';
+    el.style.opacity = '1';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      el.style.opacity = '0';
+      setTimeout(() => { el.style.display = 'none'; }, 200);
+    }, 1200);
+    if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) {} }
+  }
+
   function respawnPlayer() {
     document.getElementById('deadMsg').style.display = 'block';
     setTimeout(() => document.getElementById('deadMsg').style.display = 'none', 1500);
@@ -1446,7 +1517,7 @@
   // ================= INIT WORLD (after load attempt) =================
   async function init() {
     try {
-      const r = await window.storage.get('blockworld-active-slot', false);
+      const r = await storage.get('blockworld-active-slot', false);
       if (r && r.value) activeSlot = parseInt(r.value) || 1;
     } catch (e) {}
     const loaded = await loadGame();
@@ -1461,6 +1532,7 @@
   // ================= MAIN LOOP =================
   const clock = new THREE.Clock();
   let frameCount = 0, fpsTimer = 0, lastAutosave = 0, lastFootstepT = 0, lastMinimapDraw = 0;
+  let lastMinimapX = null, lastMinimapZ = null;
 
   function animate() {
     requestAnimationFrame(animate);
@@ -1553,7 +1625,13 @@
       if (player.health <= 0) respawnPlayer();
 
       if (now - lastAutosave > 20000) { lastAutosave = now; saveGame(); }
-      if (now - lastMinimapDraw > 500) { lastMinimapDraw = now; drawMinimap(); }
+      // redraw minimap cuma kalau posisi berubah cukup jauh (hemat baterai di HP),
+      // dengan fallback interval biar tetap update kalau dunia berubah (blok ditambang/taruh) walau diam.
+      const movedEnough = lastMinimapX === null || Math.abs(player.pos.x - lastMinimapX) > 1 || Math.abs(player.pos.z - lastMinimapZ) > 1;
+      if ((movedEnough && now - lastMinimapDraw > 150) || now - lastMinimapDraw > 2000) {
+        lastMinimapDraw = now; lastMinimapX = player.pos.x; lastMinimapZ = player.pos.z;
+        drawMinimap();
+      }
     } else {
       ghostMesh.visible = false;
     }
