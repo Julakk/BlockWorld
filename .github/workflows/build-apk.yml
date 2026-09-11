@@ -30,6 +30,9 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm i -g @bubblewrap/cli
 
+      - name: Point Bubblewrap to preinstalled JDK & Android SDK (skip interactive prompts)
+        run: bubblewrap updateConfig --jdkPath="$JAVA_HOME" --androidSdkPath="/usr/local/lib/android/sdk"
+
       - name: Restore keystore from secret
         run: |
           mkdir -p android-twa
