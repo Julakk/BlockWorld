@@ -1,0 +1,64 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'manifest.json'
+      - 'android-twa/twa-manifest.json'
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Bubblewrap CLI
+        run: npm i -g @bubblewrap/cli
+
+      - name: Restore keystore from secret
+        run: |
+          mkdir -p android-twa
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android-twa/android.keystore
+
+      - name: Generate Android project from twa-manifest.json
+        working-directory: android-twa
+        run: bubblewrap update --skipVersionUpgrade
+
+      - name: Build signed APK/AAB
+        working-directory: android-twa
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.BUBBLEWRAP_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.BUBBLEWRAP_KEY_PASSWORD }}
+        run: bubblewrap build --skipPwaValidation
+
+      - name: Rename output
+        working-directory: android-twa
+        run: |
+          cp app-release-signed.apk BlockWorld.apk
+          cp app-release-bundle.aab BlockWorld.aab || true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: BlockWorld Build ${{ github.run_number }}
+          files: |
+            android-twa/BlockWorld.apk
+            android-twa/BlockWorld.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
