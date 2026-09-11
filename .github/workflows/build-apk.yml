@@ -30,11 +30,20 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm i -g @bubblewrap/cli
 
+      - name: Fix cmdline-tools layout for Bubblewrap
+        run: |
+          echo "Isi cmdline-tools sebelum fix:"
+          ls -la "$ANDROID_HOME/cmdline-tools"
+          if [ ! -d "$ANDROID_HOME/cmdline-tools/latest" ]; then
+            VER=$(ls "$ANDROID_HOME/cmdline-tools" | grep -v latest | head -n1)
+            echo "Membuat symlink latest -> $VER"
+            ln -s "$ANDROID_HOME/cmdline-tools/$VER" "$ANDROID_HOME/cmdline-tools/latest"
+          fi
+          echo "Isi cmdline-tools sesudah fix:"
+          ls -la "$ANDROID_HOME/cmdline-tools"
+
       - name: Pre-write Bubblewrap config (skip interactive first-run wizard)
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          ls -la "$ANDROID_HOME" || echo "ANDROID_HOME path gak ada"
           mkdir -p ~/.bubblewrap
           cat > ~/.bubblewrap/config.json << CONFIGEOF
           {"jdkPath":"$JAVA_HOME","androidSdkPath":"$ANDROID_HOME"}
