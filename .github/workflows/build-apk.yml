@@ -44,15 +44,13 @@ jobs:
           CONFIGEOF
           cat ~/.bubblewrap/config.json
 
-      - name: Generate keystore (baru tiap build, gak butuh secret)
+      - name: Verify keystore exists (persistent, not regenerated)
         run: |
-          mkdir -p android-twa
-          keytool -genkeypair -v \
-            -keystore android-twa/android.keystore \
-            -alias android \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass blockworld123 \
-            -dname "CN=Julakk, OU=BlockWorld, O=Julakk, L=Unknown, S=Unknown, C=ID"
+          if [ ! -f android-twa/android.keystore ]; then
+            echo "ERROR: android.keystore tidak ditemukan di repo!"
+            exit 1
+          fi
+          echo "Keystore ditemukan, lanjut build."
 
       - name: Generate Android project from twa-manifest.json
         working-directory: android-twa
