@@ -44,13 +44,11 @@ jobs:
           CONFIGEOF
           cat ~/.bubblewrap/config.json
 
-      - name: Verify keystore exists (persistent, not regenerated)
+      - name: Restore keystore from secret
         run: |
-          if [ ! -f android-twa/android.keystore ]; then
-            echo "ERROR: android.keystore tidak ditemukan di repo!"
-            exit 1
-          fi
-          echo "Keystore ditemukan, lanjut build."
+          mkdir -p android-twa
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android-twa/android.keystore
+          echo "Keystore restored."
 
       - name: Generate Android project from twa-manifest.json
         working-directory: android-twa
@@ -59,8 +57,8 @@ jobs:
       - name: Build signed APK/AAB
         working-directory: android-twa
         env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: blockworld123
-          BUBBLEWRAP_KEY_PASSWORD: blockworld123
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: bubblewrap build --skipPwaValidation
 
       - name: Rename output
