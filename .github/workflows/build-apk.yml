@@ -30,8 +30,13 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm i -g @bubblewrap/cli
 
-      - name: Point Bubblewrap to preinstalled JDK & Android SDK (skip interactive prompts)
-        run: bubblewrap updateConfig --jdkPath="$JAVA_HOME" --androidSdkPath="/usr/local/lib/android/sdk"
+      - name: Pre-write Bubblewrap config (skip interactive first-run wizard)
+        run: |
+          mkdir -p ~/.bubblewrap
+          cat > ~/.bubblewrap/config.json << EOF
+          {"jdkPath":"$JAVA_HOME","androidSdkPath":"/usr/local/lib/android/sdk"}
+          EOF
+          cat ~/.bubblewrap/config.json
 
       - name: Generate keystore (baru tiap build, gak butuh secret)
         run: |
