@@ -121,6 +121,30 @@
   #eatBtn:disabled, .craftBtn:disabled { opacity: 0.35; cursor: default; }
   #saveMsg { color: var(--gold); font-size: 11px; text-shadow: 1px 1px 2px black; font-weight: 700; }
   #minimap { width: 88px; height: 88px; border-radius: var(--radius-sm); border: 2px solid var(--panel-border-strong); background: #111; box-shadow: var(--shadow-panel); }
+  .actionGrid { display: grid; grid-template-columns: repeat(2, auto); gap: 6px; }
+  .actionGrid .smallBtn { padding: 7px 9px; font-size: 10.5px; white-space: nowrap; }
+
+  /* ================= COMPACT LAYOUT: short / landscape phone screens ================= */
+  @media (max-height: 480px) and (pointer: coarse) {
+    #hud { padding: 8px 10px; width: 152px; font-size: 10.5px; }
+    #hud > div:first-child { font-size: 11px; }
+    #topRight { top: 8px; right: 8px; gap: 5px; }
+    #fps { font-size: 9.5px; }
+    #minimap { width: 52px; height: 52px; }
+    .actionGrid { gap: 4px; }
+    .actionGrid .smallBtn { padding: 5px 7px; font-size: 9.5px; }
+    #saveMsg { font-size: 9.5px; }
+    #hotbarWrap { bottom: 8px; gap: 5px; }
+    #hotbar, #craftPanel { padding: 5px; gap: 5px; }
+    .slot { width: 34px; height: 34px; }
+    .slot .swatch { width: 22px; height: 22px; }
+    #joystickZone { left: 12px; bottom: 10px; width: 92px; height: 92px; }
+    #joystickStick { width: 42px; height: 42px; }
+    #touchActionBtns { right: 14px; bottom: 60px; gap: 8px; }
+    #touchJumpBtn { right: 16px; bottom: 10px; width: 46px; height: 46px; font-size: 9px; }
+    #touchSprintBtn { right: 66px; bottom: 10px; width: 36px; height: 36px; font-size: 8px; }
+    .touchBtn { width: 46px; height: 46px; font-size: 17px; }
+  }
 
   /* ================= START SCREEN ================= */
   #hint {
@@ -297,7 +321,7 @@
 </head>
 <body>
 
-<div id="versionBadge"><span class="dot"></span> BlockWorld v2.4 — Lihat Update</div>
+<div id="versionBadge"><span class="dot"></span> BlockWorld v2.5 — Lihat Update</div>
 
 <div id="hint">
   <div class="badgeIcon">⛏️</div>
@@ -341,6 +365,20 @@
     <div class="patchSub">Semua perubahan yang udah ditambahin ke BlockWorld</div>
 
     <div class="patchEntry newest">
+      <div class="patchBadge">v2.5</div>
+      <div>
+        <div class="patchTitle">Perombakan UI/UX &amp; Perbaikan Tampilan Layar Pendek</div>
+        <ul>
+          <li>Tampilan menyeluruh diperbarui: hotbar, HUD nyawa/lapar, panel kanan-atas, dan menu (Tas/Statistik/Setting/Riwayat Update) sekarang lebih rapi dengan efek kaca, bayangan, dan animasi halus</li>
+          <li>Layar utama (start screen) dirombak — kontrol WASD/tombol sentuh ditampilkan dalam gaya tombol keyboard biar gampang dibaca</li>
+          <li>Tombol aksi di kanan atas (Makan/Crafting/Tas/Statistik/Setting/Simpan) dirapikan jadi grid 2 kolom biar gak makan tempat</li>
+          <li>Perbaikan bug: di HP mode landscape layar pendek, tombol HUD kanan-atas sempat numpuk/bertabrakan sama tombol kontrol sentuh (lompat/lari/tambang/pasang) di kanan bawah — sekarang otomatis mengecil &amp; gak tabrakan</li>
+          <li>Kontrol sentuh (joystick, tombol lompat/lari/tambang/pasang) tampil lebih jelas dengan efek gradasi &amp; bayangan</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="patchEntry">
       <div class="patchBadge">v2.4</div>
       <div>
         <div class="patchTitle">Perbaikan Menu &amp; Update Otomatis</div>
@@ -540,12 +578,14 @@
 <div id="topRight" style="display:none;">
   <div id="fps"></div>
   <canvas id="minimap" width="84" height="84"></canvas>
-  <button class="smallBtn" id="eatBtn">🍽️ Makan (<span id="foodCount">0</span>)</button>
-  <button class="smallBtn" id="craftToggleBtn">🛠️ Crafting</button>
-  <button class="smallBtn" id="invToggleBtn">🎒 Tas</button>
-  <button class="smallBtn" id="statsToggleBtn">📊 Statistik</button>
-  <button class="smallBtn" id="settingsToggleBtn">⚙️ Setting</button>
-  <button class="smallBtn" id="saveBtn">💾 Simpan</button>
+  <div class="actionGrid">
+    <button class="smallBtn" id="eatBtn">🍽️ Makan (<span id="foodCount">0</span>)</button>
+    <button class="smallBtn" id="craftToggleBtn">🛠️ Crafting</button>
+    <button class="smallBtn" id="invToggleBtn">🎒 Tas</button>
+    <button class="smallBtn" id="statsToggleBtn">📊 Statistik</button>
+    <button class="smallBtn" id="settingsToggleBtn">⚙️ Setting</button>
+    <button class="smallBtn" id="saveBtn">💾 Simpan</button>
+  </div>
   <span id="saveMsg"></span>
 </div>
 
