@@ -628,6 +628,11 @@
     </div>
 
     <div class="settingsRow">
+      <span>Pulihkan Backup (slot aktif)</span>
+      <span class="smallBtn icoRow" id="restoreBackupBtn"><svg class="svgicon"><use href="#ic-arrow-up"/></svg> Restore</span>
+    </div>
+
+    <div class="settingsRow">
       <span>Reset Dunia / Save (slot aktif)</span>
       <span class="smallBtn icoRow" id="resetWorldBtn" style="color:#ff8080;"><svg class="svgicon"><use href="#ic-trash"/></svg> Reset</span>
     </div>
@@ -1705,6 +1710,16 @@
       return { keys };
     }
   };
+  // Merge aman: tolak key __proto__/constructor/prototype biar data save (apalagi hasil import file)
+  // gak bisa polusi Object.prototype global.
+  function safeAssign(target, src) {
+    if (!src || typeof src !== 'object') return target;
+    for (const k of Object.keys(src)) {
+      if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
+      target[k] = src[k];
+    }
+    return target;
+  }
   function buildSaveData() {
     return {
       diffs: Array.from(worldDiffs.entries()),
@@ -1713,23 +1728,37 @@
       minedByType, statsMobsKilled, statsDeaths, playSeconds, armorEquipped,
     };
   }
+  // Validasi struktur save sebelum diterapkan. Return true kalau data cukup valid untuk dipakai.
+  function isValidSaveData(data) {
+    if (!data || typeof data !== 'object') return false;
+    if (data.diffs !== undefined && !Array.isArray(data.diffs)) return false;
+    if (data.pos !== undefined && (!Array.isArray(data.pos) || data.pos.length !== 3 || !data.pos.every((n) => typeof n === 'number' && isFinite(n)))) return false;
+    return true;
+  }
+  const clampNum = (v, lo, hi, fallback) => (typeof v === 'number' && isFinite(v)) ? Math.min(hi, Math.max(lo, v)) : fallback;
   function applySaveData(data) {
+    if (!isValidSaveData(data)) throw new Error('Save data tidak valid / rusak');
     worldDiffs.clear();
     (data.diffs || []).forEach(([k, v]) => worldDiffs.set(k, v));
-    Object.assign(inventory, data.inventory || {});
+    safeAssign(inventory, data.inventory || {});
     if (data.pos) player.pos.set(data.pos[0], data.pos[1], data.pos[2]);
-    if (typeof data.yaw === 'number') player.yaw = data.yaw;
-    if (typeof data.health === 'number') player.health = data.health;
-    if (typeof data.hunger === 'number') player.hunger = data.hunger;
-    if (typeof data.minedCount === 'number') minedCount = data.minedCount;
-    if (data.minedByType) Object.assign(minedByType, data.minedByType);
-    if (typeof data.statsMobsKilled === 'number') statsMobsKilled = data.statsMobsKilled;
-    if (typeof data.statsDeaths === 'number') statsDeaths = data.statsDeaths;
-    if (typeof data.playSeconds === 'number') playSeconds = data.playSeconds;
+    if (typeof data.yaw === 'number' && isFinite(data.yaw)) player.yaw = data.yaw;
+    player.health = clampNum(data.health, 0, 100, player.health);
+    player.hunger = clampNum(data.hunger, 0, 100, player.hunger);
+    if (typeof data.minedCount === 'number' && isFinite(data.minedCount)) minedCount = Math.max(0, data.minedCount);
+    if (data.minedByType) safeAssign(minedByType, data.minedByType);
+    if (typeof data.statsMobsKilled === 'number' && isFinite(data.statsMobsKilled)) statsMobsKilled = Math.max(0, data.statsMobsKilled);
+    if (typeof data.statsDeaths === 'number' && isFinite(data.statsDeaths)) statsDeaths = Math.max(0, data.statsDeaths);
+    if (typeof data.playSeconds === 'number' && isFinite(data.playSeconds)) playSeconds = Math.max(0, data.playSeconds);
     if (typeof data.armorEquipped === 'boolean') armorEquipped = data.armorEquipped;
   }
   async function saveGame() {
     try {
+      // Backup save lama dulu sebelum ditimpa, biar ada fallback kalau save baru ternyata korup.
+      try {
+        const prev = await storage.get(slotKey(activeSlot), false);
+        if (prev && prev.value) await storage.set(backupKey(activeSlot), prev.value, false);
+      } catch (e) {}
       const res = await storage.set(slotKey(activeSlot), JSON.stringify(buildSaveData()), false);
       const msg = document.getElementById('saveMsg');
       msg.textContent = res ? 'Tersimpan!' : 'Gagal simpan';
@@ -1739,6 +1768,21 @@
       msg.textContent = 'Gagal simpan';
       setTimeout(() => msg.textContent = '', 2000);
     }
+  }
+  function backupKey(slot) { return slotKey(slot) + '-backup'; }
+  async function restoreBackup() {
+    const msg = document.getElementById('saveMsg');
+    try {
+      const res = await storage.get(backupKey(activeSlot), false);
+      if (!res || !res.value) { msg.textContent = 'Tidak ada backup'; setTimeout(() => msg.textContent = '', 2000); return; }
+      applySaveData(JSON.parse(res.value));
+      refreshHotbarUI();
+      updateChunks(player.pos.x, player.pos.z, true);
+      msg.textContent = 'Backup dipulihkan!';
+    } catch (e) {
+      msg.textContent = 'Backup rusak/tidak valid';
+    }
+    setTimeout(() => msg.textContent = '', 2000);
   }
   async function loadGame() {
     try {
@@ -1762,18 +1806,28 @@
   function importSaveFile(file) {
     const reader = new FileReader();
     reader.onload = () => {
+      const msg = document.getElementById('saveMsg');
       try {
         applySaveData(JSON.parse(reader.result));
         refreshHotbarUI();
         updateChunks(player.pos.x, player.pos.z, true);
-        const msg = document.getElementById('saveMsg');
         msg.textContent = 'Save diimpor!';
-        setTimeout(() => msg.textContent = '', 2000);
-      } catch (e) {}
+      } catch (e) {
+        msg.textContent = 'File save tidak valid/rusak';
+      }
+      setTimeout(() => msg.textContent = '', 2000);
+    };
+    reader.onerror = () => {
+      const msg = document.getElementById('saveMsg');
+      msg.textContent = 'Gagal membaca file';
+      setTimeout(() => msg.textContent = '', 2000);
     };
     reader.readAsText(file);
   }
   document.getElementById('saveBtn').addEventListener('click', saveGame);
+  document.getElementById('restoreBackupBtn').addEventListener('click', () => {
+    if (confirm('Pulihkan backup terakhir? Progress saat ini yang belum disimpan akan hilang.')) restoreBackup();
+  });
 
   // ================= HUD UPDATE =================
   function updateHud() {
