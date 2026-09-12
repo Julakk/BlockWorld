@@ -399,7 +399,7 @@
 </defs>
 </svg>
 
-<div id="versionBadge"><span class="dot"></span> BlockWorld v2.6 — Lihat Update</div>
+<div id="versionBadge"><span class="dot"></span> BlockWorld v2.8 — Lihat Update</div>
 
 <div id="hint">
   <div class="badgeIcon"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></div>
@@ -444,6 +444,25 @@
     <div class="patchSub">Semua perubahan yang udah ditambahin ke BlockWorld</div>
 
     <div class="patchEntry newest">
+      <div class="patchBadge">v2.8</div>
+      <div>
+        <div class="patchTitle">Farming, Ranjang, Busur, Cuaca &amp; Reruntuhan</div>
+        <ul>
+          <li>Farming: bibit gandum &amp; wortel bisa ditanam di atas rumput/tanah, tumbuh bertahap, dipanen jadi bahan makanan (roti &amp; wortel)</li>
+          <li>Sistem tidur: craft Ranjang (kayu+wol dari domba baru) buat skip malam lewat tombol "Tidur"</li>
+          <li>Senjata jarak jauh: craft Busur+Anak Panah, tombol "Panah" (atau tombol F) buat serang dari jauh</li>
+          <li>Cuaca hujan acak: efek visual rintik hujan, langit meredup, dan peluang mob malam sedikit naik</li>
+          <li>Reruntuhan bawah tanah langka berisi Peti Harta — tambang buat dapat loot acak</li>
+          <li>Achievement/pencapaian kecil ditampilkan di panel Statistik, muncul toast pas baru didapat</li>
+          <li>Tutorial singkat otomatis muncul sekali di sesi main pertama (kontrol disesuaikan mobile/desktop)</li>
+          <li>Setting baru: Jarak Render &amp; Kualitas Grafis manual, plus World Seed (bisa disalin/diganti biar dunia bisa dibagi ke teman)</li>
+          <li>Optimasi ukuran save: worldDiffs sekarang dipadatkan jadi array numerik, bukan string panjang berulang</li>
+          <li>Cloud sync manual: tombol "Salin Kode Save" &amp; "Impor dari Kode" di Setting buat backup lewat Notes/Drive/WA (belum otomatis ke akun Google — lihat catatan di chat)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="patchEntry v27">
       <div class="patchBadge">v2.7</div>
       <div>
         <div class="patchTitle">Keamanan &amp; Ketahanan Sistem Save</div>
@@ -642,14 +661,61 @@
     </div>
 
     <div class="settingsRow">
+      <span>Jarak Render (chunk)</span>
+      <input type="range" id="renderDistRange" min="1" max="4" value="2">
+    </div>
+
+    <div class="settingsRow">
+      <span>Kualitas Grafis</span>
+      <select id="qualitySelect" style="background:#222;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 6px;">
+        <option value="low">Rendah</option>
+        <option value="medium">Sedang</option>
+        <option value="high">Tinggi</option>
+      </select>
+    </div>
+
+    <div class="settingsRow">
+      <span>World Seed</span>
+      <span style="display:flex;gap:6px;align-items:center;">
+        <span id="seedDisplay" style="font-weight:700;font-size:11px;"></span>
+        <span class="smallBtn" id="copySeedBtn">Salin</span>
+      </span>
+    </div>
+    <div class="settingsRow">
+      <span>Pakai Seed Lain</span>
+      <span style="display:flex;gap:6px;">
+        <input type="text" id="seedInput" placeholder="seed/kata" style="width:90px;background:#111;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 6px;">
+        <span class="smallBtn" id="applySeedBtn">Terapkan</span>
+      </span>
+    </div>
+
+    <div class="settingsRow">
       <span>Pulihkan Backup (slot aktif)</span>
       <span class="smallBtn icoRow" id="restoreBackupBtn"><svg class="svgicon"><use href="#ic-arrow-up"/></svg> Restore</span>
+    </div>
+
+    <div class="settingsRow" style="flex-direction:column;align-items:stretch;gap:6px;">
+      <span>Cloud Sync Manual (salin kode ke Notes/Drive/WA, tempel lagi di HP lain)</span>
+      <span style="display:flex;gap:6px;">
+        <span class="smallBtn icoRow" id="copySaveBtn" style="flex:1;justify-content:center;">Salin Kode Save</span>
+      </span>
+      <textarea id="pasteSaveArea" rows="2" style="width:100%;font-size:10px;background:#111;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;" placeholder="Tempel kode save di sini..."></textarea>
+      <span class="smallBtn icoRow" id="pasteImportBtn" style="align-self:flex-start;">Impor dari Kode</span>
     </div>
 
     <div class="settingsRow">
       <span>Reset Dunia / Save (slot aktif)</span>
       <span class="smallBtn icoRow" id="resetWorldBtn" style="color:#ff8080;"><svg class="svgicon"><use href="#ic-trash"/></svg> Reset</span>
     </div>
+  </div>
+</div>
+
+<div id="tutorialModal" class="modalOverlay">
+  <div class="modalCard">
+    <h2 class="icoRow"><svg class="svgicon"><use href="#ic-tools"/></svg> Tutorial Singkat <span id="tutorialCloseBtn" class="modalClose"><svg class="svgicon"><use href="#ic-close"/></svg></span></h2>
+    <div class="modalSub">Kontrol dasar biar kamu gak bingung pas mulai main</div>
+    <div class="controlsBox" id="tutorialControlsBox"></div>
+    <div style="text-align:center;margin-top:14px;"><span class="smallBtn icoRow" id="tutorialOkBtn">Mengerti, Ayo Main!</span></div>
   </div>
 </div>
 
@@ -697,6 +763,8 @@
     <button class="smallBtn icoRow" id="statsToggleBtn"><svg class="svgicon"><use href="#ic-chart"/></svg> Statistik</button>
     <button class="smallBtn icoRow" id="settingsToggleBtn"><svg class="svgicon"><use href="#ic-gear"/></svg> Setting</button>
     <button class="smallBtn icoRow" id="saveBtn"><svg class="svgicon"><use href="#ic-save"/></svg> Simpan</button>
+    <button class="smallBtn icoRow" id="sleepBtn"><svg class="svgicon"><use href="#ic-moon"/></svg> Tidur</button>
+    <button class="smallBtn icoRow" id="shootBtn"><svg class="svgicon"><use href="#ic-pickaxe"/></svg> Panah</button>
   </div>
   <span id="saveMsg"></span>
 </div>
@@ -769,9 +837,23 @@
     torch:     { color: 0xffdd66, name: 'Obor', hardness: 0.1, emissive: 0xffaa00 },
     furnace:   { color: 0x555555, name: 'Furnace', hardness: 0.6 },
     workbench: { color: 0x9c6b3a, name: 'Meja Kerja', hardness: 0.5 },
+    bed:       { color: 0xb03030, name: 'Ranjang', hardness: 0.4 },
+    chest:     { color: 0xcfa03a, name: 'Peti Harta', hardness: 0.6 },
+    wheat_seeds:  { color: 0xd9c97a, name: 'Bibit Gandum', hardness: 0 },
+    carrot_seeds: { color: 0xe08a3c, name: 'Bibit Wortel', hardness: 0 },
+    wheat0:  { color: 0xcfe8a0, name: 'Gandum (baru tanam)', hardness: 0.1, nonSolid: true },
+    wheat1:  { color: 0xb5d86a, name: 'Gandum (tumbuh)', hardness: 0.1, nonSolid: true },
+    wheat2:  { color: 0x9fcf3a, name: 'Gandum (hampir panen)', hardness: 0.1, nonSolid: true },
+    wheat3:  { color: 0xe8c93a, name: 'Gandum (siap panen)', hardness: 0.1, nonSolid: true },
+    carrot0: { color: 0xcfe8a0, name: 'Wortel (baru tanam)', hardness: 0.1, nonSolid: true },
+    carrot1: { color: 0xb5d86a, name: 'Wortel (tumbuh)', hardness: 0.1, nonSolid: true },
+    carrot2: { color: 0x9fcf3a, name: 'Wortel (hampir panen)', hardness: 0.1, nonSolid: true },
+    carrot3: { color: 0xff9a3c, name: 'Wortel (siap panen)', hardness: 0.1, nonSolid: true },
   };
   const HOTBAR = ['grass','dirt','stone','wood','leaves','sand','glass','brick','snow',
-    'coal_ore','iron_ore','gold_ore','diamond_ore','torch','furnace','workbench'];
+    'coal_ore','iron_ore','gold_ore','diamond_ore','torch','furnace','workbench','bed',
+    'wheat_seeds','carrot_seeds'];
+  const SEED_CROP_MAP = { wheat_seeds: 'wheat', carrot_seeds: 'carrot' };
   let selectedIndex = 0;
 
   const boxGeo = new THREE.BoxGeometry(1, 1, 1);
@@ -801,13 +883,14 @@
   const inventory = {};
   HOTBAR.forEach(t => inventory[t] = 0);
   ['apple','raw_chicken','cooked_chicken','raw_beef','cooked_beef','raw_porkchop','cooked_porkchop',
-   'rotten_flesh','bone','iron_ingot','gold_ingot','pickaxe_wood','pickaxe_stone','pickaxe_iron','iron_armor']
+   'rotten_flesh','bone','iron_ingot','gold_ingot','pickaxe_wood','pickaxe_stone','pickaxe_iron','iron_armor',
+   'wool','bow','arrow','wheat','carrot','bread']
    .forEach(t => inventory[t] = 0);
   let armorEquipped = false;
 
   const FOOD_VALUES = { apple: 25, raw_chicken: 15, cooked_chicken: 35, raw_beef: 15, cooked_beef: 38,
-    raw_porkchop: 15, cooked_porkchop: 36, rotten_flesh: 8 };
-  const FOOD_ORDER = ['cooked_beef','cooked_porkchop','cooked_chicken','apple','raw_beef','raw_porkchop','raw_chicken','rotten_flesh'];
+    raw_porkchop: 15, cooked_porkchop: 36, rotten_flesh: 8, carrot: 20, bread: 30 };
+  const FOOD_ORDER = ['bread','cooked_beef','cooked_porkchop','cooked_chicken','carrot','apple','raw_beef','raw_porkchop','raw_chicken','rotten_flesh'];
   function bestFood() { return FOOD_ORDER.find(f => inventory[f] > 0); }
 
   const ITEM_LABELS = {
@@ -819,11 +902,13 @@
     iron_ingot: { icon: 'ingot', text: 'Iron Ingot', cls: 'ic-iron' }, gold_ingot: { icon: 'ingot', text: 'Gold Ingot', cls: 'ic-gold' },
     pickaxe_wood: { icon: 'pickaxe', text: 'Pickaxe Kayu' }, pickaxe_stone: { icon: 'pickaxe', text: 'Pickaxe Batu' }, pickaxe_iron: { icon: 'pickaxe', text: 'Pickaxe Besi', cls: 'ic-iron' },
     iron_armor: { icon: 'shield', text: 'Zirah Besi', cls: 'ic-iron' },
+    wool: { icon: 'brick', text: 'Wol' }, bow: { icon: 'shield', text: 'Busur' }, arrow: { icon: 'pickaxe', text: 'Anak Panah' },
+    wheat: { icon: 'log', text: 'Gandum' }, carrot: { icon: 'apple', text: 'Wortel' }, bread: { icon: 'apple', text: 'Roti' },
   };
 
   // ================= WORLD / CHUNK SYSTEM =================
   const CHUNK_SIZE = 8;
-  const RENDER_RADIUS = isMobile ? 1 : 2;
+  let RENDER_RADIUS = isMobile ? 1 : 2;
   const world = new Map();        // "x,y,z" -> {mesh, type}   (currently rendered blocks)
   const worldDiffs = new Map();   // "x,y,z" -> type ('' = removed) (persists edits)
   const loadedChunks = new Map(); // "cx,cz" -> [keys]
@@ -831,25 +916,32 @@
   scene.add(worldGroup);
 
   function key(x, y, z) { return x + ',' + y + ',' + z; }
+  // ================= WORLD SEED =================
+  // Seed dipakai buat menggeser koordinat yang masuk ke fungsi noise, jadi tiap seed
+  // menghasilkan dunia yang berbeda tapi tetap deterministik (bisa dibagikan ke teman).
+  let WORLD_SEED = Math.floor(Math.random() * 1e9);
   function seededRandom(x, z, salt) {
-    const n = Math.sin(x * 127.1 + z * 311.7 + salt * 74.7) * 43758.5453;
+    const n = Math.sin(x * 127.1 + z * 311.7 + salt * 74.7 + WORLD_SEED * 0.937) * 43758.5453;
     return n - Math.floor(n);
   }
   function pseudoNoise(x, z) {
+    const sx = x + WORLD_SEED * 0.31, sz = z + WORLD_SEED * 0.71;
     return (
-      Math.sin(x * 0.15) * 2 + Math.cos(z * 0.18) * 2 +
-      Math.sin((x + z) * 0.08) * 3 + Math.sin(x * 0.05) * Math.cos(z * 0.05) * 2
+      Math.sin(sx * 0.15) * 2 + Math.cos(sz * 0.18) * 2 +
+      Math.sin((sx + sz) * 0.08) * 3 + Math.sin(sx * 0.05) * Math.cos(sz * 0.05) * 2
     );
   }
   function groundHeightAt(x, z) { return Math.round(pseudoNoise(x, z)) + 6; }
   function biomeAt(x, z) {
-    const b = Math.sin(x * 0.02) * Math.cos(z * 0.023) + Math.sin((x - z) * 0.015);
+    const sx = x + WORLD_SEED * 0.31, sz = z + WORLD_SEED * 0.71;
+    const b = Math.sin(sx * 0.02) * Math.cos(sz * 0.023) + Math.sin((sx - sz) * 0.015);
     if (b < -0.5) return 'desert';
     if (b > 0.6) return 'snow';
     return 'plains';
   }
   function caveNoise(x, y, z) {
-    return Math.sin(x * 0.25 + y * 0.37) * Math.cos(z * 0.29 - y * 0.21) + Math.sin((x + z) * 0.13 + y * 0.5);
+    const sx = x + WORLD_SEED * 0.31, sz = z + WORLD_SEED * 0.71;
+    return Math.sin(sx * 0.25 + y * 0.37) * Math.cos(sz * 0.29 - y * 0.21) + Math.sin((sx + sz) * 0.13 + y * 0.5);
   }
 
   function createBlockMesh(x, y, z, type, animate) {
@@ -931,6 +1023,29 @@
         }
       }
     }
+    // Reruntuhan bawah tanah langka dengan Peti Harta (loot chest) — sekali per chunk
+    if (seededRandom(cx, cz, 77) < 0.09) {
+      const rx = x0 + 2 + Math.floor(seededRandom(cx, cz, 78) * (CHUNK_SIZE - 4));
+      const rz = z0 + 2 + Math.floor(seededRandom(cx, cz, 79) * (CHUNK_SIZE - 4));
+      const surfaceH = groundHeightAt(rx, rz);
+      const ry = Math.max(2, surfaceH - 6 - Math.floor(seededRandom(cx, cz, 80) * 4));
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dz = -1; dz <= 1; dz++) {
+          for (let dy = 0; dy <= 2; dy++) {
+            const bx = rx + dx, by = ry + dy, bz = rz + dz;
+            const isWall = Math.abs(dx) === 1 || Math.abs(dz) === 1 || dy === 0 || dy === 2;
+            if (isWall) {
+              destroyBlockMesh(bx, by, bz);
+              placeGenBlock(bx, by, bz, 'brick', keysInChunk);
+            } else {
+              destroyBlockMesh(bx, by, bz);
+            }
+          }
+        }
+      }
+      destroyBlockMesh(rx, ry + 1, rz);
+      placeGenBlock(rx, ry + 1, rz, 'chest', keysInChunk);
+    }
     // apply player-built blocks in this chunk that aren't part of base terrain
     for (const [k, type] of worldDiffs) {
       if (type === '' || world.has(k)) continue;
@@ -979,6 +1094,50 @@
   // langsung alih-alih numpuk entry mubazir di save saat sesi main lama.
   const worldDiffsPrev = new Map();
   const minedByType = {};
+
+  // ================= FARMING (bibit gandum & wortel) =================
+  const CROP_DEFS = {
+    wheat:  { stages: 4, growMs: 35000, seedItem: 'wheat_seeds',  matureItem: 'wheat' },
+    carrot: { stages: 4, growMs: 30000, seedItem: 'carrot_seeds', matureItem: 'carrot' },
+  };
+  const cropData = new Map(); // "x,y,z" -> { crop, stage, plantedAt }
+  let cropsHarvested = 0, chestsOpened = 0, sleepsCount = 0;
+
+  function tryPlantCrop(seedType, x, y, z) {
+    const cropId = SEED_CROP_MAP[seedType];
+    if (!cropId) return false;
+    if (world.has(key(x, y, z))) return false;
+    if (!inventory[seedType] || inventory[seedType] <= 0) { showToast('Butuh bibit dulu'); return false; }
+    const below = world.get(key(x, y - 1, z));
+    if (!below || (below.type !== 'grass' && below.type !== 'dirt')) { showToast('Tanam di atas tanah/rumput'); return false; }
+    inventory[seedType]--;
+    const type = cropId + '0';
+    const k = key(x, y, z);
+    if (!worldDiffsPrev.has(k)) worldDiffsPrev.set(k, worldDiffs.has(k) ? worldDiffs.get(k) : undefined);
+    worldDiffs.set(k, type);
+    createBlockMesh(x, y, z, type, true);
+    cropData.set(k, { crop: cropId, stage: 0, plantedAt: Date.now() });
+    const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
+    const ck = cx + ',' + cz;
+    if (loadedChunks.has(ck)) loadedChunks.get(ck).push(k);
+    refreshHotbarUI();
+    return true;
+  }
+  function updateCrops(now) {
+    for (const [k, c] of cropData) {
+      const def = CROP_DEFS[c.crop];
+      const targetStage = Math.min(def.stages - 1, Math.floor((now - c.plantedAt) / def.growMs));
+      if (targetStage > c.stage) {
+        c.stage = targetStage;
+        const parts = k.split(',').map(Number);
+        destroyBlockMesh(parts[0], parts[1], parts[2]);
+        const type = c.crop + c.stage;
+        worldDiffs.set(k, type);
+        createBlockMesh(parts[0], parts[1], parts[2], type, true);
+      }
+    }
+  }
+
   function mineBlockAt(x, y, z, type) {
     if (BLOCK_TYPES[type].liquid) return; // can't mine liquids
     const k = key(x, y, z);
@@ -990,9 +1149,43 @@
       worldDiffs.set(k, '');
     }
     destroyBlockMesh(x, y, z);
-    if (inventory[type] !== undefined) inventory[type]++;
-    if (type === 'leaves') {
-      if (seededRandom(x + performance.now() % 1000, z, 9) < 0.18) inventory.apple = (inventory.apple || 0) + 1;
+    if (cropData.has(k)) {
+      const crop = cropData.get(k);
+      cropData.delete(k);
+      const def = CROP_DEFS[crop.crop];
+      if (crop.stage >= def.stages - 1) {
+        inventory[def.matureItem] = (inventory[def.matureItem] || 0) + 1;
+        inventory[def.seedItem] = (inventory[def.seedItem] || 0) + 1 + (Math.random() < 0.5 ? 1 : 0);
+        cropsHarvested++;
+      } else {
+        inventory[def.seedItem] = (inventory[def.seedItem] || 0) + 1;
+      }
+    } else if (type === 'chest') {
+      const table = [
+        ['iron_ingot', 1, 3], ['gold_ingot', 1, 2], ['apple', 1, 3], ['bread', 1, 2],
+        ['arrow', 2, 6], ['torch', 2, 4], ['coal_ore', 1, 3], ['wheat_seeds', 1, 2], ['bone', 1, 2],
+      ];
+      const picks = 2 + Math.floor(Math.random() * 3);
+      const gotten = [];
+      for (let i = 0; i < picks; i++) {
+        const [item, lo, hi] = table[Math.floor(Math.random() * table.length)];
+        const qty = lo + Math.floor(Math.random() * (hi - lo + 1));
+        inventory[item] = (inventory[item] || 0) + qty;
+        const label = ITEM_LABELS[item] ? ITEM_LABELS[item].text : (BLOCK_TYPES[item] ? BLOCK_TYPES[item].name : item);
+        gotten.push(qty + 'x ' + label);
+      }
+      chestsOpened++;
+      showToast('Peti terbuka! Dapat: ' + gotten.join(', '));
+    } else {
+      if (inventory[type] !== undefined) inventory[type]++;
+      if (type === 'leaves') {
+        if (seededRandom(x + performance.now() % 1000, z, 9) < 0.18) inventory.apple = (inventory.apple || 0) + 1;
+      }
+      if (type === 'grass') {
+        const rv = seededRandom(x + performance.now() % 1000, z, 33);
+        if (rv < 0.08) inventory.wheat_seeds = (inventory.wheat_seeds || 0) + 1;
+        else if (rv < 0.12) inventory.carrot_seeds = (inventory.carrot_seeds || 0) + 1;
+      }
     }
     minedByType[type] = (minedByType[type] || 0) + 1;
     refreshHotbarUI();
@@ -1062,6 +1255,10 @@
     { id: 'cookChicken', icon: 'fire', cls: 'ic-flame', label: 'Ayam Mentah+Batu Bara → Ayam Matang', need: { raw_chicken: 1, coal_ore: 1 }, give: { cooked_chicken: 1 }, nearFurnace: true },
     { id: 'cookBeef', icon: 'fire', cls: 'ic-flame', label: 'Daging Mentah+Batu Bara → Daging Matang', need: { raw_beef: 1, coal_ore: 1 }, give: { cooked_beef: 1 }, nearFurnace: true },
     { id: 'cookPork', icon: 'fire', cls: 'ic-flame', label: 'Babi Mentah+Batu Bara → Babi Matang', need: { raw_porkchop: 1, coal_ore: 1 }, give: { cooked_porkchop: 1 }, nearFurnace: true },
+    { id: 'craftBed', icon: 'log', label: '3 Kayu+2 Wol → Ranjang', need: { wood: 3, wool: 2 }, give: { bed: 1 }, nearWorkbench: true },
+    { id: 'craftBow', icon: 'shield', label: '2 Kayu+1 Tulang → Busur', need: { wood: 2, bone: 1 }, give: { bow: 1 }, nearWorkbench: true },
+    { id: 'craftArrow', icon: 'pickaxe', label: '1 Batu+1 Kayu → 4 Anak Panah', need: { stone: 1, wood: 1 }, give: { arrow: 4 }, nearWorkbench: true },
+    { id: 'craftBread', icon: 'fire', cls: 'ic-flame', label: '3 Gandum+Batu Bara → Roti', need: { wheat: 3, coal_ore: 1 }, give: { bread: 1 }, nearFurnace: true },
   ];
   function refreshCraftPanel() {
     const panel = document.getElementById('craftPanel');
@@ -1133,6 +1330,29 @@
     const m = Math.floor(s / 60), sec = Math.floor(s % 60);
     return m + ':' + String(sec).padStart(2, '0');
   }
+
+  // ================= ACHIEVEMENTS (Pencapaian) =================
+  const ACHIEVEMENTS = [
+    { id: 'mine100', label: 'Tambang 100 Blok', check: () => minedCount >= 100 },
+    { id: 'mine500', label: 'Tambang 500 Blok', check: () => minedCount >= 500 },
+    { id: 'survive3days', label: 'Bertahan 3 Hari', check: () => playSeconds >= CYCLE_SECONDS * 3 },
+    { id: 'firstKill', label: 'Kalahkan Mob Pertama', check: () => statsMobsKilled >= 1 },
+    { id: 'hunter10', label: 'Kalahkan 10 Mob', check: () => statsMobsKilled >= 10 },
+    { id: 'firstCrop', label: 'Panen Hasil Kebun Pertama', check: () => cropsHarvested >= 1 },
+    { id: 'firstChest', label: 'Buka Peti Harta Pertama', check: () => chestsOpened >= 1 },
+    { id: 'firstSleep', label: 'Tidur di Ranjang', check: () => sleepsCount >= 1 },
+    { id: 'ironTool', label: 'Bikin Pickaxe Besi', check: () => (inventory.pickaxe_iron || 0) >= 1 },
+  ];
+  const unlockedAchievements = new Set();
+  function checkAchievements() {
+    ACHIEVEMENTS.forEach(a => {
+      if (!unlockedAchievements.has(a.id) && a.check()) {
+        unlockedAchievements.add(a.id);
+        showToast('Pencapaian: ' + a.label);
+      }
+    });
+  }
+
   function refreshStats() {
     const body = document.getElementById('statsBody');
     let html = '';
@@ -1140,8 +1360,15 @@
     html += `<div class="statRow"><span class="icoRow">${svgIcon('pickaxe')} Total ditambang</span><span>${minedCount}</span></div>`;
     html += `<div class="statRow"><span class="icoRow">${svgIcon('skull')} Mob dikalahkan</span><span>${statsMobsKilled}</span></div>`;
     html += `<div class="statRow"><span class="icoRow">${svgIcon('skull', 'ic-danger')} Jumlah mati</span><span>${statsDeaths}</span></div>`;
+    html += `<div class="statRow"><span>Hasil kebun dipanen</span><span>${cropsHarvested}</span></div>`;
+    html += `<div class="statRow"><span>Peti harta dibuka</span><span>${chestsOpened}</span></div>`;
     Object.keys(minedByType).sort((a, b) => minedByType[b] - minedByType[a]).forEach(t => {
       html += `<div class="statRow"><span>${BLOCK_TYPES[t] ? BLOCK_TYPES[t].name : t}</span><span>${minedByType[t]}</span></div>`;
+    });
+    html += `<div style="margin-top:10px;font-weight:700;font-size:12px;opacity:0.85;">Pencapaian (${unlockedAchievements.size}/${ACHIEVEMENTS.length})</div>`;
+    ACHIEVEMENTS.forEach(a => {
+      const done = unlockedAchievements.has(a.id);
+      html += `<div class="statRow" style="opacity:${done ? 1 : 0.4}"><span>${done ? '✔' : '•'} ${a.label}</span></div>`;
     });
     body.innerHTML = html;
   }
@@ -1172,7 +1399,7 @@
       row.appendChild(b);
     }
   }
-  document.getElementById('settingsToggleBtn').addEventListener('click', () => { refreshSlotRow(); settingsModal.style.display = 'flex'; });
+  document.getElementById('settingsToggleBtn').addEventListener('click', () => { refreshSlotRow(); refreshSeedUI(); settingsModal.style.display = 'flex'; });
   document.getElementById('settingsCloseBtn').addEventListener('click', () => settingsModal.style.display = 'none');
   settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.style.display = 'none'; });
   document.getElementById('sensRange').addEventListener('input', (e) => { lookSensitivity = e.target.value / 100; });
@@ -1209,6 +1436,44 @@
     player.health = Math.max(0, player.health - reduced);
     flashDamage();
     sfxHurt();
+  }
+
+  // ================= TIDUR (skip malam) =================
+  function trySleep() {
+    if (!(brightness < 0.35)) { showToast('Cuma bisa tidur pas malam hari'); return; }
+    if (!nearBlock('bed', 3)) { showToast('Butuh Ranjang di dekatmu'); return; }
+    const curPhase = (elapsed % CYCLE_SECONDS) / CYCLE_SECONDS;
+    const targetPhase = 0.3;
+    let delta = (targetPhase - curPhase) * CYCLE_SECONDS;
+    if (delta <= 0) delta += CYCLE_SECONDS;
+    elapsed += delta;
+    sleepsCount++;
+    showToast('Kamu tidur nyenyak... pagi tiba!');
+  }
+
+  // ================= BUSUR & ANAK PANAH =================
+  function shootArrow() {
+    if (!inventory.bow || inventory.bow <= 0) { showToast('Butuh Busur'); return; }
+    if (!inventory.arrow || inventory.arrow <= 0) { showToast('Butuh Anak Panah'); return; }
+    inventory.arrow--;
+    refreshHotbarUI();
+    const shootRay = new THREE.Raycaster();
+    shootRay.far = 25;
+    shootRay.setFromCamera({ x: 0, y: 0 }, camera);
+    const mobHits = shootRay.intersectObjects(mobGroup.children, true);
+    let targetPos = camera.position.clone().add(new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(20));
+    if (mobHits.length > 0) {
+      let obj = mobHits[0].object;
+      while (obj && !obj.userData.mobRef) obj = obj.parent;
+      if (obj) { targetPos = obj.userData.mobRef.pos.clone(); attackMob(obj.userData.mobRef, 20); }
+    }
+    const geo = new THREE.SphereGeometry(0.06, 6, 6);
+    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xdeb887 }));
+    const from = player.pos.clone();
+    mesh.position.copy(from);
+    scene.add(mesh);
+    projectiles.push({ mesh, from, to: targetPos, t: 0, dur: 0.18, dmg: 0 });
+    sfxMine();
   }
 
   const keysDown = {};
@@ -1257,6 +1522,7 @@
       try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (e) {}
       mobilePlaying = true;
       setUIVisible(true);
+      maybeShowTutorial();
     } else {
       canvas.requestPointerLock();
     }
@@ -1280,7 +1546,10 @@
   canvas.addEventListener('click', () => {
     if (!isMobile && document.pointerLockElement !== canvas) canvas.requestPointerLock();
   });
-  document.addEventListener('pointerlockchange', () => { setUIVisible(document.pointerLockElement === canvas); });
+  document.addEventListener('pointerlockchange', () => {
+    setUIVisible(document.pointerLockElement === canvas);
+    if (document.pointerLockElement === canvas) maybeShowTutorial();
+  });
   document.addEventListener('mousemove', (e) => {
     if (isMobile || document.pointerLockElement !== canvas) return;
     player.yaw -= e.movementX * 0.0022 * lookSensitivity;
@@ -1392,7 +1661,11 @@
     const n = hit.face.normal;
     const nx = ud.x + Math.round(n.x), ny = ud.y + Math.round(n.y), nz = ud.z + Math.round(n.z);
     const dx = Math.abs(nx - player.pos.x), dy = Math.abs(ny - player.pos.y), dz = Math.abs(nz - player.pos.z);
-    if (!(dx < 0.6 && dz < 0.6 && dy < 1.8)) placeBlockAt(nx, ny, nz, HOTBAR[selectedIndex]);
+    const selType = HOTBAR[selectedIndex];
+    if (!(dx < 0.6 && dz < 0.6 && dy < 1.8)) {
+      if (SEED_CROP_MAP[selType]) tryPlantCrop(selType, nx, ny, nz);
+      else placeBlockAt(nx, ny, nz, selType);
+    }
     refreshCraftPanel();
   }
   function tryStartAction(kind) {
@@ -1449,7 +1722,7 @@
   function isSolid(x, y, z) {
     const k = key(Math.round(x), Math.round(y), Math.round(z));
     const b = world.get(k);
-    return b && !BLOCK_TYPES[b.type].liquid;
+    return b && !BLOCK_TYPES[b.type].liquid && !BLOCK_TYPES[b.type].nonSolid;
   }
   function liquidAt(x, y, z) {
     const b = world.get(key(Math.round(x), Math.round(y), Math.round(z)));
@@ -1474,7 +1747,7 @@
   const mobGroup = new THREE.Group();
   scene.add(mobGroup);
   const mobs = [];
-  const MAX_CHICKENS = 5, MAX_ZOMBIES = 4, MAX_COWS = 4, MAX_PIGS = 4, MAX_SKELETONS = 3;
+  const MAX_CHICKENS = 5, MAX_ZOMBIES = 4, MAX_COWS = 4, MAX_PIGS = 4, MAX_SKELETONS = 3, MAX_SHEEP = 4;
 
   function makeChickenMesh() {
     const g = new THREE.Group();
@@ -1528,8 +1801,18 @@
     g.add(body); g.add(head);
     return g;
   }
-  const MOB_MESH_FACTORY = { chicken: makeChickenMesh, zombie: makeZombieMesh, cow: makeCowMesh, pig: makePigMesh, skeleton: makeSkeletonMesh };
-  const MOB_DROPS = { chicken: 'raw_chicken', cow: 'raw_beef', pig: 'raw_porkchop', zombie: 'rotten_flesh', skeleton: 'bone' };
+  function makeSheepMesh() {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xf2f2f2 }));
+    body.scale.set(0.6, 0.55, 0.85);
+    const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x555555 }));
+    head.scale.set(0.28, 0.28, 0.28);
+    head.position.set(0, 0.25, 0.48);
+    g.add(body); g.add(head);
+    return g;
+  }
+  const MOB_MESH_FACTORY = { chicken: makeChickenMesh, zombie: makeZombieMesh, cow: makeCowMesh, pig: makePigMesh, skeleton: makeSkeletonMesh, sheep: makeSheepMesh };
+  const MOB_DROPS = { chicken: 'raw_chicken', cow: 'raw_beef', pig: 'raw_porkchop', zombie: 'rotten_flesh', skeleton: 'bone', sheep: 'wool' };
   const MOB_IS_HOSTILE = { zombie: true, skeleton: true };
 
   function spawnMob(type) {
@@ -1590,7 +1873,7 @@
       if (distToPlayer > 45 || despawnsAtDay) {
         mobGroup.remove(m.group); mobs.splice(i, 1); continue;
       }
-      if (m.type === 'chicken' || m.type === 'cow' || m.type === 'pig') {
+      if (m.type === 'chicken' || m.type === 'cow' || m.type === 'pig' || m.type === 'sheep') {
         if (now > m.nextDirT) { m.dir = Math.random() * Math.PI * 2; m.nextDirT = now + 2000 + Math.random() * 3000; }
         const spd = (m.type === 'chicken' ? 1.2 : 0.9) * dt;
         m.pos.x += Math.cos(m.dir) * spd; m.pos.z += Math.sin(m.dir) * spd;
@@ -1631,13 +1914,16 @@
     if (now - lastMobSpawnCheck < 4000) return;
     lastMobSpawnCheck = now;
     const count = (t) => mobs.filter(m => m.type === t).length;
+    const rainMult = isRaining ? 1.4 : 1;
     if (!isNight) {
       if (count('chicken') < MAX_CHICKENS && Math.random() < 0.6) spawnMob('chicken');
       if (count('cow') < MAX_COWS && Math.random() < 0.4) spawnMob('cow');
       if (count('pig') < MAX_PIGS && Math.random() < 0.4) spawnMob('pig');
+      if (count('sheep') < MAX_SHEEP && Math.random() < 0.4) spawnMob('sheep');
+      if (isRaining && count('zombie') < MAX_ZOMBIES && Math.random() < 0.06) spawnMob('zombie'); // langit gelap pas hujan siang
     } else {
-      if (count('zombie') < MAX_ZOMBIES && Math.random() < 0.7) spawnMob('zombie');
-      if (count('skeleton') < MAX_SKELETONS && Math.random() < 0.4) spawnMob('skeleton');
+      if (count('zombie') < MAX_ZOMBIES && Math.random() < Math.min(1, 0.7 * rainMult)) spawnMob('zombie');
+      if (count('skeleton') < MAX_SKELETONS && Math.random() < Math.min(1, 0.4 * rainMult)) spawnMob('skeleton');
     }
   }
 
@@ -1651,12 +1937,52 @@
     brightness = Math.max(0.12, (Math.sin(phase * Math.PI * 2 - Math.PI / 2) + 1) / 2);
     const c = new THREE.Color();
     c.lerpColors(NIGHT_COLOR, DAY_COLOR, brightness);
+    if (isRaining) c.lerp(new THREE.Color(0x55697a), 0.4);
     scene.background = c;
     scene.fog.color = c;
-    hemiLight.intensity = 0.25 + 0.85 * brightness;
-    sunLight.intensity = 0.15 + 0.85 * brightness;
+    hemiLight.intensity = (0.25 + 0.85 * brightness) * (isRaining ? 0.75 : 1);
+    sunLight.intensity = (0.15 + 0.85 * brightness) * (isRaining ? 0.7 : 1);
     document.getElementById('timeIcon').innerHTML = brightness < 0.35 ? svgIcon('moon', 'ic-moon') : svgIcon('sun', 'ic-sun');
     return brightness < 0.35;
+  }
+
+  // ================= CUACA (HUJAN) =================
+  let isRaining = false, nextWeatherCheck = 0;
+  const RAIN_COUNT = isMobile ? 50 : 140;
+  const rainDrops = [];
+  for (let i = 0; i < RAIN_COUNT; i++) rainDrops.push(new THREE.Vector3());
+  const rainGeo = new THREE.BufferGeometry();
+  rainGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(RAIN_COUNT * 6), 3));
+  const rainLines = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0x9fc6ff, transparent: true, opacity: 0.55 }));
+  rainLines.visible = false;
+  scene.add(rainLines);
+  function resetRaindrop(i) {
+    const r = 18;
+    rainDrops[i].set(
+      player.pos.x + (Math.random() * 2 - 1) * r,
+      player.pos.y + 12 + Math.random() * 10,
+      player.pos.z + (Math.random() * 2 - 1) * r
+    );
+  }
+  for (let i = 0; i < RAIN_COUNT; i++) resetRaindrop(i);
+  function updateRain(dt) {
+    if (!isRaining) { rainLines.visible = false; return; }
+    rainLines.visible = true;
+    const posAttr = rainGeo.getAttribute('position');
+    for (let i = 0; i < RAIN_COUNT; i++) {
+      const p = rainDrops[i];
+      p.y -= dt * 14;
+      if (p.y < player.pos.y - 6 || Math.hypot(p.x - player.pos.x, p.z - player.pos.z) > 22) resetRaindrop(i);
+      posAttr.setXYZ(i * 2, p.x, p.y, p.z);
+      posAttr.setXYZ(i * 2 + 1, p.x, p.y - 0.4, p.z);
+    }
+    posAttr.needsUpdate = true;
+  }
+  function updateWeather(now) {
+    if (now > nextWeatherCheck) {
+      nextWeatherCheck = now + 45000 + Math.random() * 60000;
+      isRaining = Math.random() < 0.3;
+    }
   }
 
   // ================= AUDIO (procedural, no assets) =================
@@ -1734,18 +2060,46 @@
     }
     return target;
   }
+  // Kompresi worldDiffs: dulu disimpan sebagai [ "x,y,z", "typeName" ] (boros string berulang).
+  // Sekarang dipadatkan jadi [x, y, z, typeId] numerik pakai tabel tipe blok, jauh lebih hemat
+  // ukuran save begitu dunia yang dieksplor/diubah makin luas. Save lama tetap kebaca (fallback diffs).
+  const DIFF_TYPE_TABLE = ['', ...Object.keys(BLOCK_TYPES)];
+  const DIFF_TYPE_INDEX = {}; DIFF_TYPE_TABLE.forEach((t, i) => DIFF_TYPE_INDEX[t] = i);
+  function compactDiffs() {
+    const out = [];
+    for (const [k, v] of worldDiffs) {
+      const id = DIFF_TYPE_INDEX[v];
+      if (id === undefined) continue;
+      const p = k.split(',').map(Number);
+      out.push([p[0], p[1], p[2], id]);
+    }
+    return out;
+  }
+  function loadCompactDiffs(arr) {
+    arr.forEach(entry => {
+      if (!Array.isArray(entry) || entry.length !== 4) return;
+      const type = DIFF_TYPE_TABLE[entry[3]];
+      if (type === undefined) return;
+      worldDiffs.set(key(entry[0], entry[1], entry[2]), type);
+    });
+  }
   function buildSaveData() {
     return {
-      diffs: Array.from(worldDiffs.entries()),
+      diffsC: compactDiffs(),
       inventory, pos: [player.pos.x, player.pos.y, player.pos.z],
       yaw: player.yaw, health: player.health, hunger: player.hunger, minedCount,
       minedByType, statsMobsKilled, statsDeaths, playSeconds, armorEquipped,
+      seed: WORLD_SEED,
+      achievements: Array.from(unlockedAchievements),
+      chestsOpened, sleepsCount, cropsHarvested,
+      crops: Array.from(cropData.entries()).map(([k, c]) => [k, c.crop, c.stage, Date.now() - c.plantedAt]),
     };
   }
   // Validasi struktur save sebelum diterapkan. Return true kalau data cukup valid untuk dipakai.
   function isValidSaveData(data) {
     if (!data || typeof data !== 'object') return false;
     if (data.diffs !== undefined && !Array.isArray(data.diffs)) return false;
+    if (data.diffsC !== undefined && !Array.isArray(data.diffsC)) return false;
     if (data.pos !== undefined && (!Array.isArray(data.pos) || data.pos.length !== 3 || !data.pos.every((n) => typeof n === 'number' && isFinite(n)))) return false;
     return true;
   }
@@ -1753,7 +2107,8 @@
   function applySaveData(data) {
     if (!isValidSaveData(data)) throw new Error('Save data tidak valid / rusak');
     worldDiffs.clear();
-    (data.diffs || []).forEach(([k, v]) => worldDiffs.set(k, v));
+    if (Array.isArray(data.diffsC)) loadCompactDiffs(data.diffsC);
+    else (data.diffs || []).forEach(([k, v]) => worldDiffs.set(k, v));
     safeAssign(inventory, data.inventory || {});
     if (data.pos) player.pos.set(data.pos[0], data.pos[1], data.pos[2]);
     if (typeof data.yaw === 'number' && isFinite(data.yaw)) player.yaw = data.yaw;
@@ -1765,6 +2120,20 @@
     if (typeof data.statsDeaths === 'number' && isFinite(data.statsDeaths)) statsDeaths = Math.max(0, data.statsDeaths);
     if (typeof data.playSeconds === 'number' && isFinite(data.playSeconds)) playSeconds = Math.max(0, data.playSeconds);
     if (typeof data.armorEquipped === 'boolean') armorEquipped = data.armorEquipped;
+    if (typeof data.seed === 'number' && isFinite(data.seed)) WORLD_SEED = data.seed;
+    if (Array.isArray(data.achievements)) { unlockedAchievements.clear(); data.achievements.forEach(id => unlockedAchievements.add(id)); }
+    if (typeof data.chestsOpened === 'number' && isFinite(data.chestsOpened)) chestsOpened = Math.max(0, data.chestsOpened);
+    if (typeof data.sleepsCount === 'number' && isFinite(data.sleepsCount)) sleepsCount = Math.max(0, data.sleepsCount);
+    if (typeof data.cropsHarvested === 'number' && isFinite(data.cropsHarvested)) cropsHarvested = Math.max(0, data.cropsHarvested);
+    cropData.clear();
+    if (Array.isArray(data.crops)) {
+      data.crops.forEach(entry => {
+        if (!Array.isArray(entry) || entry.length !== 4) return;
+        const [k, crop, stage, age] = entry;
+        if (!CROP_DEFS[crop]) return;
+        cropData.set(k, { crop, stage: Math.max(0, stage | 0), plantedAt: Date.now() - (age || 0) });
+      });
+    }
   }
   async function saveGame() {
     try {
@@ -1842,6 +2211,95 @@
   document.getElementById('restoreBackupBtn').addEventListener('click', () => {
     if (confirm('Pulihkan backup terakhir? Progress saat ini yang belum disimpan akan hilang.')) restoreBackup();
   });
+  document.getElementById('sleepBtn').addEventListener('click', trySleep);
+  document.getElementById('shootBtn').addEventListener('click', shootArrow);
+  document.addEventListener('keydown', (e) => { if (e.code === 'KeyF' && isPlaying()) shootArrow(); });
+
+  document.getElementById('copySaveBtn').addEventListener('click', async () => {
+    const code = btoa(unescape(encodeURIComponent(JSON.stringify(buildSaveData()))));
+    try { await navigator.clipboard.writeText(code); showToast('Kode save disalin! Tempel di Notes/Drive/WA buat backup manual.'); }
+    catch (e) { showToast('Gagal menyalin otomatis, coba salin manual'); }
+  });
+  document.getElementById('pasteImportBtn').addEventListener('click', () => {
+    const raw = document.getElementById('pasteSaveArea').value.trim();
+    if (!raw) return;
+    try {
+      const json = decodeURIComponent(escape(atob(raw)));
+      applySaveData(JSON.parse(json));
+      refreshHotbarUI();
+      updateChunks(player.pos.x, player.pos.z, true);
+      refreshSeedUI();
+      showToast('Save berhasil diimpor dari kode!');
+    } catch (e) { showToast('Kode save tidak valid'); }
+  });
+
+  function refreshSeedUI() { document.getElementById('seedDisplay').textContent = String(WORLD_SEED); }
+  document.getElementById('copySeedBtn').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(String(WORLD_SEED)); showToast('Seed disalin!'); }
+    catch (e) { showToast('Gagal menyalin'); }
+  });
+  document.getElementById('applySeedBtn').addEventListener('click', () => {
+    const input = document.getElementById('seedInput').value.trim();
+    if (!input) return;
+    let newSeed = 0;
+    if (/^-?\d+$/.test(input)) newSeed = parseInt(input);
+    else for (let i = 0; i < input.length; i++) newSeed = (newSeed * 31 + input.charCodeAt(i)) >>> 0;
+    if (!confirm('Ganti world seed? Area yang belum pernah kamu ubah akan generate ulang dengan seed baru (area yang udah kamu tambang/bangun tetap seperti semula).')) return;
+    WORLD_SEED = newSeed;
+    refreshSeedUI();
+    for (const ck of Array.from(loadedChunks.keys())) unloadChunk(ck);
+    updateChunks(player.pos.x, player.pos.z, true);
+    showToast('Seed diterapkan!');
+  });
+
+  let renderRadiusPref = RENDER_RADIUS, graphicsQuality = 'medium';
+  try { const v = localStorage.getItem('blockworld-render-radius'); if (v) renderRadiusPref = parseInt(v) || renderRadiusPref; } catch (e) {}
+  try { const q = localStorage.getItem('blockworld-graphics-quality'); if (q) graphicsQuality = q; } catch (e) {}
+  RENDER_RADIUS = renderRadiusPref;
+  document.getElementById('renderDistRange').value = RENDER_RADIUS;
+  document.getElementById('renderDistRange').addEventListener('input', (e) => {
+    RENDER_RADIUS = parseInt(e.target.value) || RENDER_RADIUS;
+    try { localStorage.setItem('blockworld-render-radius', String(RENDER_RADIUS)); } catch (e) {}
+    updateChunks(player.pos.x, player.pos.z, true);
+  });
+  function applyGraphicsQuality(q) {
+    graphicsQuality = q;
+    const dprMap = { low: 1, medium: Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5), high: Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2) };
+    renderer.setPixelRatio(dprMap[q] || 1);
+    const fogMap = { low: [14, 30], medium: [isMobile ? 22 : 38, isMobile ? 50 : 85], high: [isMobile ? 28 : 45, isMobile ? 60 : 100] };
+    const fv = fogMap[q] || fogMap.medium;
+    scene.fog.near = fv[0]; scene.fog.far = fv[1];
+    try { localStorage.setItem('blockworld-graphics-quality', q); } catch (e) {}
+  }
+  document.getElementById('qualitySelect').value = graphicsQuality;
+  applyGraphicsQuality(graphicsQuality);
+  document.getElementById('qualitySelect').addEventListener('change', (e) => applyGraphicsQuality(e.target.value));
+
+  // ================= TUTORIAL SINGKAT (sekali tampil) =================
+  let tutorialSeen = false;
+  try { tutorialSeen = localStorage.getItem('blockworld-tutorial-seen') === '1'; } catch (e) {}
+  function maybeShowTutorial() {
+    if (tutorialSeen) return;
+    const box = document.getElementById('tutorialControlsBox');
+    box.innerHTML = isMobile
+      ? `<div class="controlRow"><kbd>Joystick kiri</kbd><span class="lbl">gerak</span></div>
+         <div class="controlRow"><kbd>Geser layar</kbd><span class="lbl">nengok sekitar</span></div>
+         <div class="controlRow"><kbd>Tombol bulat</kbd><span class="lbl">lompat</span></div>
+         <div class="controlRow"><kbd>Tombol merah</kbd><span class="lbl">tahan buat nambang</span></div>
+         <div class="controlRow"><kbd>Tombol hijau</kbd><span class="lbl">pasang blok/tanam bibit</span></div>
+         <div class="controlRow"><kbd>Panah/Tidur</kbd><span class="lbl">tombol di kanan atas</span></div>`
+      : `<div class="controlRow"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span class="lbl">gerak</span></div>
+         <div class="controlRow"><kbd>Mouse</kbd><span class="lbl">lihat sekitar</span></div>
+         <div class="controlRow"><kbd>Klik Kiri</kbd><span class="lbl">nambang</span> &nbsp; <kbd>Klik Kanan</kbd><span class="lbl">pasang/tanam</span></div>
+         <div class="controlRow"><kbd>1-9</kbd><span class="lbl">pilih hotbar</span> &nbsp; <kbd>F</kbd><span class="lbl">panah</span></div>`;
+    document.getElementById('tutorialModal').style.display = 'flex';
+  }
+  document.getElementById('tutorialOkBtn').addEventListener('click', () => {
+    tutorialSeen = true;
+    try { localStorage.setItem('blockworld-tutorial-seen', '1'); } catch (e) {}
+    document.getElementById('tutorialModal').style.display = 'none';
+  });
+  document.getElementById('tutorialCloseBtn').addEventListener('click', () => document.getElementById('tutorialModal').style.display = 'none');
 
   // ================= HUD UPDATE =================
   function updateHud() {
@@ -1892,7 +2350,7 @@
 
   // ================= MAIN LOOP =================
   const clock = new THREE.Clock();
-  let frameCount = 0, fpsTimer = 0, lastAutosave = 0, lastFootstepT = 0, lastMinimapDraw = 0;
+  let frameCount = 0, fpsTimer = 0, lastAutosave = 0, lastFootstepT = 0, lastMinimapDraw = 0, lastAchievementCheck = 0;
   let lastMinimapX = null, lastMinimapZ = null;
 
   function animate() {
@@ -1982,6 +2440,10 @@
       updateProjectiles(dt);
       updateMining(dt);
       updateGhost();
+      updateCrops(now);
+      updateWeather(now);
+      updateRain(dt);
+      if (now - lastAchievementCheck > 1000) { lastAchievementCheck = now; checkAchievements(); }
 
       if (player.health <= 0) respawnPlayer();
 
