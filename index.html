@@ -444,6 +444,20 @@
     <div class="patchSub">Semua perubahan yang udah ditambahin ke BlockWorld</div>
 
     <div class="patchEntry newest">
+      <div class="patchBadge">v2.7</div>
+      <div>
+        <div class="patchTitle">Keamanan &amp; Ketahanan Sistem Save</div>
+        <ul>
+          <li>Perbaikan celah keamanan: import/apply save gak lagi bisa "polusi" data internal game lewat key <code>__proto__</code> di file save (safe-merge)</li>
+          <li>Validasi save diperketat: posisi/nyawa/lapar yang gak masuk akal (rusak, di luar batas wajar) otomatis ditolak atau dikoreksi biar karakter gak nyangkut/error</li>
+          <li>Import file save yang corrupt/gak valid sekarang kasih pesan error yang jelas, gak lagi diem-diem gagal</li>
+          <li>Setiap kali Simpan, save lama otomatis di-backup dulu sebelum ditimpa</li>
+          <li>Tombol baru "Pulihkan Backup" di menu Setting buat balikin save sebelumnya kalau save terbaru bermasalah (pakai konfirmasi dulu)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="patchEntry">
       <div class="patchBadge">v2.6</div>
       <div>
         <div class="patchTitle">Semua Emoji Diganti Icon SVG &amp; Halaman Utama Dipercantik</div>
