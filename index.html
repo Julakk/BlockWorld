@@ -1,2501 +1,5029 @@
 <!DOCTYPE html>
+
 <html lang="id">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
 <link rel="manifest" href="manifest.json">
+
 <meta name="theme-color" content="#141a14">
+
 <link rel="icon" href="icon-192.png">
+
 <link rel="apple-touch-icon" href="icon-192.png">
+
 <title>BlockWorld</title>
+
 <style>
+
   :root {
+
     --bg-sky: #87CEEB;
+
     --panel: rgba(14, 19, 16, 0.66);
+
     --panel-solid: #12171a;
+
     --panel-solid-2: #171d20;
+
     --panel-border: rgba(255,255,255,0.09);
+
     --panel-border-strong: rgba(255,255,255,0.22);
+
     --accent: #8ee06a;
+
     --accent-2: #5fd0c4;
+
     --accent-dark: #3f8a28;
+
     --accent-grad: linear-gradient(135deg, #b4f491, #4a9e30);
+
     --gold: #ffd54a;
+
     --gold-dark: #d99e1f;
+
     --gold-grad: linear-gradient(135deg, #ffe38a, #d99e1f);
+
     --danger: #ff6a5c;
+
     --danger-grad: linear-gradient(135deg, #ff9086, #d1372a);
+
     --text: #f4f7f2;
+
     --text-dim: #b9c9b4;
+
     --text-faint: #8a978a;
+
     --radius-sm: 9px;
+
     --radius-md: 13px;
+
     --radius-lg: 20px;
+
     --shadow-panel: 0 8px 26px rgba(0,0,0,0.38), 0 1px 0 rgba(255,255,255,0.03) inset, 0 0 0 1px rgba(0,0,0,0.25) inset;
+
     --shadow-pop: 0 22px 60px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.05) inset;
+
     --shadow-raised: 0 3px 0 rgba(0,0,0,0.25), 0 6px 16px rgba(0,0,0,0.35);
+
   }
+
+
 
   html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg-sky); font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif; color: var(--text); -webkit-tap-highlight-color: transparent; }
+
   canvas { display: block; }
+
   * { box-sizing: border-box; }
+
   ::selection { background: rgba(143,224,106,0.35); }
 
+
+
   /* ================= AMBIENT OVERLAYS ================= */
+
   #vignette {
+
     position: fixed; inset: 0; z-index: 4; pointer-events: none;
+
     background: radial-gradient(ellipse at center, rgba(0,0,0,0) 58%, rgba(0,0,0,0.32) 100%);
+
   }
+
+
 
   #crosshair {
+
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+
     width: 22px; height: 22px; pointer-events: none; z-index: 10;
+
   }
+
   #crosshair::before, #crosshair::after {
+
     content: ''; position: absolute; background: rgba(255,255,255,0.95); border-radius: 2px;
+
     box-shadow: 0 0 4px rgba(0,0,0,0.6), 0 0 10px rgba(255,255,255,0.25);
+
   }
+
   #crosshair::before { width: 2px; height: 22px; left: 10px; }
+
   #crosshair::after { width: 22px; height: 2px; top: 10px; }
 
+
+
   #miningRing { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 44px; height: 44px; pointer-events: none; z-index: 11; display: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
+
   #miningRing svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+
   #miningBg { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 3.5; }
+
   #miningFg { fill: none; stroke: var(--gold); stroke-width: 3.5; stroke-linecap: round; filter: drop-shadow(0 0 5px rgba(255,213,74,0.85)); }
+
+
 
   #dmgFlash { position: fixed; inset: 0; z-index: 26; background: radial-gradient(circle, rgba(200,20,20,0.06) 38%, rgba(180,10,10,0.55) 100%); pointer-events: none; opacity: 0; transition: opacity 0.15s; }
 
+
+
   /* ================= HOTBAR ================= */
+
   #hotbarWrap { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 9px; }
+
   #hotbar {
+
     display: flex; gap: 7px; background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+
     padding: 8px; border-radius: var(--radius-md); max-width: 92vw; flex-wrap: wrap; justify-content: center;
+
     border: 1px solid var(--panel-border); box-shadow: var(--shadow-panel);
+
   }
+
   .slot {
+
     width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.12);
+
     border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+
     font-size: 10px; color: white; text-shadow: 1px 1px 2px black; cursor: pointer;
+
     position: relative; background: rgba(255,255,255,0.045);
+
     transition: transform 0.12s cubic-bezier(.34,1.6,.64,1), border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+
   }
+
   .slot:active { transform: scale(0.90); }
+
   .slot.active { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,213,74,0.2), 0 0 16px rgba(255,213,74,0.6); background: rgba(255,213,74,0.1); transform: translateY(-2px); }
+
   .slot .swatch { width: 28px; height: 28px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3), inset 0 2px 3px rgba(255,255,255,0.15), 0 1px 3px rgba(0,0,0,0.45); }
+
   .slot .key { position: absolute; top: 2px; left: 4px; font-size: 8px; opacity: 0.8; font-weight: 700; color: var(--text-dim); }
+
   .slot .cnt { position: absolute; bottom: -2px; right: 3px; font-size: 10px; font-weight: 800; color: var(--gold); }
+
   .slot.empty .swatch { opacity: 0.25; }
+
   .slot.empty { border-color: rgba(255,255,255,0.05); }
+
   .slot.empty .cnt { display: none; }
 
+
+
   #craftPanel { display: none; gap: 7px; flex-wrap: wrap; max-width: 92vw; justify-content: center; background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 8px; border-radius: var(--radius-md); border: 1px solid var(--panel-border); box-shadow: var(--shadow-panel); animation: slideUpFade 0.18s ease; }
+
   .craftBtn { color: white; font-size: 11px; text-shadow: 1px 1px 2px black; background: rgba(255,255,255,0.07);
+
     border: 1px solid rgba(255,255,255,0.16); border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease; font-weight: 600; }
+
   .craftBtn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.28); }
+
   .craftBtn:active { background: rgba(255,255,255,0.26); transform: scale(0.96); }
 
+
+
   /* ================= HUD ================= */
+
   #hud {
+
     position: fixed; top: 12px; left: 12px; z-index: 10; color: var(--text);
+
     text-shadow: 1px 1px 2px black; font-size: 12px; line-height: 1.5;
+
     background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+
     padding: 12px 14px; border-radius: var(--radius-md); width: 184px;
+
     border: 1px solid var(--panel-border); box-shadow: var(--shadow-panel);
+
   }
+
   #hud > div:first-child { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 12.5px; }
+
   .barLabel { display: flex; justify-content: space-between; margin-top: 7px; font-size: 11.5px; font-weight: 600; color: var(--text-dim); }
+
   .barBg { width: 100%; height: 10px; background: rgba(0,0,0,0.5); border-radius: 6px; overflow: hidden; margin-top: 3px; box-shadow: inset 0 1px 4px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.04); }
+
   .barFill { height: 100%; transition: width 0.25s ease; border-radius: 6px; position: relative; background-image: linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0) 45%); }
+
   #healthFill { background-color: #e33; background-image: linear-gradient(90deg, #ff8a7a, #e33), linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0) 45%); }
+
   #hungerFill { background-color: #e89b30; background-image: linear-gradient(90deg, #ffc266, #e89b30), linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0) 45%); }
+
   #coords, #toolInfo { margin-top: 6px; font-size: 10.5px; opacity: 0.75; letter-spacing: 0.2px; }
+
   #coords { padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.07); }
 
+
+
   #topRight { position: fixed; top: 12px; right: 12px; z-index: 10; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
   #fps { color: #9f9; font-size: 11px; text-shadow: 1px 1px 2px black; font-weight: 700; letter-spacing: 0.3px; }
+
   .smallBtn { color: white; font-size: 11.5px; text-shadow: 1px 1px 2px black; background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+
     border: 1px solid var(--panel-border); border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer;
+
     box-shadow: var(--shadow-panel); transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease; font-weight: 600; }
+
   .smallBtn:hover { border-color: var(--panel-border-strong); background: rgba(255,255,255,0.11); }
+
   .smallBtn:active { transform: scale(0.95); }
+
   #eatBtn:disabled, .craftBtn:disabled { opacity: 0.35; cursor: default; }
+
   #saveMsg { color: var(--gold); font-size: 11px; text-shadow: 1px 1px 2px black; font-weight: 700; }
+
   #minimap { width: 88px; height: 88px; border-radius: var(--radius-sm); border: 2px solid var(--panel-border-strong); background: #111; box-shadow: var(--shadow-panel); }
+
   .actionGrid { display: grid; grid-template-columns: repeat(2, auto); gap: 6px; }
+
   .actionGrid .smallBtn { padding: 7px 9px; font-size: 10.5px; white-space: nowrap; }
 
+
+
   /* ================= COMPACT LAYOUT: all touch/mobile devices =================
+
      Always applied on coarse-pointer (touch) devices — not just short screens —
+
      because the circular touch buttons (jump/sprint/place/break) share the same
+
      right-hand column as the topRight menu on every mobile viewport height. */
+
   @media (pointer: coarse) {
+
     #hud { padding: 8px 10px; width: 152px; font-size: 10.5px; }
+
     #hud > div:first-child { font-size: 11px; }
+
     #topRight { top: 8px; right: 8px; gap: 5px; }
+
     #fps { font-size: 9.5px; }
+
     #minimap { width: 52px; height: 52px; }
+
     .actionGrid { gap: 4px; }
+
     .actionGrid .smallBtn { padding: 5px 7px; font-size: 9.5px; }
+
     #saveMsg { font-size: 9.5px; }
+
     #hotbarWrap { bottom: 8px; gap: 5px; }
+
     #hotbar, #craftPanel { padding: 5px; gap: 5px; }
+
     .slot { width: 34px; height: 34px; }
+
     .slot .swatch { width: 22px; height: 22px; }
+
+    .invGrid { grid-template-columns: repeat(auto-fill, 40px); gap: 5px; }
+
+    .invItem { width: 40px; height: 40px; }
+
+    .invItem .ico .svgicon { width: 20px; height: 20px; }
+
     #joystickZone { left: 12px; bottom: 10px; width: 92px; height: 92px; }
+
     #joystickStick { width: 42px; height: 42px; }
+
     #touchActionBtns { right: 14px; bottom: 58px; gap: 8px; }
+
     #touchJumpBtn { right: 16px; bottom: 10px; width: 46px; height: 46px; font-size: 9px; }
+
     #touchSprintBtn { right: 66px; bottom: 10px; width: 36px; height: 36px; font-size: 8px; }
+
     .touchBtn { width: 42px; height: 42px; font-size: 16px; }
+
   }
+
   /* Extra shrink for very short landscape heights on top of the coarse-pointer rules above */
+
   @media (max-height: 380px) and (pointer: coarse) {
+
     #topRight { gap: 3px; }
+
     #minimap { width: 40px; height: 40px; }
+
     .actionGrid .smallBtn { padding: 4px 6px; font-size: 8.5px; }
+
     #hud { width: 132px; font-size: 9.5px; padding: 6px 8px; }
+
   }
+
+
 
   /* ================= START SCREEN ================= */
+
   #hint {
+
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+
     color: white; text-align: center; text-shadow: 1px 1px 3px black;
+
     z-index: 20; background: linear-gradient(165deg, rgba(24,32,24,0.96), rgba(8,12,8,0.97));
+
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+
     padding: 32px 28px 26px; border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.13);
+
     box-shadow: var(--shadow-pop), 0 0 90px rgba(74,158,48,0.08);
+
     font-size: 13px; line-height: 1.7; cursor: pointer; max-width: 92vw; width: 400px;
+
     max-height: 84vh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+
     animation: popIn 0.28s cubic-bezier(.2,.9,.3,1.2);
+
   }
+
   #hint::-webkit-scrollbar { width: 6px; }
+
   #hint::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
   #hint .badgeIcon {
+
     width: 62px; height: 62px; margin: 0 auto 10px; border-radius: 16px;
+
     background: var(--accent-grad); display: flex; align-items: center; justify-content: center;
+
     font-size: 30px; box-shadow: 0 6px 0 #2f6e1c, 0 12px 24px rgba(74,158,48,0.4);
+
     transform: rotate(-4deg);
+
   }
+
   #hint h1 {
+
     margin: 0 0 3px 0; font-size: 32px; letter-spacing: 0.3px; font-weight: 800;
+
     background: linear-gradient(90deg, var(--accent), var(--gold));
+
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+
     text-shadow: none; filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.6));
+
   }
+
   #hint .tagline { display: block; color: var(--text-dim); font-size: 12.5px; margin-bottom: 20px; letter-spacing: 0.2px; }
+
   #hint b { color: var(--gold); }
+
   #playBtnFace {
+
     margin: 6px auto 20px; padding: 13px 0; width: 84%; border-radius: 999px;
+
     background: var(--accent-grad); border: 1px solid rgba(255,255,255,0.35);
+
     font-weight: 800; font-size: 14.5px; letter-spacing: 0.4px; color: #14230c;
+
     box-shadow: 0 4px 0 #2f6e1c, 0 10px 22px rgba(74,158,48,0.4);
+
     animation: pulseBtn 1.8s ease-in-out infinite;
+
     position: relative; overflow: hidden;
+
   }
+
   #playBtnFace::after {
+
     content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+
     background: linear-gradient(115deg, transparent, rgba(255,255,255,0.55), transparent);
+
     animation: shine 2.6s ease-in-out infinite;
+
   }
+
   @keyframes shine { 0% { left: -60%; } 45%, 100% { left: 130%; } }
+
   @keyframes pulseBtn { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+
   @keyframes popIn { from { opacity: 0; transform: translate(-50%, -46%) scale(0.94); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+
   @keyframes slideUpFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
   @keyframes modalPop { from { opacity: 0; transform: scale(0.94) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
+
+
   #hint .controlsBox { text-align: left; background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.07); border-radius: var(--radius-md); padding: 13px 14px; font-size: 12px; margin-bottom: 16px; }
+
   #hint .controlRow { display: flex; align-items: center; gap: 8px; padding: 4px 0; flex-wrap: wrap; }
+
   #hint .controlRow + .controlRow { border-top: 1px solid rgba(255,255,255,0.045); }
+
   #hint kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; padding: 3px 8px; font-size: 10.5px; font-weight: 700;
+
     background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); border-bottom-width: 2px; border-radius: 6px; color: var(--gold); font-family: inherit; }
+
   #hint .controlRow span.lbl { color: var(--text-dim); }
+
   #hint .noteBoxLabel { text-align: left; font-size: 10.5px; font-weight: 800; letter-spacing: 1.2px; color: var(--text-faint); text-transform: uppercase; margin: 0 0 6px 2px; }
+
   #hint .noteBox { font-size: 11.5px; color: #d8d0b0; text-align: left; display: flex; flex-direction: column; gap: 5px; }
+
   #hint .noteRow { display: flex; align-items: center; gap: 10px; padding: 7px 9px; line-height: 1.45; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; transition: background 0.15s ease; }
+
   #hint .noteRow:hover { background: rgba(255,255,255,0.065); }
+
   #hint .noteRow .em {
+
     flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+
     background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+
   }
+
   #hint .noteRow .em .svgicon { width: 15px; height: 15px; }
+
   #hint .noteRow .em.em-danger { background: rgba(255,106,92,0.16); }
+
   #hint .noteRow .em.em-hunger { background: rgba(255,213,74,0.16); }
+
   #patchNotesLink {
+
     display: inline-flex; align-items: center; gap: 5px; margin-top: 16px; font-size: 11.5px; color: #9fd8ff;
+
     text-decoration: none; border-bottom: 1px dashed rgba(159,216,255,0.5); cursor: pointer; transition: opacity 0.15s ease;
+
   }
+
   #patchNotesLink:hover { opacity: 0.8; }
 
+
+
   #versionBadge {
+
     position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 21;
+
     background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+
     border: 1px solid var(--panel-border); border-radius: 999px;
+
     color: #fff; font-size: 11px; padding: 6px 14px; cursor: pointer; text-shadow: 1px 1px 2px black;
+
     display: flex; align-items: center; gap: 7px; box-shadow: var(--shadow-panel); transition: border-color 0.15s ease, background 0.15s ease;
+
     font-weight: 600; letter-spacing: 0.2px;
+
   }
+
   #versionBadge:hover { border-color: var(--panel-border-strong); background: rgba(255,255,255,0.08); }
+
   #versionBadge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 6px var(--danger); animation: dotBlink 1.4s infinite; }
+
   @keyframes dotBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+
+
   /* ================= MODALS ================= */
+
   .modalOverlay {
+
     position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,0.62);
+
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+
     display: none; align-items: center; justify-content: center;
+
   }
+
   .modalCard {
+
     width: min(440px, 88vw); max-height: 80vh; overflow-y: auto;
+
     background: var(--panel-solid); border: 1px solid rgba(255,255,255,0.13); border-radius: var(--radius-lg);
+
     color: white; text-shadow: none; padding: 22px 24px; box-shadow: var(--shadow-pop);
+
     animation: modalPop 0.2s cubic-bezier(.2,.9,.3,1.1);
+
   }
+
   .modalCard::-webkit-scrollbar { width: 7px; }
+
   .modalCard::-webkit-scrollbar-track { background: transparent; }
+
   .modalCard::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.16); border-radius: 4px; }
+
   .modalCard::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.26); }
+
   .modalCard h2 { margin: 0 0 6px 0; font-size: 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; letter-spacing: 0.2px; }
+
   .modalClose { cursor: pointer; font-size: 15px; color: #999; padding: 4px 10px; border-radius: 8px; transition: background 0.15s ease, color 0.15s ease; line-height: 1; }
+
   .modalClose:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
   .patchSub, .modalSub { color: #93a396; font-size: 11px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+
   .patchEntry { display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start; position: relative; }
+
   .patchEntry:not(:last-child)::before {
+
     content: ''; position: absolute; left: 17px; top: 26px; bottom: -16px; width: 1px; background: rgba(255,255,255,0.09);
+
   }
+
   .patchEntry .patchBadge {
+
     flex-shrink: 0; font-size: 10px; font-weight: 800; color: #14181a; background: var(--accent);
+
     border-radius: 7px; padding: 4px 7px; min-width: 34px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+
   }
+
   .patchEntry.newest .patchBadge { background: var(--gold-grad); }
+
   .patchEntry ul { margin: 6px 0 0 0; padding-left: 16px; font-size: 12px; color: #ccc; line-height: 1.65; }
+
   .patchEntry .patchTitle { font-size: 13px; font-weight: 700; color: #fff; }
 
-  .invGrid { display: grid; grid-template-columns: repeat(4,1fr); gap: 9px; }
-  .invItem { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.07); border-radius: var(--radius-sm); padding: 10px; text-align: center; font-size: 10.5px; transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease; }
-  .invItem:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.15); transform: translateY(-1px); }
-  .invItem .ico { font-size: 22px; }
-  .invBtn { margin-top: 6px; font-size: 10px; padding: 5px 8px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: white; cursor: pointer; transition: background 0.15s ease; font-weight: 600; }
-  .invBtn:hover { background: rgba(255,255,255,0.22); }
+
+
+  /* ===== Inventory ala Minecraft: grid slot kotak, ikon + jumlah pojok, per-kategori ===== */
+  .invSection { grid-column: 1 / -1; font-size: 10.5px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 2px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .invSection:first-child { margin-top: 0; }
+
+  .invGrid { display: grid; grid-template-columns: repeat(auto-fill, 46px); gap: 6px; justify-content: center; }
+
+  .invItem {
+    position: relative; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.045); border: 2px solid rgba(255,255,255,0.12); border-radius: var(--radius-sm);
+    cursor: pointer; box-shadow: inset 0 2px 4px rgba(0,0,0,0.35), inset 0 -1px 0 rgba(255,255,255,0.04);
+    transition: transform 0.12s cubic-bezier(.34,1.6,.64,1), border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+
+  .invItem:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.26); }
+  .invItem:active { transform: scale(0.9); }
+
+  .invItem .ico { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
+
+  .invItem .cnt { position: absolute; bottom: 1px; right: 4px; font-size: 11px; font-weight: 800; color: var(--gold); text-shadow: 1px 1px 2px black; }
+
+  .invItem.equipped { border-color: var(--gold); background: rgba(255,213,74,0.12); box-shadow: 0 0 0 3px rgba(255,213,74,0.2), 0 0 14px rgba(255,213,74,0.6), inset 0 2px 4px rgba(0,0,0,0.35); }
+
+  .invItem .eqTag { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); font-size: 8px; font-weight: 800; color: #14181a; background: var(--gold-grad); padding: 1px 5px; border-radius: 5px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+
+  .invEmpty { grid-column: 1/-1; text-align: center; opacity: 0.55; font-size: 12px; padding: 14px 0; }
+
   .statRow { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+
   .statRow:last-child { border-bottom: none; }
+
   .slotRow { display: flex; gap: 8px; margin-bottom: 16px; }
+
   .slotBtn { flex: 1; padding: 10px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.045); color: white; cursor: pointer; font-size: 12px; text-align: center; font-weight: 600; transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease; }
+
   .slotBtn:hover { background: rgba(255,255,255,0.09); }
+
   .slotBtn:active { transform: scale(0.97); }
+
   .slotBtn.activeSlot { border-color: var(--gold); background: rgba(255,213,74,0.14); box-shadow: 0 0 0 1px rgba(255,213,74,0.25); color: var(--gold); }
+
   .settingsRow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 12.5px; gap: 10px; }
+
   .settingsRow input[type=range] { flex: 1; accent-color: var(--accent); }
+
   .settingsRow input[type=checkbox] { accent-color: var(--accent); width: 17px; height: 17px; }
 
+
+
   #deadMsg {
+
     position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+
     color: var(--danger); font-size: 28px; font-weight: 800; text-shadow: 2px 2px 10px black;
+
     z-index: 25; display: none; pointer-events: none; letter-spacing: 0.3px;
+
   }
+
+
 
   #toastMsg {
+
     position: fixed; top: 22%; left: 50%; transform: translate(-50%, -50%);
+
     color: var(--gold); font-size: 14px; font-weight: 700; text-shadow: 1px 1px 4px black;
+
     background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+
     padding: 9px 18px; border-radius: var(--radius-sm); border: 1px solid rgba(255,213,74,0.3);
+
     z-index: 25; display: none; pointer-events: none; white-space: nowrap;
+
     transition: opacity 0.2s ease; box-shadow: var(--shadow-panel);
+
   }
+
+
 
   #rotateOverlay {
+
     position: fixed; inset: 0; z-index: 50; background: rgba(5,8,6,0.97);
+
     display: none; flex-direction: column; align-items: center; justify-content: center;
+
     color: white; text-align: center; padding: 20px; text-shadow: 1px 1px 3px black;
+
   }
+
   #rotateOverlay .icon { font-size: 56px; animation: rotateHint 1.6s ease-in-out infinite; margin-bottom: 14px; }
+
   #rotateOverlay .msg { font-size: 15px; max-width: 260px; line-height: 1.6; }
+
   #rotateOverlay .msg b { color: var(--gold); }
+
   @keyframes rotateHint {
+
     0% { transform: rotate(0deg); } 45% { transform: rotate(-90deg); }
+
     55% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); }
+
   }
+
+
 
   /* ================= TOUCH CONTROLS ================= */
+
   #joystickZone { position: fixed; left: 22px; bottom: 26px; width: 122px; height: 122px; z-index: 15; touch-action: none; }
+
   #joystickBase { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.16), rgba(255,255,255,0.06)); border: 2px solid rgba(255,255,255,0.32); box-shadow: inset 0 2px 12px rgba(0,0,0,0.35), var(--shadow-panel); }
+
   #joystickStick { position: absolute; width: 54px; height: 54px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.55)); border: 2px solid rgba(255,255,255,0.9); left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 3px 10px rgba(0,0,0,0.4); transition: background 0.1s ease; }
+
   #lookZone { position: fixed; right: 0; top: 0; width: 100%; height: 100%; z-index: 5; touch-action: none; }
+
   #touchActionBtns { position: fixed; right: 22px; bottom: 92px; z-index: 15; display: flex; flex-direction: column; gap: 14px; align-items: center; }
+
   #touchJumpBtn { position: fixed; right: 24px; bottom: 24px; z-index: 15; width: 60px; height: 60px; border-radius: 50%;
+
     background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.28), rgba(255,255,255,0.12)); border: 2px solid rgba(255,255,255,0.45); color: white; font-size: 10.5px; font-weight: 800;
+
     text-shadow: 1px 1px 2px black; display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none;
+
     box-shadow: var(--shadow-panel), var(--shadow-raised); transition: transform 0.1s ease; letter-spacing: 0.3px; }
+
   #touchJumpBtn:active { transform: scale(0.9); }
+
   #touchSprintBtn { position: fixed; right: 92px; bottom: 24px; z-index: 15; width: 48px; height: 48px; border-radius: 50%;
+
     background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.32); color: white; font-size: 9px; font-weight: 800;
+
     text-shadow: 1px 1px 2px black; display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none;
+
     box-shadow: var(--shadow-panel); transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease; letter-spacing: 0.3px; }
+
   #touchSprintBtn:active { transform: scale(0.9); }
+
   #touchSprintBtn.on { background: rgba(143,224,106,0.6); border-color: rgba(143,224,106,0.9); box-shadow: 0 0 14px rgba(143,224,106,0.5), var(--shadow-panel); }
+
   .touchBtn { width: 60px; height: 60px; border-radius: 50%; background: rgba(0,0,0,0.42); border: 2px solid rgba(255,255,255,0.45);
+
     color: white; font-size: 22px; display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none;
+
     box-shadow: var(--shadow-panel), var(--shadow-raised); transition: transform 0.1s ease; }
+
   .touchBtn:active { transform: scale(0.9); }
+
   #touchBreakBtn { background: radial-gradient(circle at 35% 30%, rgba(230,90,90,0.6), rgba(180,50,50,0.45)); border-color: rgba(255,140,130,0.55); }
+
   #touchPlaceBtn { background: radial-gradient(circle at 35% 30%, rgba(100,190,100,0.6), rgba(60,150,60,0.45)); border-color: rgba(150,230,150,0.55); }
 
+
+
   /* ================= SVG ICONS (replacing emoji) ================= */
+
   .svgicon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
   .icoRow { display: inline-flex; align-items: center; gap: 5px; }
+
   .icoRow > .svgicon { width: 1.35em; height: 1.35em; }
+
   .ic-heart { color: var(--danger); }
+
   .ic-hunger { color: var(--gold); }
+
   .ic-sun { color: var(--gold); }
+
   .ic-moon { color: #cfe0ea; }
+
   .ic-danger { color: var(--danger); }
+
   .ic-gold { color: var(--gold); }
+
   .ic-iron { color: #cdd6d8; }
+
   .ic-flame { color: #ff8a3d; }
+
   .ic-accent { color: var(--accent); }
-  .invItem .ico { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; }
-  .invItem .ico .svgicon { width: 20px; height: 20px; }
+
+  .invItem .ico .svgicon { width: 24px; height: 24px; }
+
   #rotateOverlay .icon { width: 56px; height: 56px; margin: 0 auto 14px; animation: rotateHint 1.6s ease-in-out infinite; }
+
   #rotateOverlay .icon .svgicon { width: 100%; height: 100%; }
+
 </style>
+
 </head>
+
 <body>
 
+
+
 <svg id="iconSprite" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+
 <defs>
+
 <symbol id="ic-pickaxe" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.2" ry="2.4" transform="rotate(-22 12 6)"/><path d="M11.4 7L4.5 20.5"/></symbol>
+
 <symbol id="ic-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.8 2.5 4.2 6 4.2 9s-1.4 6.5-4.2 9c-2.8-2.5-4.2-6-4.2-9s1.4-6.5 4.2-9z"/></symbol>
+
 <symbol id="ic-tools" viewBox="0 0 24 24"><rect x="13.3" y="2.3" width="8" height="5.2" rx="1.2" transform="rotate(45 17.3 4.9)"/><path d="M13.7 8.5L5 17.2"/></symbol>
+
 <symbol id="ic-warning" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 9.5v4"/><circle cx="12" cy="16.7" r="0.6" fill="currentColor" stroke="none"/></symbol>
+
 <symbol id="ic-drumstick" viewBox="0 0 24 24"><circle cx="9" cy="15" r="5.3"/><path d="M12.8 11.2 19 5"/><path d="M17.3 3.3l3.4 3.4"/></symbol>
+
 <symbol id="ic-clipboard" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M8 10h8M8 14h8M8 18h5"/></symbol>
+
 <symbol id="ic-heart" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 20.5c-4.6-3-9-6.9-9-11.2C3 6.4 5.1 4 7.8 4c1.8 0 3.4 1 4.2 2.6C12.8 5 14.4 4 16.2 4 18.9 4 21 6.4 21 9.3c0 4.3-4.4 8.2-9 11.2z"/></symbol>
+
 <symbol id="ic-backpack" viewBox="0 0 24 24"><path d="M9 8.5V6.5a3 3 0 0 1 6 0v2"/><rect x="5.5" y="8" width="13" height="13" rx="3.2"/><path d="M8.7 8h6.6"/><rect x="9.3" y="13" width="5.4" height="4.4" rx="1.1"/></symbol>
+
 <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M4 20h16"/></symbol>
+
 <symbol id="ic-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6"/><circle cx="12" cy="12" r="7.6" stroke-width="3.1" stroke-dasharray="2.3 2.1"/></symbol>
+
 <symbol id="ic-arrow-down" viewBox="0 0 24 24"><path d="M12 4v14M6 13l6 6 6-6"/></symbol>
+
 <symbol id="ic-arrow-up" viewBox="0 0 24 24"><path d="M12 20V6M6 11l6-6 6 6"/></symbol>
+
 <symbol id="ic-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M10 11v6M14 11v6"/></symbol>
+
 <symbol id="ic-skull" viewBox="0 0 24 24"><path d="M12 3c-4.4 0-8 3.4-8 7.6 0 2.6 1.5 4.9 3.7 6.3V19a1 1 0 0 0 1 1h1.6v-2h1.4v2h1.4v-2h1.4v2H17a1 1 0 0 0 1-1v-2.1c2.2-1.4 3.7-3.7 3.7-6.3C21.7 6.4 16.4 3 12 3z"/><circle cx="9" cy="11" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="11" r="1.2" fill="currentColor" stroke="none"/></symbol>
+
 <symbol id="ic-phone-rotate" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 19h2"/><path d="M18.5 8.5l2 1.8-2 1.8M5.5 8.5l-2 1.8 2 1.8"/></symbol>
+
 <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+
 <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></symbol>
+
 <symbol id="ic-utensils" viewBox="0 0 24 24"><path d="M6 3v7a2 2 0 0 0 4 0V3M8 10v11M16 3c-1.5 0-2 2-2 4s.5 4 2 4v10"/></symbol>
+
 <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+
 <symbol id="ic-close" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol>
+
 <symbol id="ic-stopwatch" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6M12 2v2"/></symbol>
+
 <symbol id="ic-apple" viewBox="0 0 24 24"><path d="M12 8c-3.5-3-8-1-8 4 0 4.5 4 9 8 9s8-4.5 8-9c0-5-4.5-7-8-4z"/><path d="M12 8V5c0-1 1-2 2-2"/></symbol>
+
 <symbol id="ic-steak" viewBox="0 0 24 24"><path d="M6 14c-2-2-2-6 1-8s7-2 9 1c2 3 1 6-1 8-1.5 1.5-4 1-6 2-1.5.7-2 1-3-1-1-1.5-.5-1.5 0-2z"/><circle cx="9" cy="11" r="0.9" fill="currentColor" stroke="none"/><circle cx="13" cy="13" r="0.9" fill="currentColor" stroke="none"/></symbol>
+
 <symbol id="ic-bacon" viewBox="0 0 24 24"><path d="M4 6c4-2 6 2 10 0s6 2 6 2-3 2-4 4c-1 2 1 3 1 3s-4 2-8 0-6-2-6-2 3-2 4-4c1-2-1-3-3-3z"/></symbol>
+
 <symbol id="ic-bone" viewBox="0 0 24 24"><path d="M7 12a2.5 2.5 0 1 0-3-3 2.5 2.5 0 0 0 1 4l10 10a2.5 2.5 0 0 0 4 1 2.5 2.5 0 0 0-3-3L7 12z"/></symbol>
+
 <symbol id="ic-zombie" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M9 8l1.5 1.5M15 8l-1.5 1.5M9 12.3c1 1 4 1 5 0"/><path d="M12 15v6M9 19h6"/></symbol>
+
 <symbol id="ic-ingot" viewBox="0 0 24 24"><path d="M6 9h12l2 6H4z"/><path d="M6 9l1-3h10l1 3"/></symbol>
+
 <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z"/></symbol>
+
 <symbol id="ic-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></symbol>
+
 <symbol id="ic-brick" viewBox="0 0 24 24"><rect x="3" y="9" width="8" height="6"/><rect x="13" y="9" width="8" height="6"/><rect x="8" y="15" width="8" height="6"/></symbol>
+
 <symbol id="ic-fire" viewBox="0 0 24 24"><path d="M12 2c1 3-3 4-3 8a3 3 0 0 0 6 0c0-1-1-2-1-3 2 1 3 4 3 6a5 5 0 0 1-10 0c0-4 3-6 5-11z"/></symbol>
+
 <symbol id="ic-log" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="6" rx="3"/><circle cx="6" cy="12" r="2"/></symbol>
+
 <symbol id="ic-torch" viewBox="0 0 24 24"><path d="M12 2c2 2 3 4 1 6-1 1-2 0-2-1 0 1-1 2-2 1-2-2-1-4 3-6z"/><path d="M12 9v13"/><path d="M9 22h6"/></symbol>
+
 <symbol id="ic-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h8V4"/><path d="M8 21v-6h8v6"/></symbol>
+
 </defs>
+
 </svg>
+
+
 
 <div id="versionBadge"><span class="dot"></span> BlockWorld v2.8 — Lihat Update</div>
 
+
+
 <div id="hint">
+
   <div class="badgeIcon"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></div>
+
   <h1>BlockWorld</h1>
+
   <span class="tagline">Bangun, jelajahi, dan bertahan hidup</span>
+
+
 
   <div id="playBtnFace">▶ <span class="desktopOnly">KLIK UNTUK MAIN</span><span class="mobileOnly" style="display:none">TAP UNTUK MAIN</span></div>
 
+
+
   <div class="controlsBox">
+
     <div class="desktopOnly">
+
       <div class="controlRow"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span class="lbl">gerak</span></div>
+
       <div class="controlRow"><kbd>Spasi</kbd><span class="lbl">lompat</span> &nbsp; <kbd>Shift</kbd><span class="lbl">lari</span></div>
+
       <div class="controlRow"><kbd>Mouse</kbd><span class="lbl">lihat sekitar</span></div>
+
       <div class="controlRow"><kbd>Klik Kiri</kbd><span class="lbl">tahan buat nambang</span></div>
+
       <div class="controlRow"><kbd>Klik Kanan</kbd><span class="lbl">pasang blok</span></div>
+
       <div class="controlRow"><kbd>1-9</kbd><span class="lbl">pilih blok</span> &nbsp; <kbd>Esc</kbd><span class="lbl">keluar mode main</span></div>
+
     </div>
+
     <div class="mobileOnly" style="display:none">
+
       <div class="controlRow"><kbd>Joystick kiri</kbd><span class="lbl">gerak</span></div>
+
       <div class="controlRow"><kbd>Tombol bulat</kbd><span class="lbl">lompat, tombol kecil lari</span></div>
+
       <div class="controlRow"><kbd>Geser layar</kbd><span class="lbl">buat nengok</span></div>
+
       <div class="controlRow"><kbd>Tombol merah</kbd><span class="lbl">tahan buat nambang</span></div>
+
       <div class="controlRow"><kbd>Tombol hijau</kbd><span class="lbl">pasang blok</span></div>
+
     </div>
+
   </div>
+
+
 
   <div class="noteBoxLabel">Tips</div>
+
   <div class="noteBox">
+
     <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-globe"/></svg></span><span>Dunia gak terbatas, ada gurun/salju/dataran, gua &amp; bijih di bawah tanah</span></div>
+
     <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></span><span>Tambang butuh waktu &amp; pickaxe yang cukup buat bijih keras</span></div>
+
     <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-tools"/></svg></span><span>Bikin Meja Kerja &amp; Furnace buat crafting, smelting, dan masak</span></div>
+
     <div class="noteRow"><span class="em em-danger"><svg class="svgicon ic-danger"><use href="#ic-warning"/></svg></span><span>Hati-hati <b>lava</b>, <b>zombie</b>, dan <b>skeleton</b> malam hari</span></div>
+
     <div class="noteRow"><span class="em em-hunger"><svg class="svgicon ic-hunger"><use href="#ic-drumstick"/></svg></span><span>Jaga lapar — makan apel/daging hasil buruan atau kebun</span></div>
+
   </div>
+
+
 
   <div id="patchNotesLink" class="icoRow"><svg class="svgicon"><use href="#ic-clipboard"/></svg> Lihat semua update &amp; perbaikan</div>
+
 </div>
+
+
 
 <div id="patchModal" class="modalOverlay">
+
   <div id="patchCard" class="modalCard">
+
     <h2 class="icoRow"><svg class="svgicon"><use href="#ic-clipboard"/></svg> Riwayat Update <span id="patchCloseBtn" class="modalClose"><svg class="svgicon"><use href="#ic-close"/></svg></span></h2>
+
     <div class="patchSub">Semua perubahan yang udah ditambahin ke BlockWorld</div>
 
+
+
     <div class="patchEntry newest">
+
       <div class="patchBadge">v2.8</div>
+
       <div>
+
         <div class="patchTitle">Farming, Ranjang, Busur, Cuaca &amp; Reruntuhan</div>
+
         <ul>
+
           <li>Farming: bibit gandum &amp; wortel bisa ditanam di atas rumput/tanah, tumbuh bertahap, dipanen jadi bahan makanan (roti &amp; wortel)</li>
+
           <li>Sistem tidur: craft Ranjang (kayu+wol dari domba baru) buat skip malam lewat tombol "Tidur"</li>
+
           <li>Senjata jarak jauh: craft Busur+Anak Panah, tombol "Panah" (atau tombol F) buat serang dari jauh</li>
+
           <li>Cuaca hujan acak: efek visual rintik hujan, langit meredup, dan peluang mob malam sedikit naik</li>
+
           <li>Reruntuhan bawah tanah langka berisi Peti Harta — tambang buat dapat loot acak</li>
+
           <li>Achievement/pencapaian kecil ditampilkan di panel Statistik, muncul toast pas baru didapat</li>
+
           <li>Tutorial singkat otomatis muncul sekali di sesi main pertama (kontrol disesuaikan mobile/desktop)</li>
+
           <li>Setting baru: Jarak Render &amp; Kualitas Grafis manual, plus World Seed (bisa disalin/diganti biar dunia bisa dibagi ke teman)</li>
+
           <li>Optimasi ukuran save: worldDiffs sekarang dipadatkan jadi array numerik, bukan string panjang berulang</li>
+
           <li>Cloud sync manual: tombol "Salin Kode Save" &amp; "Impor dari Kode" di Setting buat backup lewat Notes/Drive/WA (belum otomatis ke akun Google — lihat catatan di chat)</li>
+
         </ul>
+
       </div>
+
     </div>
+
+
 
     <div class="patchEntry v27">
+
       <div class="patchBadge">v2.7</div>
+
       <div>
+
         <div class="patchTitle">Keamanan &amp; Ketahanan Sistem Save</div>
+
         <ul>
+
           <li>Perbaikan celah keamanan: import/apply save gak lagi bisa "polusi" data internal game lewat key <code>__proto__</code> di file save (safe-merge)</li>
+
           <li>Validasi save diperketat: posisi/nyawa/lapar yang gak masuk akal (rusak, di luar batas wajar) otomatis ditolak atau dikoreksi biar karakter gak nyangkut/error</li>
+
           <li>Import file save yang corrupt/gak valid sekarang kasih pesan error yang jelas, gak lagi diem-diem gagal</li>
+
           <li>Setiap kali Simpan, save lama otomatis di-backup dulu sebelum ditimpa</li>
+
           <li>Tombol baru "Pulihkan Backup" di menu Setting buat balikin save sebelumnya kalau save terbaru bermasalah (pakai konfirmasi dulu)</li>
+
         </ul>
+
       </div>
+
     </div>
 
+
+
     <div class="patchEntry">
+
       <div class="patchBadge">v2.6</div>
+
       <div>
+
         <div class="patchTitle">Semua Emoji Diganti Icon SVG &amp; Halaman Utama Dipercantik</div>
+
         <ul>
+
           <li>Semua emoji (nyawa, lapar, item, resep crafting, statistik, dll) diganti dengan icon SVG kustom yang otomatis ikut warna tema — lebih tajam &amp; konsisten di semua HP</li>
+
           <li>Perbaikan bug icon SVG yang sempat tampil hitam/tidak jelas gara-gara warnanya gak ke-inherit dengan benar</li>
+
           <li>Desain ulang beberapa icon yang bentuknya kurang jelas: pickaxe, palu crafting, drumstick/lapar, tas, dan gear setting — sekarang lebih gampang dikenali</li>
+
           <li>Layar utama (start screen) dipercantik: bagian "Tips" sekarang pakai label section &amp; kartu kecil per baris dengan chip icon berwarna sesuai konteks (bahaya = merah, lapar = kuning)</li>
+
           <li>Baris daftar kontrol (WASD/joystick) dikasih pemisah tipis antar baris biar lebih rapi dibaca</li>
+
         </ul>
+
       </div>
+
     </div>
 
+
+
     <div class="patchEntry">
+
       <div class="patchBadge">v2.5</div>
+
       <div>
+
         <div class="patchTitle">Perombakan UI/UX &amp; Perbaikan Tampilan Layar Pendek</div>
+
         <ul>
+
           <li>Tampilan menyeluruh diperbarui: hotbar, HUD nyawa/lapar, panel kanan-atas, dan menu (Tas/Statistik/Setting/Riwayat Update) sekarang lebih rapi dengan efek kaca, bayangan, dan animasi halus</li>
+
           <li>Layar utama (start screen) dirombak — kontrol WASD/tombol sentuh ditampilkan dalam gaya tombol keyboard biar gampang dibaca</li>
+
           <li>Tombol aksi di kanan atas (Makan/Crafting/Tas/Statistik/Setting/Simpan) dirapikan jadi grid 2 kolom biar gak makan tempat</li>
+
           <li>Perbaikan bug: di HP mode landscape layar pendek, tombol HUD kanan-atas sempat numpuk/bertabrakan sama tombol kontrol sentuh (lompat/lari/tambang/pasang) di kanan bawah — sekarang otomatis mengecil &amp; gak tabrakan</li>
+
           <li>Kontrol sentuh (joystick, tombol lompat/lari/tambang/pasang) tampil lebih jelas dengan efek gradasi &amp; bayangan</li>
+
         </ul>
+
       </div>
+
     </div>
 
+
+
     <div class="patchEntry">
+
       <div class="patchBadge">v2.4</div>
+
       <div>
+
         <div class="patchTitle">Perbaikan Menu &amp; Update Otomatis</div>
+
         <ul>
+
           <li>Perbaikan bug tampilan: teks riwayat update sempat bocor/numpuk di layar menu utama, sekarang bersih</li>
+
           <li>Signature APK sekarang permanen — update selanjutnya gak perlu uninstall dulu</li>
+
           <li>Konten game sekarang otomatis ke-update tiap ada perubahan, tanpa perlu clear cache manual</li>
+
         </ul>
+
       </div>
+
     </div>
 
+
+
     <div class="patchEntry">
+
       <div class="patchBadge">v2.3</div>
+
       <div>
+
         <div class="patchTitle">Perbaikan Instalasi APK</div>
+
         <ul>
+
           <li>APK Android sekarang jalan fullscreen penuh — gak lagi kebuka sebagai tab browser</li>
+
         </ul>
+
       </div>
+
     </div>
 
+
+
     <div class="patchEntry">
+
       <div class="patchBadge">v2.2</div>
+
       <div>
+
         <div class="patchTitle">Audit Kode — Pemantapan Sebelum Deploy Mandiri</div>
+
         <ul>
+
           <li>Dicek ulang: save/load otomatis fallback ke localStorage kalau dijalankan di luar Claude (biar tetap jalan sebagai website/PWA berdiri sendiri)</li>
+
           <li>Dicek ulang: muncul pesan "Butuh [pickaxe]!" kalau coba nambang bijih yang lebih keras dari alat yang dipegang</li>
+
           <li>Dicek ulang: tombol Makan menolak dipakai &amp; kasih pesan kalau hunger udah penuh</li>
+
           <li>Dicek ulang: jumlah ayam/sapi/babi/zombie/skeleton dibatasi per jenis biar dunia gak numpuk mob</li>
+
           <li>Dicek ulang: minimap cuma digambar ulang saat posisi berubah cukup jauh, biar hemat baterai di HP</li>
+
           <li>Dicek ulang: tombol Reset Dunia/Save di menu Setting berfungsi dengan konfirmasi</li>
+
         </ul>
+
       </div>
+
     </div>
 
+
+
     <div class="patchEntry">
+
       <div class="patchBadge">v2.1</div>
+
       <div>
+
         <div class="patchTitle">Update Besar — Survival &amp; Crafting Dalam</div>
+
         <ul>
+
           <li>Bijih baru: batu bara, besi, emas, berlian — tersebar di bawah tanah</li>
+
           <li>Gua bawah tanah &amp; variasi biome (gurun, salju, dataran)</li>
+
           <li>Struktur sumur kecil yang muncul random</li>
+
           <li>Sistem pickaxe kayu/batu/besi — nambang sekarang butuh waktu (progress ring) &amp; tier alat</li>
+
           <li>Meja Kerja &amp; Furnace: crafting pickaxe, zirah, smelting bijih jadi ingot, masak daging</li>
+
           <li>Zirah besi (kurangi damage) — pakai/lepas lewat tas</li>
+
           <li>Mob baru: sapi &amp; babi (jinak), skeleton (serang jarak jauh malam hari)</li>
+
           <li>Mob sekarang drop item (daging mentah, tulang, daging busuk)</li>
+
           <li>Preview transparan sebelum naro blok</li>
+
           <li>Tas (inventory penuh), panel Statistik, minimap &amp; koordinat di HUD</li>
+
           <li>Efek layar merah pas kena damage + suara nambang/kena hit</li>
+
           <li>3 slot save terpisah + export/import save ke file JSON</li>
+
           <li>Lari (Shift/tombol lari) &amp; slider sensitivitas kontrol sentuh</li>
+
         </ul>
+
       </div>
+
     </div>
 
+
+
     <div class="patchEntry">
+
       <div class="patchBadge">v2.0</div>
+
       <div>
+
         <div class="patchTitle">BlockWorld — Update Besar</div>
+
         <ul>
+
           <li>Ganti nama jadi BlockWorld + tampilan menu baru</li>
+
           <li>Dunia tak terbatas (chunk streaming otomatis)</li>
+
           <li>Siklus siang &amp; malam</li>
+
           <li>Sistem nyawa (<svg class="svgicon ic-heart"><use href="#ic-heart"/></svg>) dan lapar (<svg class="svgicon ic-hunger"><use href="#ic-drumstick"/></svg>)</li>
+
           <li>Blok baru: air, lava, kaca, bata</li>
+
           <li>Inventory nyata — harus nambang dulu baru bisa pasang</li>
+
           <li>Crafting sederhana (pasir→kaca, batu→bata)</li>
+
           <li>Mob: ayam (siang) &amp; zombie (malam) + sistem serang</li>
+
           <li>Save/Load otomatis (progress kesimpen)</li>
+
         </ul>
+
       </div>
+
     </div>
 
+
+
     <div class="patchEntry">
+
       <div class="patchBadge">v1.2</div>
+
       <div>
+
         <div class="patchTitle">Perbaikan Kontrol &amp; Performa</div>
+
         <ul>
+
           <li>Benerin arah analog/WASD yang kebalik (maju jadi maju beneran)</li>
+
           <li>Matiin shadow &amp; kecilin dunia khusus di HP biar gak berat</li>
+
           <li>Batasin resolusi render di HP</li>
+
         </ul>
+
       </div>
+
     </div>
 
+
+
     <div class="patchEntry">
+
       <div class="patchBadge">v1.1</div>
+
       <div>
+
         <div class="patchTitle">Dukungan HP</div>
+
         <ul>
+
           <li>Kontrol sentuh: joystick gerak, geser layar buat nengok</li>
+
           <li>Tombol lompat, hancurkan, dan pasang blok versi sentuh</li>
+
         </ul>
+
       </div>
+
     </div>
 
+
+
     <div class="patchEntry">
+
       <div class="patchBadge">v1.0</div>
+
       <div>
+
         <div class="patchTitle">Rilis Awal</div>
+
         <ul>
+
           <li>Dunia voxel dengan terrain &amp; pohon</li>
+
           <li>Kontrol first-person + hancurkan/pasang blok</li>
+
           <li>Hotbar 6 jenis blok</li>
+
         </ul>
+
       </div>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <div id="invModal" class="modalOverlay">
+
   <div class="modalCard">
+
     <h2 class="icoRow"><svg class="svgicon"><use href="#ic-backpack"/></svg> Tas <span id="invCloseBtn" class="modalClose"><svg class="svgicon"><use href="#ic-close"/></svg></span></h2>
-    <div class="modalSub">Item di luar hotbar (bahan, makanan, alat, zirah)</div>
+
+    <div class="modalSub">Item di luar hotbar &mdash; ketuk slot zirah untuk pakai/lepas</div>
+
     <div id="invGrid" class="invGrid"></div>
+
   </div>
+
 </div>
+
+
 
 <div id="statsModal" class="modalOverlay">
+
   <div class="modalCard">
+
     <h2 class="icoRow"><svg class="svgicon"><use href="#ic-chart"/></svg> Statistik <span id="statsCloseBtn" class="modalClose"><svg class="svgicon"><use href="#ic-close"/></svg></span></h2>
+
     <div id="statsBody"></div>
+
   </div>
+
 </div>
+
+
 
 <div id="settingsModal" class="modalOverlay">
+
   <div class="modalCard">
+
     <h2 class="icoRow"><svg class="svgicon"><use href="#ic-gear"/></svg> Setting <span id="settingsCloseBtn" class="modalClose"><svg class="svgicon"><use href="#ic-close"/></svg></span></h2>
+
     <div class="modalSub">Slot save, sensitivitas, dan suara</div>
 
+
+
     <div style="font-size:12px; margin-bottom:6px; opacity:0.8;">Slot Save Aktif</div>
+
     <div class="slotRow" id="slotRow"></div>
 
+
+
     <div class="settingsRow">
+
       <span>Ekspor / Impor Save</span>
+
       <span>
+
         <span class="smallBtn icoRow" id="exportBtn"><svg class="svgicon"><use href="#ic-arrow-down"/></svg> Ekspor</span>
+
         <span class="smallBtn icoRow" id="importBtn"><svg class="svgicon"><use href="#ic-arrow-up"/></svg> Impor</span>
+
         <input type="file" id="importFile" accept="application/json" style="display:none">
+
       </span>
+
     </div>
 
+
+
     <div class="settingsRow">
+
       <span>Sensitivitas Lihat</span>
+
       <input type="range" id="sensRange" min="30" max="200" value="100">
+
     </div>
 
+
+
     <div class="settingsRow">
+
       <span>Efek Suara</span>
+
       <input type="checkbox" id="sfxCheck" checked>
+
     </div>
 
+
+
     <div class="settingsRow">
+
       <span>Jarak Render (chunk)</span>
+
       <input type="range" id="renderDistRange" min="1" max="4" value="2">
+
     </div>
 
+
+
     <div class="settingsRow">
+
       <span>Kualitas Grafis</span>
+
       <select id="qualitySelect" style="background:#222;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 6px;">
+
         <option value="low">Rendah</option>
+
         <option value="medium">Sedang</option>
+
         <option value="high">Tinggi</option>
+
       </select>
+
     </div>
 
+
+
     <div class="settingsRow">
+
       <span>World Seed</span>
+
       <span style="display:flex;gap:6px;align-items:center;">
+
         <span id="seedDisplay" style="font-weight:700;font-size:11px;"></span>
+
         <span class="smallBtn" id="copySeedBtn">Salin</span>
+
       </span>
-    </div>
-    <div class="settingsRow">
-      <span>Pakai Seed Lain</span>
-      <span style="display:flex;gap:6px;">
-        <input type="text" id="seedInput" placeholder="seed/kata" style="width:90px;background:#111;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 6px;">
-        <span class="smallBtn" id="applySeedBtn">Terapkan</span>
-      </span>
+
     </div>
 
     <div class="settingsRow">
-      <span>Pulihkan Backup (slot aktif)</span>
-      <span class="smallBtn icoRow" id="restoreBackupBtn"><svg class="svgicon"><use href="#ic-arrow-up"/></svg> Restore</span>
+
+      <span>Pakai Seed Lain</span>
+
+      <span style="display:flex;gap:6px;">
+
+        <input type="text" id="seedInput" placeholder="seed/kata" style="width:90px;background:#111;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 6px;">
+
+        <span class="smallBtn" id="applySeedBtn">Terapkan</span>
+
+      </span>
+
     </div>
+
+
+
+    <div class="settingsRow">
+
+      <span>Pulihkan Backup (slot aktif)</span>
+
+      <span class="smallBtn icoRow" id="restoreBackupBtn"><svg class="svgicon"><use href="#ic-arrow-up"/></svg> Restore</span>
+
+    </div>
+
+
 
     <div class="settingsRow" style="flex-direction:column;align-items:stretch;gap:6px;">
+
       <span>Cloud Sync Manual (salin kode ke Notes/Drive/WA, tempel lagi di HP lain)</span>
+
       <span style="display:flex;gap:6px;">
+
         <span class="smallBtn icoRow" id="copySaveBtn" style="flex:1;justify-content:center;">Salin Kode Save</span>
+
       </span>
+
       <textarea id="pasteSaveArea" rows="2" style="width:100%;font-size:10px;background:#111;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;" placeholder="Tempel kode save di sini..."></textarea>
+
       <span class="smallBtn icoRow" id="pasteImportBtn" style="align-self:flex-start;">Impor dari Kode</span>
+
     </div>
+
+
 
     <div class="settingsRow">
+
       <span>Reset Dunia / Save (slot aktif)</span>
+
       <span class="smallBtn icoRow" id="resetWorldBtn" style="color:#ff8080;"><svg class="svgicon"><use href="#ic-trash"/></svg> Reset</span>
+
     </div>
+
   </div>
+
 </div>
+
+
 
 <div id="tutorialModal" class="modalOverlay">
+
   <div class="modalCard">
+
     <h2 class="icoRow"><svg class="svgicon"><use href="#ic-tools"/></svg> Tutorial Singkat <span id="tutorialCloseBtn" class="modalClose"><svg class="svgicon"><use href="#ic-close"/></svg></span></h2>
+
     <div class="modalSub">Kontrol dasar biar kamu gak bingung pas mulai main</div>
+
     <div class="controlsBox" id="tutorialControlsBox"></div>
+
     <div style="text-align:center;margin-top:14px;"><span class="smallBtn icoRow" id="tutorialOkBtn">Mengerti, Ayo Main!</span></div>
+
   </div>
+
 </div>
+
+
 
 <div id="deadMsg" class="icoRow"><svg class="svgicon"><use href="#ic-skull"/></svg> Kamu mati... respawn</div>
+
 <div id="toastMsg"></div>
 
+
+
 <div id="rotateOverlay">
+
   <div class="icon"><svg class="svgicon"><use href="#ic-phone-rotate"/></svg></div>
+
   <div class="msg">Putar HP kamu ke mode <b>Horizontal (Landscape)</b><br>biar tampilan game lebih lega, kayak Minecraft asli</div>
+
 </div>
+
+
 
 <div id="dmgFlash"></div>
 
+
+
 <div id="crosshair" style="display:none;"></div>
+
 <div id="vignette"></div>
+
 <div id="miningRing">
+
   <svg viewBox="0 0 36 36">
+
     <circle id="miningBg" cx="18" cy="18" r="15"></circle>
+
     <circle id="miningFg" cx="18" cy="18" r="15" stroke-dasharray="94.2" stroke-dashoffset="94.2"></circle>
+
   </svg>
+
 </div>
+
+
 
 <div id="hotbarWrap" style="display:none;">
+
   <div id="craftPanel"></div>
+
   <div id="hotbar"></div>
+
 </div>
+
+
 
 <div id="hud" style="display:none;">
+
   <div class="icoRow"><svg class="svgicon"><use href="#ic-pickaxe"/></svg> <span id="blockCount">0</span> ditambang &nbsp; <span id="timeIcon" class="icoRow"><svg class="svgicon ic-sun"><use href="#ic-sun"/></svg></span></div>
+
   <div class="barLabel"><span class="icoRow"><svg class="svgicon ic-heart"><use href="#ic-heart"/></svg> Nyawa</span><span id="healthNum">100</span></div>
+
   <div class="barBg"><div class="barFill" id="healthFill" style="width:100%"></div></div>
+
   <div class="barLabel"><span class="icoRow"><svg class="svgicon ic-hunger"><use href="#ic-drumstick"/></svg> Lapar</span><span id="hungerNum">100</span></div>
+
   <div class="barBg"><div class="barFill" id="hungerFill" style="width:100%"></div></div>
+
   <div id="coords">X:0 Y:0 Z:0</div>
+
   <div id="toolInfo">Tool: Tangan</div>
+
 </div>
+
+
 
 <div id="topRight" style="display:none;">
+
   <div id="fps"></div>
+
   <canvas id="minimap" width="84" height="84"></canvas>
+
   <div class="actionGrid">
+
     <button class="smallBtn icoRow" id="eatBtn"><svg class="svgicon"><use href="#ic-utensils"/></svg> Makan (<span id="foodCount">0</span>)</button>
+
     <button class="smallBtn icoRow" id="craftToggleBtn"><svg class="svgicon"><use href="#ic-tools"/></svg> Crafting</button>
+
     <button class="smallBtn icoRow" id="invToggleBtn"><svg class="svgicon"><use href="#ic-backpack"/></svg> Tas</button>
+
     <button class="smallBtn icoRow" id="statsToggleBtn"><svg class="svgicon"><use href="#ic-chart"/></svg> Statistik</button>
+
     <button class="smallBtn icoRow" id="settingsToggleBtn"><svg class="svgicon"><use href="#ic-gear"/></svg> Setting</button>
+
     <button class="smallBtn icoRow" id="saveBtn"><svg class="svgicon"><use href="#ic-save"/></svg> Simpan</button>
+
     <button class="smallBtn icoRow" id="sleepBtn"><svg class="svgicon"><use href="#ic-moon"/></svg> Tidur</button>
+
     <button class="smallBtn icoRow" id="shootBtn"><svg class="svgicon"><use href="#ic-pickaxe"/></svg> Panah</button>
+
   </div>
+
   <span id="saveMsg"></span>
+
 </div>
+
+
 
 <div id="lookZone" style="display:none;"></div>
+
 <div id="joystickZone" style="display:none;">
+
   <div id="joystickBase"></div>
+
   <div id="joystickStick"></div>
+
 </div>
+
 <div id="touchJumpBtn" style="display:none;">LOMPAT</div>
+
 <div id="touchSprintBtn" style="display:none;">LARI</div>
+
 <div id="touchActionBtns" style="display:none;">
+
   <div class="touchBtn" id="touchPlaceBtn"><svg class="svgicon"><use href="#ic-plus"/></svg></div>
+
   <div class="touchBtn" id="touchBreakBtn"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></div>
+
 </div>
+
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
 <script>
+
 (function() {
+
   // ================= MOBILE DETECTION (must run first) =================
+
   const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
+
+
   // ================= ICON HELPER (SVG sprite, replaces emoji) =================
+
   function svgIcon(name, cls) {
+
     return `<svg class="svgicon${cls ? ' ' + cls : ''}"><use href="#ic-${name}"/></svg>`;
+
   }
+
+
 
   // ================= SCENE / RENDERER =================
+
   const scene = new THREE.Scene();
+
   scene.background = new THREE.Color(0x87CEEB);
+
   const DAY_COLOR = new THREE.Color(0x87CEEB);
+
   const NIGHT_COLOR = new THREE.Color(0x0a1330);
+
   scene.fog = new THREE.Fog(0x87CEEB, isMobile ? 22 : 38, isMobile ? 50 : 85);
 
+
+
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
   const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, powerPreference: 'high-performance' });
+
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 2));
+
   renderer.setSize(window.innerWidth, window.innerHeight);
+
   renderer.shadowMap.enabled = false; // shadows off for everyone: too many chunk-streamed blocks
+
   document.body.appendChild(renderer.domElement);
 
+
+
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+
   scene.add(hemiLight);
+
   const sunLight = new THREE.DirectionalLight(0xffffff, 0.9);
+
   sunLight.position.set(50, 80, 30);
+
   scene.add(sunLight);
 
+
+
   if (isMobile) {
+
     document.querySelectorAll('.desktopOnly').forEach(el => el.style.display = 'none');
+
     document.querySelectorAll('.mobileOnly').forEach(el => el.style.display = 'inline');
+
   }
+
+
 
   // ================= BLOCK TYPES =================
+
   const BLOCK_TYPES = {
+
     grass:  { color: 0x5fb83a, name: 'Rumput', hardness: 0.3 },
+
     dirt:   { color: 0x8a5a2b, name: 'Tanah', hardness: 0.3 },
+
     stone:  { color: 0x8c8c8c, name: 'Batu', hardness: 0.8, tier: 1 },
+
     wood:   { color: 0x6b4423, name: 'Kayu', hardness: 0.4 },
+
     leaves: { color: 0x2f8f2f, name: 'Daun', hardness: 0.15 },
+
     sand:   { color: 0xdccb7a, name: 'Pasir', hardness: 0.3 },
+
     glass:  { color: 0xbfe7ea, name: 'Kaca', transparent: true, opacity: 0.45, hardness: 0.2 },
+
     brick:  { color: 0x9a3d2f, name: 'Bata', hardness: 0.5 },
+
     snow:   { color: 0xf5f8fa, name: 'Salju', hardness: 0.2 },
+
     water:  { color: 0x2b6fd1, name: 'Air', transparent: true, opacity: 0.55, liquid: true },
+
     lava:   { color: 0xdd4b16, name: 'Lava', liquid: true, emissive: 0x7a1e00 },
+
     coal_ore:    { color: 0x3a3a3a, name: 'Bijih Batu Bara', hardness: 0.8, tier: 1 },
+
     iron_ore:    { color: 0xd8b98a, name: 'Bijih Besi', hardness: 1.0, tier: 2 },
+
     gold_ore:    { color: 0xf0d24a, name: 'Bijih Emas', hardness: 1.0, tier: 2 },
+
     diamond_ore: { color: 0x6ff0e8, name: 'Bijih Berlian', hardness: 1.4, tier: 3, emissive: 0x0a3d3a },
+
     torch:     { color: 0xffdd66, name: 'Obor', hardness: 0.1, emissive: 0xffaa00 },
+
     furnace:   { color: 0x555555, name: 'Furnace', hardness: 0.6 },
+
     workbench: { color: 0x9c6b3a, name: 'Meja Kerja', hardness: 0.5 },
+
     bed:       { color: 0xb03030, name: 'Ranjang', hardness: 0.4 },
+
     chest:     { color: 0xcfa03a, name: 'Peti Harta', hardness: 0.6 },
+
     wheat_seeds:  { color: 0xd9c97a, name: 'Bibit Gandum', hardness: 0 },
+
     carrot_seeds: { color: 0xe08a3c, name: 'Bibit Wortel', hardness: 0 },
+
     wheat0:  { color: 0xcfe8a0, name: 'Gandum (baru tanam)', hardness: 0.1, nonSolid: true },
+
     wheat1:  { color: 0xb5d86a, name: 'Gandum (tumbuh)', hardness: 0.1, nonSolid: true },
+
     wheat2:  { color: 0x9fcf3a, name: 'Gandum (hampir panen)', hardness: 0.1, nonSolid: true },
+
     wheat3:  { color: 0xe8c93a, name: 'Gandum (siap panen)', hardness: 0.1, nonSolid: true },
+
     carrot0: { color: 0xcfe8a0, name: 'Wortel (baru tanam)', hardness: 0.1, nonSolid: true },
+
     carrot1: { color: 0xb5d86a, name: 'Wortel (tumbuh)', hardness: 0.1, nonSolid: true },
+
     carrot2: { color: 0x9fcf3a, name: 'Wortel (hampir panen)', hardness: 0.1, nonSolid: true },
+
     carrot3: { color: 0xff9a3c, name: 'Wortel (siap panen)', hardness: 0.1, nonSolid: true },
+
   };
+
   const HOTBAR = ['grass','dirt','stone','wood','leaves','sand','glass','brick','snow',
+
     'coal_ore','iron_ore','gold_ore','diamond_ore','torch','furnace','workbench','bed',
+
     'wheat_seeds','carrot_seeds'];
+
   const SEED_CROP_MAP = { wheat_seeds: 'wheat', carrot_seeds: 'carrot' };
+
   let selectedIndex = 0;
 
+
+
   const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+
   const materialCache = {};
+
   function getMaterial(type) {
+
     if (!materialCache[type]) {
+
       const def = BLOCK_TYPES[type];
+
       const opts = { color: def.color };
+
       if (def.transparent) { opts.transparent = true; opts.opacity = def.opacity; }
+
       if (def.emissive) opts.emissive = def.emissive;
+
       materialCache[type] = new THREE.MeshLambertMaterial(opts);
+
     }
+
     return materialCache[type];
+
   }
+
+
 
   // ================= TOOLS =================
+
   function currentToolTier() {
+
     if (inventory.pickaxe_iron > 0) return 3;
+
     if (inventory.pickaxe_stone > 0) return 2;
+
     if (inventory.pickaxe_wood > 0) return 1;
+
     return 0;
+
   }
+
   function toolSpeedMult(tier) { return [1, 1.6, 2.6, 4][tier] || 1; }
+
   const TOOL_NAMES = ['Tangan', 'Pickaxe Kayu', 'Pickaxe Batu', 'Pickaxe Besi'];
 
+
+
   // ================= INVENTORY =================
+
   const inventory = {};
+
   HOTBAR.forEach(t => inventory[t] = 0);
+
   ['apple','raw_chicken','cooked_chicken','raw_beef','cooked_beef','raw_porkchop','cooked_porkchop',
+
    'rotten_flesh','bone','iron_ingot','gold_ingot','pickaxe_wood','pickaxe_stone','pickaxe_iron','iron_armor',
+
    'wool','bow','arrow','wheat','carrot','bread']
+
    .forEach(t => inventory[t] = 0);
+
   let armorEquipped = false;
 
+
+
   const FOOD_VALUES = { apple: 25, raw_chicken: 15, cooked_chicken: 35, raw_beef: 15, cooked_beef: 38,
+
     raw_porkchop: 15, cooked_porkchop: 36, rotten_flesh: 8, carrot: 20, bread: 30 };
+
   const FOOD_ORDER = ['bread','cooked_beef','cooked_porkchop','cooked_chicken','carrot','apple','raw_beef','raw_porkchop','raw_chicken','rotten_flesh'];
+
   function bestFood() { return FOOD_ORDER.find(f => inventory[f] > 0); }
 
+
+
   const ITEM_LABELS = {
+
     apple: { icon: 'apple', text: 'Apel' },
+
     raw_chicken: { icon: 'drumstick', text: 'Ayam Mentah' }, cooked_chicken: { icon: 'drumstick', text: 'Ayam Matang', cls: 'ic-flame' },
+
     raw_beef: { icon: 'steak', text: 'Daging Mentah' }, cooked_beef: { icon: 'steak', text: 'Daging Matang', cls: 'ic-flame' },
+
     raw_porkchop: { icon: 'bacon', text: 'Babi Mentah' }, cooked_porkchop: { icon: 'bacon', text: 'Babi Matang', cls: 'ic-flame' },
+
     rotten_flesh: { icon: 'zombie', text: 'Daging Busuk' }, bone: { icon: 'bone', text: 'Tulang' },
+
     iron_ingot: { icon: 'ingot', text: 'Iron Ingot', cls: 'ic-iron' }, gold_ingot: { icon: 'ingot', text: 'Gold Ingot', cls: 'ic-gold' },
+
     pickaxe_wood: { icon: 'pickaxe', text: 'Pickaxe Kayu' }, pickaxe_stone: { icon: 'pickaxe', text: 'Pickaxe Batu' }, pickaxe_iron: { icon: 'pickaxe', text: 'Pickaxe Besi', cls: 'ic-iron' },
+
     iron_armor: { icon: 'shield', text: 'Zirah Besi', cls: 'ic-iron' },
+
     wool: { icon: 'brick', text: 'Wol' }, bow: { icon: 'shield', text: 'Busur' }, arrow: { icon: 'pickaxe', text: 'Anak Panah' },
+
     wheat: { icon: 'log', text: 'Gandum' }, carrot: { icon: 'apple', text: 'Wortel' }, bread: { icon: 'apple', text: 'Roti' },
+
   };
+
+
 
   // ================= WORLD / CHUNK SYSTEM =================
+
   const CHUNK_SIZE = 8;
+
   let RENDER_RADIUS = isMobile ? 1 : 2;
+
   const world = new Map();        // "x,y,z" -> {mesh, type}   (currently rendered blocks)
+
   const worldDiffs = new Map();   // "x,y,z" -> type ('' = removed) (persists edits)
+
   const loadedChunks = new Map(); // "cx,cz" -> [keys]
+
   const worldGroup = new THREE.Group();
+
   scene.add(worldGroup);
 
+
+
   function key(x, y, z) { return x + ',' + y + ',' + z; }
+
   // ================= WORLD SEED =================
+
   // Seed dipakai buat menggeser koordinat yang masuk ke fungsi noise, jadi tiap seed
+
   // menghasilkan dunia yang berbeda tapi tetap deterministik (bisa dibagikan ke teman).
+
   let WORLD_SEED = Math.floor(Math.random() * 1e9);
+
   function seededRandom(x, z, salt) {
+
     const n = Math.sin(x * 127.1 + z * 311.7 + salt * 74.7 + WORLD_SEED * 0.937) * 43758.5453;
+
     return n - Math.floor(n);
+
   }
+
   function pseudoNoise(x, z) {
+
     const sx = x + WORLD_SEED * 0.31, sz = z + WORLD_SEED * 0.71;
+
     return (
+
       Math.sin(sx * 0.15) * 2 + Math.cos(sz * 0.18) * 2 +
+
       Math.sin((sx + sz) * 0.08) * 3 + Math.sin(sx * 0.05) * Math.cos(sz * 0.05) * 2
+
     );
+
   }
+
   function groundHeightAt(x, z) { return Math.round(pseudoNoise(x, z)) + 6; }
+
   function biomeAt(x, z) {
+
     const sx = x + WORLD_SEED * 0.31, sz = z + WORLD_SEED * 0.71;
+
     const b = Math.sin(sx * 0.02) * Math.cos(sz * 0.023) + Math.sin((sx - sz) * 0.015);
+
     if (b < -0.5) return 'desert';
+
     if (b > 0.6) return 'snow';
+
     return 'plains';
+
   }
+
   function caveNoise(x, y, z) {
+
     const sx = x + WORLD_SEED * 0.31, sz = z + WORLD_SEED * 0.71;
+
     return Math.sin(sx * 0.25 + y * 0.37) * Math.cos(sz * 0.29 - y * 0.21) + Math.sin((sx + sz) * 0.13 + y * 0.5);
+
   }
+
+
 
   function createBlockMesh(x, y, z, type, animate) {
+
     const k = key(x, y, z);
+
     if (world.has(k)) return;
+
     const mesh = new THREE.Mesh(boxGeo, getMaterial(type));
+
     mesh.position.set(x, y, z);
+
     mesh.userData = { x, y, z, type };
+
     if (animate) { mesh.scale.set(0.01, 0.01, 0.01); mesh.userData.spawnT = performance.now(); }
+
     worldGroup.add(mesh);
+
     world.set(k, { mesh, type });
+
   }
+
   function destroyBlockMesh(x, y, z) {
+
     const k = key(x, y, z);
+
     const b = world.get(k);
+
     if (!b) return;
+
     worldGroup.remove(b.mesh);
+
     world.delete(k);
+
   }
+
+
 
   function placeGenBlock(x, y, z, type, keysInChunk) {
+
     const k = key(x, y, z);
+
     if (worldDiffs.has(k)) {
+
       const d = worldDiffs.get(k);
+
       if (d === '') return;
+
       type = d;
+
     }
+
     createBlockMesh(x, y, z, type, false);
+
     keysInChunk.push(k);
+
   }
+
+
 
   function generateChunk(cx, cz) {
+
     const ck = cx + ',' + cz;
+
     if (loadedChunks.has(ck)) return;
+
     const keysInChunk = [];
+
     const x0 = cx * CHUNK_SIZE, z0 = cz * CHUNK_SIZE;
+
     for (let x = x0; x < x0 + CHUNK_SIZE; x++) {
+
       for (let z = z0; z < z0 + CHUNK_SIZE; z++) {
+
         const h = groundHeightAt(x, z);
+
         const biome = biomeAt(x, z);
+
         const surfaceType = (h <= 4) ? 'sand' : (biome === 'desert' ? 'sand' : biome === 'snow' ? 'snow' : 'grass');
+
         for (let y = 0; y <= h; y++) {
+
           let type;
+
           if (y === h) {
+
             type = surfaceType;
+
           } else if (y >= h - 2) {
+
             type = (biome === 'desert' && h > 4) ? 'sand' : 'dirt';
+
           } else {
+
             type = 'stone';
+
             const rv = seededRandom(x, z, y + 50);
+
             if (h - y > 10 && rv < 0.01) type = 'diamond_ore';
+
             else if (rv < 0.03) type = 'gold_ore';
+
             else if (rv < 0.07) type = 'iron_ore';
+
             else if (rv < 0.14) type = 'coal_ore';
+
             if (y < h - 4 && y > 2 && caveNoise(x, y, z) > 1.35) continue; // gua: lubang kosong
+
           }
+
           placeGenBlock(x, y, z, type, keysInChunk);
+
         }
+
         if (h < 4) {
+
           for (let y = h + 1; y <= 4; y++) placeGenBlock(x, y, z, 'water', keysInChunk);
+
         } else if (h <= 6 && seededRandom(x, z, 2) < 0.004) {
+
           placeGenBlock(x, h, z, 'lava', keysInChunk);
+
         } else if (h > 5 && biome !== 'desert' && seededRandom(x, z, 20) < 0.0025) {
+
           // struktur sumur kecil
+
           for (let rx = -1; rx <= 1; rx++) for (let rz = -1; rz <= 1; rz++) {
+
             if (Math.abs(rx) === 1 || Math.abs(rz) === 1) placeGenBlock(x + rx, h + 1, z + rz, 'brick', keysInChunk);
+
           }
+
           placeGenBlock(x, h, z, 'water', keysInChunk);
+
         } else if (h > 5 && biome !== 'desert' && seededRandom(x, z, 1) < 0.02) {
+
           const th = 4 + Math.floor(seededRandom(x, z, 3) * 2);
+
           for (let ty = 1; ty <= th; ty++) placeGenBlock(x, h + ty, z, 'wood', keysInChunk);
+
           for (let lx = -2; lx <= 2; lx++)
+
             for (let lz = -2; lz <= 2; lz++)
+
               for (let ly = th; ly <= th + 2; ly++) {
+
                 if (Math.abs(lx) + Math.abs(lz) + Math.abs(ly - th - 1) <= 3 && seededRandom(x + lx * 13, z + lz * 7, ly + 4) < 0.85) {
+
                   placeGenBlock(x + lx, h + ly, z + lz, 'leaves', keysInChunk);
+
                 }
+
               }
+
         }
+
       }
+
     }
+
     // Reruntuhan bawah tanah langka dengan Peti Harta (loot chest) — sekali per chunk
+
     if (seededRandom(cx, cz, 77) < 0.09) {
+
       const rx = x0 + 2 + Math.floor(seededRandom(cx, cz, 78) * (CHUNK_SIZE - 4));
+
       const rz = z0 + 2 + Math.floor(seededRandom(cx, cz, 79) * (CHUNK_SIZE - 4));
+
       const surfaceH = groundHeightAt(rx, rz);
+
       const ry = Math.max(2, surfaceH - 6 - Math.floor(seededRandom(cx, cz, 80) * 4));
+
       for (let dx = -1; dx <= 1; dx++) {
+
         for (let dz = -1; dz <= 1; dz++) {
+
           for (let dy = 0; dy <= 2; dy++) {
+
             const bx = rx + dx, by = ry + dy, bz = rz + dz;
+
             const isWall = Math.abs(dx) === 1 || Math.abs(dz) === 1 || dy === 0 || dy === 2;
+
             if (isWall) {
+
               destroyBlockMesh(bx, by, bz);
+
               placeGenBlock(bx, by, bz, 'brick', keysInChunk);
+
             } else {
+
               destroyBlockMesh(bx, by, bz);
+
             }
+
           }
+
         }
+
       }
+
       destroyBlockMesh(rx, ry + 1, rz);
+
       placeGenBlock(rx, ry + 1, rz, 'chest', keysInChunk);
+
     }
+
     // apply player-built blocks in this chunk that aren't part of base terrain
+
     for (const [k, type] of worldDiffs) {
+
       if (type === '' || world.has(k)) continue;
+
       const parts = k.split(',').map(Number);
+
       const dx = parts[0], dz = parts[2];
+
       if (dx >= x0 && dx < x0 + CHUNK_SIZE && dz >= z0 && dz < z0 + CHUNK_SIZE) {
+
         createBlockMesh(dx, parts[1], dz, type, false);
+
         keysInChunk.push(k);
+
       }
+
     }
+
     loadedChunks.set(ck, keysInChunk);
+
   }
+
+
 
   function unloadChunk(ck) {
+
     const keys = loadedChunks.get(ck);
+
     if (!keys) return;
+
     for (const k of keys) {
+
       const b = world.get(k);
+
       if (b) { worldGroup.remove(b.mesh); world.delete(k); }
+
     }
+
     loadedChunks.delete(ck);
+
   }
+
+
 
   let lastChunkUpdate = 0;
+
   function updateChunks(px, pz, force) {
+
     const now = performance.now();
+
     if (!force && now - lastChunkUpdate < 500) return;
+
     lastChunkUpdate = now;
+
     const pcx = Math.floor(px / CHUNK_SIZE), pcz = Math.floor(pz / CHUNK_SIZE);
+
     const needed = new Set();
+
     for (let dx = -RENDER_RADIUS; dx <= RENDER_RADIUS; dx++) {
+
       for (let dz = -RENDER_RADIUS; dz <= RENDER_RADIUS; dz++) {
+
         const cx = pcx + dx, cz = pcz + dz;
+
         const ck = cx + ',' + cz;
+
         needed.add(ck);
+
         if (!loadedChunks.has(ck)) generateChunk(cx, cz);
+
       }
+
     }
+
     for (const ck of Array.from(loadedChunks.keys())) {
+
       if (!needed.has(ck)) unloadChunk(ck);
+
     }
+
   }
+
+
 
   // mining / placing (records diffs + inventory)
+
   // worldDiffsPrev: kalau taruh-lalu-bongkar blok yang sama, kembalikan (atau hapus) diff-nya
+
   // langsung alih-alih numpuk entry mubazir di save saat sesi main lama.
+
   const worldDiffsPrev = new Map();
+
   const minedByType = {};
 
+
+
   // ================= FARMING (bibit gandum & wortel) =================
+
   const CROP_DEFS = {
+
     wheat:  { stages: 4, growMs: 35000, seedItem: 'wheat_seeds',  matureItem: 'wheat' },
+
     carrot: { stages: 4, growMs: 30000, seedItem: 'carrot_seeds', matureItem: 'carrot' },
+
   };
+
   const cropData = new Map(); // "x,y,z" -> { crop, stage, plantedAt }
+
   let cropsHarvested = 0, chestsOpened = 0, sleepsCount = 0;
 
+
+
   function tryPlantCrop(seedType, x, y, z) {
+
     const cropId = SEED_CROP_MAP[seedType];
+
     if (!cropId) return false;
+
     if (world.has(key(x, y, z))) return false;
+
     if (!inventory[seedType] || inventory[seedType] <= 0) { showToast('Butuh bibit dulu'); return false; }
+
     const below = world.get(key(x, y - 1, z));
+
     if (!below || (below.type !== 'grass' && below.type !== 'dirt')) { showToast('Tanam di atas tanah/rumput'); return false; }
+
     inventory[seedType]--;
+
     const type = cropId + '0';
+
     const k = key(x, y, z);
+
     if (!worldDiffsPrev.has(k)) worldDiffsPrev.set(k, worldDiffs.has(k) ? worldDiffs.get(k) : undefined);
+
     worldDiffs.set(k, type);
+
     createBlockMesh(x, y, z, type, true);
+
     cropData.set(k, { crop: cropId, stage: 0, plantedAt: Date.now() });
+
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
+
     const ck = cx + ',' + cz;
+
     if (loadedChunks.has(ck)) loadedChunks.get(ck).push(k);
+
     refreshHotbarUI();
+
     return true;
+
   }
+
   function updateCrops(now) {
+
     for (const [k, c] of cropData) {
+
       const def = CROP_DEFS[c.crop];
+
       const targetStage = Math.min(def.stages - 1, Math.floor((now - c.plantedAt) / def.growMs));
+
       if (targetStage > c.stage) {
+
         c.stage = targetStage;
+
         const parts = k.split(',').map(Number);
+
         destroyBlockMesh(parts[0], parts[1], parts[2]);
+
         const type = c.crop + c.stage;
+
         worldDiffs.set(k, type);
+
         createBlockMesh(parts[0], parts[1], parts[2], type, true);
+
       }
+
     }
+
   }
+
+
 
   function mineBlockAt(x, y, z, type) {
+
     if (BLOCK_TYPES[type].liquid) return; // can't mine liquids
+
     const k = key(x, y, z);
+
     if (worldDiffsPrev.has(k)) {
+
       const prev = worldDiffsPrev.get(k);
+
       worldDiffsPrev.delete(k);
+
       if (prev === undefined) worldDiffs.delete(k); else worldDiffs.set(k, prev);
+
     } else {
+
       worldDiffs.set(k, '');
+
     }
+
     destroyBlockMesh(x, y, z);
+
     if (cropData.has(k)) {
+
       const crop = cropData.get(k);
+
       cropData.delete(k);
+
       const def = CROP_DEFS[crop.crop];
+
       if (crop.stage >= def.stages - 1) {
+
         inventory[def.matureItem] = (inventory[def.matureItem] || 0) + 1;
+
         inventory[def.seedItem] = (inventory[def.seedItem] || 0) + 1 + (Math.random() < 0.5 ? 1 : 0);
+
         cropsHarvested++;
+
       } else {
+
         inventory[def.seedItem] = (inventory[def.seedItem] || 0) + 1;
+
       }
+
     } else if (type === 'chest') {
+
       const table = [
+
         ['iron_ingot', 1, 3], ['gold_ingot', 1, 2], ['apple', 1, 3], ['bread', 1, 2],
+
         ['arrow', 2, 6], ['torch', 2, 4], ['coal_ore', 1, 3], ['wheat_seeds', 1, 2], ['bone', 1, 2],
+
       ];
+
       const picks = 2 + Math.floor(Math.random() * 3);
+
       const gotten = [];
+
       for (let i = 0; i < picks; i++) {
+
         const [item, lo, hi] = table[Math.floor(Math.random() * table.length)];
+
         const qty = lo + Math.floor(Math.random() * (hi - lo + 1));
+
         inventory[item] = (inventory[item] || 0) + qty;
+
         const label = ITEM_LABELS[item] ? ITEM_LABELS[item].text : (BLOCK_TYPES[item] ? BLOCK_TYPES[item].name : item);
+
         gotten.push(qty + 'x ' + label);
+
       }
+
       chestsOpened++;
+
       showToast('Peti terbuka! Dapat: ' + gotten.join(', '));
+
     } else {
+
       if (inventory[type] !== undefined) inventory[type]++;
+
       if (type === 'leaves') {
+
         if (seededRandom(x + performance.now() % 1000, z, 9) < 0.18) inventory.apple = (inventory.apple || 0) + 1;
+
       }
+
       if (type === 'grass') {
+
         const rv = seededRandom(x + performance.now() % 1000, z, 33);
+
         if (rv < 0.08) inventory.wheat_seeds = (inventory.wheat_seeds || 0) + 1;
+
         else if (rv < 0.12) inventory.carrot_seeds = (inventory.carrot_seeds || 0) + 1;
+
       }
+
     }
+
     minedByType[type] = (minedByType[type] || 0) + 1;
+
     refreshHotbarUI();
+
     minedCount++;
+
     document.getElementById('blockCount').textContent = minedCount;
+
     sfxMine();
+
   }
+
   function placeBlockAt(x, y, z, type) {
+
     const k = key(x, y, z);
+
     if (world.has(k)) return false;
+
     if (!inventory[type] || inventory[type] <= 0) return false;
+
     inventory[type]--;
+
     if (!worldDiffsPrev.has(k)) worldDiffsPrev.set(k, worldDiffs.has(k) ? worldDiffs.get(k) : undefined);
+
     worldDiffs.set(k, type);
+
     createBlockMesh(x, y, z, type, true);
+
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
+
     const ck = cx + ',' + cz;
+
     if (loadedChunks.has(ck)) loadedChunks.get(ck).push(key(x, y, z));
+
     refreshHotbarUI();
+
     return true;
+
   }
+
+
 
   // ================= HOTBAR / CRAFT UI =================
+
   const hotbarEl = document.getElementById('hotbar');
+
   function refreshHotbarUI() {
+
     hotbarEl.innerHTML = '';
+
     HOTBAR.forEach((type, i) => {
+
       const cnt = inventory[type] || 0;
+
       const slot = document.createElement('div');
+
       slot.className = 'slot' + (i === selectedIndex ? ' active' : '') + (cnt === 0 ? ' empty' : '');
+
       slot.innerHTML = `<span class="key">${i + 1}</span><div class="swatch" style="background:#${BLOCK_TYPES[type].color.toString(16).padStart(6,'0')}"></div><span class="cnt">${cnt}</span>`;
+
       slot.title = BLOCK_TYPES[type].name;
+
       slot.addEventListener('click', () => { selectedIndex = i; refreshHotbarUI(); });
+
       hotbarEl.appendChild(slot);
+
     });
+
     const bf = bestFood();
+
     const foodTotal = FOOD_ORDER.reduce((s, f) => s + (inventory[f] || 0), 0);
+
     document.getElementById('foodCount').textContent = foodTotal;
+
     document.getElementById('eatBtn').disabled = !bf;
+
     document.getElementById('toolInfo').textContent = 'Tool: ' + TOOL_NAMES[currentToolTier()];
+
   }
+
   refreshHotbarUI();
 
+
+
   function nearBlock(type, radius) {
+
     const px = Math.round(player.pos.x), py = Math.round(player.pos.y), pz = Math.round(player.pos.z);
+
     for (let dx = -radius; dx <= radius; dx++)
+
       for (let dy = -radius; dy <= radius; dy++)
+
         for (let dz = -radius; dz <= radius; dz++) {
+
           const b = world.get(key(px + dx, py + dy, pz + dz));
+
           if (b && b.type === type) return true;
+
         }
+
     return false;
+
   }
+
+
 
   const CRAFT_RECIPES = [
+
     { id: 'craftGlass', icon: 'flask', label: '1 Pasir → 1 Kaca', need: { sand: 1 }, give: { glass: 1 } },
+
     { id: 'craftBrick', icon: 'brick', label: '1 Batu → 1 Bata', need: { stone: 1 }, give: { brick: 1 } },
+
     { id: 'craftFurnace', icon: 'fire', cls: 'ic-flame', label: '4 Batu → 1 Furnace', need: { stone: 4 }, give: { furnace: 1 } },
+
     { id: 'craftWorkbench', icon: 'log', label: '4 Kayu → 1 Meja Kerja', need: { wood: 4 }, give: { workbench: 1 } },
+
     { id: 'craftTorch', icon: 'torch', cls: 'ic-flame', label: '1 Kayu+1 Batu Bara → 4 Obor', need: { wood: 1, coal_ore: 1 }, give: { torch: 4 } },
+
     { id: 'craftPickWood', icon: 'pickaxe', label: '3 Kayu → Pickaxe Kayu', need: { wood: 3 }, give: { pickaxe_wood: 1 }, nearWorkbench: true },
+
     { id: 'craftPickStone', icon: 'pickaxe', label: '3 Batu → Pickaxe Batu', need: { stone: 3 }, give: { pickaxe_stone: 1 }, nearWorkbench: true },
+
     { id: 'craftPickIron', icon: 'pickaxe', cls: 'ic-iron', label: '3 Iron Ingot → Pickaxe Besi', need: { iron_ingot: 3 }, give: { pickaxe_iron: 1 }, nearWorkbench: true },
+
     { id: 'craftArmor', icon: 'shield', cls: 'ic-iron', label: '4 Iron Ingot → Zirah Besi', need: { iron_ingot: 4 }, give: { iron_armor: 1 }, nearWorkbench: true },
+
     { id: 'smeltIron', icon: 'fire', cls: 'ic-flame', label: 'Bijih Besi+Batu Bara → Iron Ingot', need: { iron_ore: 1, coal_ore: 1 }, give: { iron_ingot: 1 }, nearFurnace: true },
+
     { id: 'smeltGold', icon: 'fire', cls: 'ic-flame', label: 'Bijih Emas+Batu Bara → Gold Ingot', need: { gold_ore: 1, coal_ore: 1 }, give: { gold_ingot: 1 }, nearFurnace: true },
+
     { id: 'cookChicken', icon: 'fire', cls: 'ic-flame', label: 'Ayam Mentah+Batu Bara → Ayam Matang', need: { raw_chicken: 1, coal_ore: 1 }, give: { cooked_chicken: 1 }, nearFurnace: true },
+
     { id: 'cookBeef', icon: 'fire', cls: 'ic-flame', label: 'Daging Mentah+Batu Bara → Daging Matang', need: { raw_beef: 1, coal_ore: 1 }, give: { cooked_beef: 1 }, nearFurnace: true },
+
     { id: 'cookPork', icon: 'fire', cls: 'ic-flame', label: 'Babi Mentah+Batu Bara → Babi Matang', need: { raw_porkchop: 1, coal_ore: 1 }, give: { cooked_porkchop: 1 }, nearFurnace: true },
+
     { id: 'craftBed', icon: 'log', label: '3 Kayu+2 Wol → Ranjang', need: { wood: 3, wool: 2 }, give: { bed: 1 }, nearWorkbench: true },
+
     { id: 'craftBow', icon: 'shield', label: '2 Kayu+1 Tulang → Busur', need: { wood: 2, bone: 1 }, give: { bow: 1 }, nearWorkbench: true },
+
     { id: 'craftArrow', icon: 'pickaxe', label: '1 Batu+1 Kayu → 4 Anak Panah', need: { stone: 1, wood: 1 }, give: { arrow: 4 }, nearWorkbench: true },
+
     { id: 'craftBread', icon: 'fire', cls: 'ic-flame', label: '3 Gandum+Batu Bara → Roti', need: { wheat: 3, coal_ore: 1 }, give: { bread: 1 }, nearFurnace: true },
+
   ];
+
   function refreshCraftPanel() {
+
     const panel = document.getElementById('craftPanel');
+
     panel.innerHTML = '';
+
     const nb = nearBlock('workbench', 2), nf = nearBlock('furnace', 2);
+
     CRAFT_RECIPES.forEach(r => {
+
       if (r.nearWorkbench && !nb) return;
+
       if (r.nearFurnace && !nf) return;
+
       const can = Object.entries(r.need).every(([k, v]) => (inventory[k] || 0) >= v);
+
       const btn = document.createElement('div');
+
       btn.className = 'craftBtn icoRow';
+
       btn.innerHTML = svgIcon(r.icon, r.cls) + ' ' + r.label;
+
       if (!can) btn.style.opacity = '0.4';
+
       btn.addEventListener('click', () => {
+
         if (!Object.entries(r.need).every(([k, v]) => (inventory[k] || 0) >= v)) return;
+
         Object.entries(r.need).forEach(([k, v]) => inventory[k] -= v);
+
         Object.entries(r.give).forEach(([k, v]) => inventory[k] = (inventory[k] || 0) + v);
+
         refreshHotbarUI(); refreshCraftPanel();
+
       });
+
       panel.appendChild(btn);
+
     });
+
     if (!panel.children.length) panel.innerHTML = '<div style="color:#ccc;font-size:11px;">Resep lain butuh Meja Kerja / Furnace di dekatmu</div>';
+
   }
 
+
+
   document.getElementById('craftToggleBtn').addEventListener('click', () => {
+
     const p = document.getElementById('craftPanel');
+
     const willOpen = p.style.display !== 'flex';
+
     p.style.display = willOpen ? 'flex' : 'none';
+
     if (willOpen) refreshCraftPanel();
-  });
-  document.getElementById('eatBtn').addEventListener('click', () => {
-    if (player.hunger >= 100) { showToast('Hunger sudah penuh'); return; }
-    const f = bestFood();
-    if (!f) return;
-    inventory[f]--; player.hunger = Math.min(100, player.hunger + FOOD_VALUES[f]); refreshHotbarUI();
+
   });
 
+  document.getElementById('eatBtn').addEventListener('click', () => {
+
+    if (player.hunger >= 100) { showToast('Hunger sudah penuh'); return; }
+
+    const f = bestFood();
+
+    if (!f) return;
+
+    inventory[f]--; player.hunger = Math.min(100, player.hunger + FOOD_VALUES[f]); refreshHotbarUI();
+
+  });
+
+
+
   // ================= INVENTORY MODAL =================
+
   const invModal = document.getElementById('invModal');
+
   function openInventory() { refreshInvModal(); invModal.style.display = 'flex'; }
+
+  // Kategori ala Minecraft: tiap section dipisah judul kecil, isinya slot kotak.
+  const INV_SECTIONS = [
+    { title: 'Alat & Zirah', keys: ['pickaxe_wood', 'pickaxe_stone', 'pickaxe_iron', 'iron_armor', 'bow', 'arrow'] },
+    { title: 'Makanan', keys: ['bread', 'cooked_beef', 'cooked_porkchop', 'cooked_chicken', 'apple', 'carrot', 'raw_beef', 'raw_porkchop', 'raw_chicken', 'rotten_flesh'] },
+    { title: 'Bahan', keys: ['iron_ingot', 'gold_ingot', 'bone', 'wool', 'wheat'] },
+  ];
+
+  function makeInvSlot(k) {
+    const label = ITEM_LABELS[k] || { icon: null, text: k };
+    const cnt = inventory[k] || 0;
+    const div = document.createElement('div');
+    div.className = 'invItem' + (k === 'iron_armor' && armorEquipped ? ' equipped' : '');
+    div.title = label.text + ' x' + cnt;
+    div.innerHTML = `${k === 'iron_armor' && armorEquipped ? '<span class="eqTag">Dipakai</span>' : ''}<div class="ico">${label.icon ? svgIcon(label.icon, label.cls) : ''}</div><span class="cnt">${cnt}</span>`;
+    div.addEventListener('click', () => {
+      if (k === 'iron_armor') {
+        armorEquipped = !armorEquipped;
+        showToast(armorEquipped ? 'Zirah besi dipakai' : 'Zirah besi dilepas');
+        refreshInvModal();
+      } else {
+        showToast(label.text + ' &times;' + cnt);
+      }
+    });
+    return div;
+  }
+
   function refreshInvModal() {
     const grid = document.getElementById('invGrid');
     grid.innerHTML = '';
-    const items = Object.keys(inventory).filter(k => inventory[k] > 0 && !HOTBAR.includes(k));
-    if (!items.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;opacity:0.6;font-size:12px;">Kosong</div>'; return; }
-    items.forEach(k => {
-      const label = ITEM_LABELS[k] || { icon: null, text: k };
-      const div = document.createElement('div');
-      div.className = 'invItem';
-      div.innerHTML = `<div class="ico">${label.icon ? svgIcon(label.icon, label.cls) : ''}</div><div>${label.text}</div><div>x${inventory[k]}</div>`;
-      if (k === 'iron_armor') {
-        const btn = document.createElement('div');
-        btn.className = 'invBtn';
-        btn.textContent = armorEquipped ? 'Lepas' : 'Pakai';
-        btn.addEventListener('click', () => { armorEquipped = !armorEquipped; refreshInvModal(); });
-        div.appendChild(btn);
-      }
-      grid.appendChild(div);
+    const allItems = Object.keys(inventory).filter(k => inventory[k] > 0 && !HOTBAR.includes(k));
+    if (!allItems.length) { grid.innerHTML = '<div class="invEmpty">Kosong &mdash; ayo nambang atau berburu dulu</div>'; return; }
+
+    const used = new Set();
+    INV_SECTIONS.forEach(sec => {
+      const secItems = sec.keys.filter(k => (inventory[k] || 0) > 0);
+      if (!secItems.length) return;
+      const h = document.createElement('div');
+      h.className = 'invSection';
+      h.textContent = sec.title;
+      grid.appendChild(h);
+      secItems.forEach(k => { grid.appendChild(makeInvSlot(k)); used.add(k); });
     });
+
+    const rest = allItems.filter(k => !used.has(k));
+    if (rest.length) {
+      const h = document.createElement('div');
+      h.className = 'invSection';
+      h.textContent = 'Lainnya';
+      grid.appendChild(h);
+      rest.forEach(k => grid.appendChild(makeInvSlot(k)));
+    }
   }
+
   document.getElementById('invToggleBtn').addEventListener('click', openInventory);
+
   document.getElementById('invCloseBtn').addEventListener('click', () => invModal.style.display = 'none');
+
   invModal.addEventListener('click', (e) => { if (e.target === invModal) invModal.style.display = 'none'; });
 
+
+
   // ================= STATS MODAL =================
+
   let statsMobsKilled = 0, statsDeaths = 0, playSeconds = 0;
+
   const statsModal = document.getElementById('statsModal');
+
   function fmtTime(s) {
+
     const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+
     return m + ':' + String(sec).padStart(2, '0');
+
   }
+
+
 
   // ================= ACHIEVEMENTS (Pencapaian) =================
+
   const ACHIEVEMENTS = [
+
     { id: 'mine100', label: 'Tambang 100 Blok', check: () => minedCount >= 100 },
+
     { id: 'mine500', label: 'Tambang 500 Blok', check: () => minedCount >= 500 },
+
     { id: 'survive3days', label: 'Bertahan 3 Hari', check: () => playSeconds >= CYCLE_SECONDS * 3 },
+
     { id: 'firstKill', label: 'Kalahkan Mob Pertama', check: () => statsMobsKilled >= 1 },
+
     { id: 'hunter10', label: 'Kalahkan 10 Mob', check: () => statsMobsKilled >= 10 },
+
     { id: 'firstCrop', label: 'Panen Hasil Kebun Pertama', check: () => cropsHarvested >= 1 },
+
     { id: 'firstChest', label: 'Buka Peti Harta Pertama', check: () => chestsOpened >= 1 },
+
     { id: 'firstSleep', label: 'Tidur di Ranjang', check: () => sleepsCount >= 1 },
+
     { id: 'ironTool', label: 'Bikin Pickaxe Besi', check: () => (inventory.pickaxe_iron || 0) >= 1 },
+
   ];
+
   const unlockedAchievements = new Set();
+
   function checkAchievements() {
+
     ACHIEVEMENTS.forEach(a => {
+
       if (!unlockedAchievements.has(a.id) && a.check()) {
+
         unlockedAchievements.add(a.id);
+
         showToast('Pencapaian: ' + a.label);
+
       }
+
     });
+
   }
+
+
 
   function refreshStats() {
+
     const body = document.getElementById('statsBody');
+
     let html = '';
+
     html += `<div class="statRow"><span class="icoRow">${svgIcon('stopwatch')} Waktu main</span><span>${fmtTime(playSeconds)}</span></div>`;
+
     html += `<div class="statRow"><span class="icoRow">${svgIcon('pickaxe')} Total ditambang</span><span>${minedCount}</span></div>`;
+
     html += `<div class="statRow"><span class="icoRow">${svgIcon('skull')} Mob dikalahkan</span><span>${statsMobsKilled}</span></div>`;
+
     html += `<div class="statRow"><span class="icoRow">${svgIcon('skull', 'ic-danger')} Jumlah mati</span><span>${statsDeaths}</span></div>`;
+
     html += `<div class="statRow"><span>Hasil kebun dipanen</span><span>${cropsHarvested}</span></div>`;
+
     html += `<div class="statRow"><span>Peti harta dibuka</span><span>${chestsOpened}</span></div>`;
+
     Object.keys(minedByType).sort((a, b) => minedByType[b] - minedByType[a]).forEach(t => {
+
       html += `<div class="statRow"><span>${BLOCK_TYPES[t] ? BLOCK_TYPES[t].name : t}</span><span>${minedByType[t]}</span></div>`;
+
     });
+
     html += `<div style="margin-top:10px;font-weight:700;font-size:12px;opacity:0.85;">Pencapaian (${unlockedAchievements.size}/${ACHIEVEMENTS.length})</div>`;
+
     ACHIEVEMENTS.forEach(a => {
+
       const done = unlockedAchievements.has(a.id);
+
       html += `<div class="statRow" style="opacity:${done ? 1 : 0.4}"><span>${done ? '✔' : '•'} ${a.label}</span></div>`;
+
     });
+
     body.innerHTML = html;
+
   }
+
   document.getElementById('statsToggleBtn').addEventListener('click', () => { refreshStats(); statsModal.style.display = 'flex'; });
+
   document.getElementById('statsCloseBtn').addEventListener('click', () => statsModal.style.display = 'none');
+
   statsModal.addEventListener('click', (e) => { if (e.target === statsModal) statsModal.style.display = 'none'; });
 
+
+
   // ================= SETTINGS / SAVE SLOTS =================
+
   let lookSensitivity = 1, sfxOn = true;
+
   let activeSlot = 1;
+
   function slotKey(n) { return 'blockworld-save-slot' + n; }
+
   const settingsModal = document.getElementById('settingsModal');
+
   function refreshSlotRow() {
+
     const row = document.getElementById('slotRow');
+
     row.innerHTML = '';
+
     for (let n = 1; n <= 3; n++) {
+
       const b = document.createElement('div');
+
       b.className = 'slotBtn' + (n === activeSlot ? ' activeSlot' : '');
+
       b.textContent = 'Slot ' + n;
+
       b.addEventListener('click', async () => {
+
         await saveGame();
+
         activeSlot = n;
+
         try { await storage.set('blockworld-active-slot', String(n), false); } catch (e) {}
+
         await loadGame();
+
         refreshHotbarUI();
+
         refreshSlotRow();
+
       });
+
       row.appendChild(b);
+
     }
+
   }
+
   document.getElementById('settingsToggleBtn').addEventListener('click', () => { refreshSlotRow(); refreshSeedUI(); settingsModal.style.display = 'flex'; });
+
   document.getElementById('settingsCloseBtn').addEventListener('click', () => settingsModal.style.display = 'none');
+
   settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.style.display = 'none'; });
+
   document.getElementById('sensRange').addEventListener('input', (e) => { lookSensitivity = e.target.value / 100; });
+
   document.getElementById('sfxCheck').addEventListener('change', (e) => { sfxOn = e.target.checked; });
+
   document.getElementById('exportBtn').addEventListener('click', exportSave);
+
   document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+
   document.getElementById('importFile').addEventListener('change', (e) => {
+
     const file = e.target.files[0];
+
     if (file) importSaveFile(file);
+
     e.target.value = '';
+
   });
+
   document.getElementById('resetWorldBtn').addEventListener('click', async () => {
+
     if (!confirm('Yakin mau reset dunia & save di slot ' + activeSlot + '? Progress slot ini akan hilang permanen.')) return;
+
     try { await storage.delete(slotKey(activeSlot)); } catch (e) {}
+
     location.reload();
+
   });
+
+
 
   // ================= PLAYER =================
+
   const player = {
+
     pos: new THREE.Vector3(0.5, 0, 0.5),
+
     velY: 0, yaw: 0, pitch: 0, onGround: false, speed: 6,
+
     health: 100, hunger: 100, fallStartY: 0, wasOnGround: true, lastLavaTick: 0, sprinting: false,
+
   };
+
   let minedCount = 0;
 
+
+
   function flashDamage() {
+
     const el = document.getElementById('dmgFlash');
+
     el.style.opacity = '1';
+
     setTimeout(() => el.style.opacity = '0', 150);
+
   }
+
   function applyDamage(amount) {
+
     if (amount <= 0) return;
+
     const reduced = armorEquipped ? amount * 0.7 : amount;
+
     player.health = Math.max(0, player.health - reduced);
+
     flashDamage();
+
     sfxHurt();
+
   }
+
+
 
   // ================= TIDUR (skip malam) =================
+
   function trySleep() {
+
     if (!(brightness < 0.35)) { showToast('Cuma bisa tidur pas malam hari'); return; }
+
     if (!nearBlock('bed', 3)) { showToast('Butuh Ranjang di dekatmu'); return; }
+
     const curPhase = (elapsed % CYCLE_SECONDS) / CYCLE_SECONDS;
+
     const targetPhase = 0.3;
+
     let delta = (targetPhase - curPhase) * CYCLE_SECONDS;
+
     if (delta <= 0) delta += CYCLE_SECONDS;
+
     elapsed += delta;
+
     sleepsCount++;
+
     showToast('Kamu tidur nyenyak... pagi tiba!');
+
   }
+
+
 
   // ================= BUSUR & ANAK PANAH =================
+
   function shootArrow() {
+
     if (!inventory.bow || inventory.bow <= 0) { showToast('Butuh Busur'); return; }
+
     if (!inventory.arrow || inventory.arrow <= 0) { showToast('Butuh Anak Panah'); return; }
+
     inventory.arrow--;
+
     refreshHotbarUI();
+
     const shootRay = new THREE.Raycaster();
+
     shootRay.far = 25;
+
     shootRay.setFromCamera({ x: 0, y: 0 }, camera);
+
     const mobHits = shootRay.intersectObjects(mobGroup.children, true);
+
     let targetPos = camera.position.clone().add(new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(20));
+
     if (mobHits.length > 0) {
+
       let obj = mobHits[0].object;
+
       while (obj && !obj.userData.mobRef) obj = obj.parent;
+
       if (obj) { targetPos = obj.userData.mobRef.pos.clone(); attackMob(obj.userData.mobRef, 20); }
+
     }
+
     const geo = new THREE.SphereGeometry(0.06, 6, 6);
+
     const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xdeb887 }));
+
     const from = player.pos.clone();
+
     mesh.position.copy(from);
+
     scene.add(mesh);
+
     projectiles.push({ mesh, from, to: targetPos, t: 0, dur: 0.18, dmg: 0 });
+
     sfxMine();
+
   }
+
+
 
   const keysDown = {};
+
   document.addEventListener('keydown', (e) => {
+
     keysDown[e.code] = true;
+
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') player.sprinting = true;
+
     const num = parseInt(e.key);
+
     if (num >= 1 && num <= HOTBAR.length) { selectedIndex = num - 1; refreshHotbarUI(); }
+
   });
+
   document.addEventListener('keyup', (e) => {
+
     keysDown[e.code] = false;
+
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') player.sprinting = false;
+
   });
+
+
 
   const canvas = renderer.domElement;
+
   const hint = document.getElementById('hint');
+
   let mobilePlaying = false;
+
   function isPlaying() { return isMobile ? mobilePlaying : (document.pointerLockElement === canvas); }
 
+
+
   function setUIVisible(playing) {
+
     hint.style.display = playing ? 'none' : 'flex';
+
     document.getElementById('crosshair').style.display = playing ? 'block' : 'none';
+
     document.getElementById('hotbarWrap').style.display = playing ? 'flex' : 'none';
+
     document.getElementById('hud').style.display = playing ? 'block' : 'none';
+
     document.getElementById('topRight').style.display = playing ? 'flex' : 'none';
+
     document.getElementById('joystickZone').style.display = (playing && isMobile) ? 'block' : 'none';
+
     document.getElementById('lookZone').style.display = (playing && isMobile) ? 'block' : 'none';
+
     document.getElementById('touchJumpBtn').style.display = (playing && isMobile) ? 'flex' : 'none';
+
     document.getElementById('touchSprintBtn').style.display = (playing && isMobile) ? 'flex' : 'none';
+
     document.getElementById('touchActionBtns').style.display = (playing && isMobile) ? 'flex' : 'none';
+
     if (!playing) cancelMining();
+
   }
+
+
 
   async function tryFullscreen() {
+
     const el = document.documentElement;
+
     const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+
     if (req) { try { await req.call(el); } catch (e) {} }
+
   }
+
   function isFullscreenActive() {
+
     return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+
   }
+
+
 
   hint.addEventListener('click', async () => {
+
     if (isMobile) {
+
       await tryFullscreen();
+
       try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (e) {}
+
       mobilePlaying = true;
+
       setUIVisible(true);
+
       maybeShowTutorial();
+
     } else {
+
       canvas.requestPointerLock();
+
     }
-  });
-  // Kalau HP dukung fullscreen tapi sempat keluar (misal user geser dari tepi layar), coba masuk lagi
-  ['fullscreenchange', 'webkitfullscreenchange'].forEach(evt => {
-    document.addEventListener(evt, () => {
-      if (isMobile && mobilePlaying && !isFullscreenActive()) tryFullscreen();
-    });
+
   });
 
-  // Patch notes modal
-  const patchModal = document.getElementById('patchModal');
-  function openPatchNotes(e) { if (e) e.stopPropagation(); patchModal.style.display = 'flex'; }
-  function closePatchNotes(e) { if (e) e.stopPropagation(); patchModal.style.display = 'none'; }
-  document.getElementById('versionBadge').addEventListener('click', openPatchNotes);
-  document.getElementById('patchNotesLink').addEventListener('click', openPatchNotes);
-  document.getElementById('patchCloseBtn').addEventListener('click', closePatchNotes);
-  document.getElementById('patchCard').addEventListener('click', (e) => e.stopPropagation());
-  patchModal.addEventListener('click', closePatchNotes);
-  canvas.addEventListener('click', () => {
-    if (!isMobile && document.pointerLockElement !== canvas) canvas.requestPointerLock();
+  // Kalau HP dukung fullscreen tapi sempat keluar (misal user geser dari tepi layar), coba masuk lagi
+
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(evt => {
+
+    document.addEventListener(evt, () => {
+
+      if (isMobile && mobilePlaying && !isFullscreenActive()) tryFullscreen();
+
+    });
+
   });
+
+
+
+  // Patch notes modal
+
+  const patchModal = document.getElementById('patchModal');
+
+  function openPatchNotes(e) { if (e) e.stopPropagation(); patchModal.style.display = 'flex'; }
+
+  function closePatchNotes(e) { if (e) e.stopPropagation(); patchModal.style.display = 'none'; }
+
+  document.getElementById('versionBadge').addEventListener('click', openPatchNotes);
+
+  document.getElementById('patchNotesLink').addEventListener('click', openPatchNotes);
+
+  document.getElementById('patchCloseBtn').addEventListener('click', closePatchNotes);
+
+  document.getElementById('patchCard').addEventListener('click', (e) => e.stopPropagation());
+
+  patchModal.addEventListener('click', closePatchNotes);
+
+  canvas.addEventListener('click', () => {
+
+    if (!isMobile && document.pointerLockElement !== canvas) canvas.requestPointerLock();
+
+  });
+
   document.addEventListener('pointerlockchange', () => {
     setUIVisible(document.pointerLockElement === canvas);
     if (document.pointerLockElement === canvas) maybeShowTutorial();
   });
+
   document.addEventListener('mousemove', (e) => {
+
     if (isMobile || document.pointerLockElement !== canvas) return;
+
     player.yaw -= e.movementX * 0.0022 * lookSensitivity;
+
     player.pitch -= e.movementY * 0.0022 * lookSensitivity;
+
     player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, player.pitch));
+
   });
+
+
 
   // ================= TOUCH CONTROLS =================
+
   const joyAxis = { x: 0, y: 0 };
+
   let touchJump = false;
+
   if (isMobile) {
+
     const lookZone = document.getElementById('lookZone');
+
     let lookTouchId = null, lastLookX = 0, lastLookY = 0;
+
     lookZone.addEventListener('touchstart', (e) => {
+
       if (!isPlaying()) return;
+
       const t = e.changedTouches[0]; lookTouchId = t.identifier; lastLookX = t.clientX; lastLookY = t.clientY;
+
     }, { passive: true });
+
     lookZone.addEventListener('touchmove', (e) => {
+
       if (lookTouchId === null) return;
+
       for (const t of e.changedTouches) {
+
         if (t.identifier === lookTouchId) {
+
           const dx = t.clientX - lastLookX, dy = t.clientY - lastLookY;
+
           lastLookX = t.clientX; lastLookY = t.clientY;
+
           player.yaw -= dx * 0.0045 * lookSensitivity;
+
           player.pitch -= dy * 0.0045 * lookSensitivity;
+
           player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, player.pitch));
+
         }
+
       }
+
     }, { passive: true });
+
     function endLook(e) { for (const t of e.changedTouches) if (t.identifier === lookTouchId) lookTouchId = null; }
+
     lookZone.addEventListener('touchend', endLook);
+
     lookZone.addEventListener('touchcancel', endLook);
 
+
+
     const joyZone = document.getElementById('joystickZone');
+
     const joyStick = document.getElementById('joystickStick');
+
     let joyTouchId = null;
+
     const JOY_RADIUS = 46;
+
     joyZone.addEventListener('touchstart', (e) => { joyTouchId = e.changedTouches[0].identifier; updateJoystick(e.changedTouches[0]); }, { passive: true });
+
     joyZone.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === joyTouchId) updateJoystick(t); }, { passive: true });
+
     function updateJoystick(t) {
+
       const rect = joyZone.getBoundingClientRect();
+
       let dx = t.clientX - (rect.left + rect.width / 2), dy = t.clientY - (rect.top + rect.height / 2);
+
       const dist = Math.min(JOY_RADIUS, Math.hypot(dx, dy));
+
       const angle = Math.atan2(dy, dx);
+
       dx = Math.cos(angle) * dist; dy = Math.sin(angle) * dist;
+
       joyStick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
       joyAxis.x = dx / JOY_RADIUS; joyAxis.y = dy / JOY_RADIUS;
+
     }
+
     function resetJoystick(e) {
+
       for (const t of e.changedTouches) if (t.identifier === joyTouchId) {
+
         joyTouchId = null; joyAxis.x = 0; joyAxis.y = 0; joyStick.style.transform = 'translate(-50%, -50%)';
+
       }
+
     }
+
     joyZone.addEventListener('touchend', resetJoystick);
+
     joyZone.addEventListener('touchcancel', resetJoystick);
 
+
+
     document.getElementById('touchJumpBtn').addEventListener('touchstart', (e) => { e.preventDefault(); touchJump = true; }, { passive: false });
+
     document.getElementById('touchJumpBtn').addEventListener('touchend', () => { touchJump = false; });
+
     const sprintBtn = document.getElementById('touchSprintBtn');
+
     sprintBtn.addEventListener('touchstart', (e) => { e.preventDefault(); player.sprinting = !player.sprinting; sprintBtn.classList.toggle('on', player.sprinting); }, { passive: false });
+
     document.getElementById('touchBreakBtn').addEventListener('touchstart', (e) => { e.preventDefault(); tryStartAction('break'); }, { passive: false });
+
     document.getElementById('touchBreakBtn').addEventListener('touchend', () => { cancelMining(); });
+
     document.getElementById('touchPlaceBtn').addEventListener('touchstart', (e) => { e.preventDefault(); tryStartAction('place'); }, { passive: false });
+
   }
+
+
 
   // ================= RAYCAST ACTIONS =================
+
   const raycaster = new THREE.Raycaster();
+
   raycaster.far = 7;
+
   const mobRaycaster = new THREE.Raycaster();
+
   mobRaycaster.far = 5;
 
+
+
   // Ghost preview
+
   const ghostGeo = new THREE.BoxGeometry(1.02, 1.02, 1.02);
+
   const ghostEdges = new THREE.EdgesGeometry(ghostGeo);
+
   const ghostMesh = new THREE.LineSegments(ghostEdges, new THREE.LineBasicMaterial({ color: 0xffffff }));
+
   ghostMesh.visible = false;
+
   scene.add(ghostMesh);
+
   function updateGhost() {
+
     if (!isPlaying()) { ghostMesh.visible = false; return; }
+
     raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+
     const intersects = raycaster.intersectObjects(worldGroup.children);
+
     if (!intersects.length) { ghostMesh.visible = false; return; }
+
     const hit = intersects[0]; const ud = hit.object.userData; const n = hit.face.normal;
+
     const nx = ud.x + Math.round(n.x), ny = ud.y + Math.round(n.y), nz = ud.z + Math.round(n.z);
+
     if (world.has(key(nx, ny, nz)) || !inventory[HOTBAR[selectedIndex]]) { ghostMesh.visible = false; return; }
+
     ghostMesh.position.set(nx, ny, nz);
+
     ghostMesh.visible = true;
+
   }
+
+
 
   // Hold-to-mine
+
   let miningTarget = null, miningProgress = 0, miningBreakTime = 0;
+
   function setRingProgress(p) {
+
     const fg = document.getElementById('miningFg');
+
     const c = 2 * Math.PI * 15;
+
     fg.setAttribute('stroke-dasharray', c);
+
     fg.setAttribute('stroke-dashoffset', c * (1 - p));
+
   }
+
   function cancelMining() {
+
     miningTarget = null; miningProgress = 0;
+
     document.getElementById('miningRing').style.display = 'none';
+
     setRingProgress(0);
+
   }
+
   function doPlace() {
+
     if (!isPlaying()) return;
+
     raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+
     const intersects = raycaster.intersectObjects(worldGroup.children);
+
     if (!intersects.length) return;
+
     const hit = intersects[0]; const ud = hit.object.userData;
+
     const n = hit.face.normal;
+
     const nx = ud.x + Math.round(n.x), ny = ud.y + Math.round(n.y), nz = ud.z + Math.round(n.z);
+
     const dx = Math.abs(nx - player.pos.x), dy = Math.abs(ny - player.pos.y), dz = Math.abs(nz - player.pos.z);
+
     const selType = HOTBAR[selectedIndex];
+
     if (!(dx < 0.6 && dz < 0.6 && dy < 1.8)) {
+
       if (SEED_CROP_MAP[selType]) tryPlantCrop(selType, nx, ny, nz);
+
       else placeBlockAt(nx, ny, nz, selType);
+
     }
+
     refreshCraftPanel();
+
   }
+
   function tryStartAction(kind) {
+
     if (!isPlaying()) return;
+
     if (kind === 'place') { doPlace(); return; }
+
     mobRaycaster.setFromCamera({ x: 0, y: 0 }, camera);
+
     const mobHits = mobRaycaster.intersectObjects(mobGroup.children, true);
+
     if (mobHits.length > 0) {
+
       let obj = mobHits[0].object;
+
       while (obj && !obj.userData.mobRef) obj = obj.parent;
+
       if (obj) { attackMob(obj.userData.mobRef, 25); return; }
+
     }
+
     raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+
     const intersects = raycaster.intersectObjects(worldGroup.children);
+
     if (!intersects.length) return;
+
     const hit = intersects[0]; const ud = hit.object.userData;
+
     const def = BLOCK_TYPES[ud.type];
+
     if (def.liquid) return;
+
     const tier = def.tier || 0;
+
     if (tier > currentToolTier()) {
+
       const needName = TOOL_NAMES[tier] || 'alat lebih baik';
+
       showToast(`<span class="icoRow">${svgIcon('pickaxe')} Butuh ${needName}!</span>`);
+
       return;
+
     }
+
     miningTarget = { x: ud.x, y: ud.y, z: ud.z, type: ud.type };
+
     miningProgress = 0;
+
     miningBreakTime = def.hardness / toolSpeedMult(currentToolTier());
+
     document.getElementById('miningRing').style.display = 'block';
+
   }
+
   function updateMining(dt) {
+
     if (!miningTarget) return;
+
     raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+
     const intersects = raycaster.intersectObjects(worldGroup.children);
+
     const hit = intersects[0];
+
     if (!hit || hit.object.userData.x !== miningTarget.x || hit.object.userData.y !== miningTarget.y || hit.object.userData.z !== miningTarget.z) {
+
       cancelMining(); return;
+
     }
+
     miningProgress += dt;
+
     setRingProgress(Math.min(1, miningProgress / miningBreakTime));
+
     if (miningProgress >= miningBreakTime) {
+
       mineBlockAt(miningTarget.x, miningTarget.y, miningTarget.z, miningTarget.type);
+
       cancelMining();
+
       refreshCraftPanel();
+
     }
+
   }
+
   canvas.addEventListener('mousedown', (e) => {
+
     if (isMobile || document.pointerLockElement !== canvas) return;
+
     tryStartAction(e.button === 0 ? 'break' : 'place');
+
   });
+
   canvas.addEventListener('mouseup', (e) => { if (e.button === 0) cancelMining(); });
+
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
+
+
   // ================= COLLISION =================
+
   function isSolid(x, y, z) {
+
     const k = key(Math.round(x), Math.round(y), Math.round(z));
+
     const b = world.get(k);
+
     return b && !BLOCK_TYPES[b.type].liquid && !BLOCK_TYPES[b.type].nonSolid;
+
   }
+
   function liquidAt(x, y, z) {
+
     const b = world.get(key(Math.round(x), Math.round(y), Math.round(z)));
+
     return b && BLOCK_TYPES[b.type].liquid ? b.type : null;
+
   }
+
   function collidesAt(pos) {
+
     const half = 0.3, feet = pos.y - 1.6, head = pos.y - 0.1;
+
     for (const dy of [feet + 0.1, feet + 0.9, head])
+
       for (const dx of [-half, half])
+
         for (const dz of [-half, half])
+
           if (isSolid(pos.x + dx, dy, pos.z + dz)) return true;
+
     return false;
+
   }
+
   function findGroundY(x, z, startY) {
+
     for (let y = Math.ceil(startY) + 3; y > startY - 8; y--) {
+
       if (world.has(key(Math.round(x), y, Math.round(z)))) return y + 1;
+
     }
+
     return groundHeightAt(Math.round(x), Math.round(z)) + 1;
+
   }
+
+
 
   // ================= MOBS =================
+
   const mobGroup = new THREE.Group();
+
   scene.add(mobGroup);
+
   const mobs = [];
+
   const MAX_CHICKENS = 5, MAX_ZOMBIES = 4, MAX_COWS = 4, MAX_PIGS = 4, MAX_SKELETONS = 3, MAX_SHEEP = 4;
 
+
+
   function makeChickenMesh() {
+
     const g = new THREE.Group();
+
     const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }));
+
     body.scale.set(0.55, 0.5, 0.7);
+
     const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xdd3333 }));
+
     head.scale.set(0.25, 0.25, 0.25);
+
     head.position.set(0, 0.3, 0.35);
+
     g.add(body); g.add(head);
+
     return g;
+
   }
+
   function makeZombieMesh() {
+
     const g = new THREE.Group();
+
     const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x3f7d3f }));
+
     body.scale.set(0.5, 1.2, 0.35);
+
     body.position.y = 0.1;
+
     const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x2e5c2e }));
+
     head.scale.set(0.4, 0.4, 0.4);
+
     head.position.y = 0.85;
+
     g.add(body); g.add(head);
+
     return g;
+
   }
+
   function makeCowMesh() {
+
     const g = new THREE.Group();
+
     const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x5a3c25 }));
+
     body.scale.set(0.6, 0.55, 0.9);
+
     const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }));
+
     head.scale.set(0.3, 0.3, 0.3);
+
     head.position.set(0, 0.25, 0.5);
+
     g.add(body); g.add(head);
+
     return g;
+
   }
+
   function makePigMesh() {
+
     const g = new THREE.Group();
+
     const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xe8a0b0 }));
+
     body.scale.set(0.5, 0.45, 0.75);
+
     const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xf0b5c2 }));
+
     head.scale.set(0.28, 0.28, 0.28);
+
     head.position.set(0, 0.2, 0.42);
+
     g.add(body); g.add(head);
+
     return g;
+
   }
+
   function makeSkeletonMesh() {
+
     const g = new THREE.Group();
+
     const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xd8d8c8 }));
+
     body.scale.set(0.45, 1.15, 0.3);
+
     body.position.y = 0.1;
+
     const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xe8e8d8 }));
+
     head.scale.set(0.35, 0.35, 0.35);
+
     head.position.y = 0.85;
+
     g.add(body); g.add(head);
+
     return g;
+
   }
+
   function makeSheepMesh() {
+
     const g = new THREE.Group();
+
     const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xf2f2f2 }));
+
     body.scale.set(0.6, 0.55, 0.85);
+
     const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x555555 }));
+
     head.scale.set(0.28, 0.28, 0.28);
+
     head.position.set(0, 0.25, 0.48);
+
     g.add(body); g.add(head);
+
     return g;
+
   }
+
   const MOB_MESH_FACTORY = { chicken: makeChickenMesh, zombie: makeZombieMesh, cow: makeCowMesh, pig: makePigMesh, skeleton: makeSkeletonMesh, sheep: makeSheepMesh };
+
   const MOB_DROPS = { chicken: 'raw_chicken', cow: 'raw_beef', pig: 'raw_porkchop', zombie: 'rotten_flesh', skeleton: 'bone', sheep: 'wool' };
+
   const MOB_IS_HOSTILE = { zombie: true, skeleton: true };
 
+
+
   function spawnMob(type) {
+
     const angle = Math.random() * Math.PI * 2;
+
     const dist = 10 + Math.random() * 8;
+
     const x = Math.round(player.pos.x + Math.cos(angle) * dist);
+
     const z = Math.round(player.pos.z + Math.sin(angle) * dist);
+
     const y = findGroundY(x, z, player.pos.y);
+
     const group = MOB_MESH_FACTORY[type]();
+
     group.position.set(x, y, z);
+
     const mobRef = { group, type, pos: new THREE.Vector3(x, y, z), velY: 0, dir: Math.random() * Math.PI * 2, nextDirT: 0, health: 100, lastAttackT: 0 };
+
     group.userData.mobRef = mobRef;
+
     group.traverse(o => { o.userData.mobRef = mobRef; });
+
     mobGroup.add(group);
+
     mobs.push(mobRef);
+
   }
+
+
 
   function attackMob(mob, dmg) {
+
     mob.health -= dmg;
+
     if (mob.health <= 0) {
+
       mobGroup.remove(mob.group);
+
       const idx = mobs.indexOf(mob);
+
       if (idx >= 0) mobs.splice(idx, 1);
+
       const drop = MOB_DROPS[mob.type];
+
       if (drop) { inventory[drop] = (inventory[drop] || 0) + 1; refreshHotbarUI(); }
+
       statsMobsKilled++;
+
     }
+
   }
+
+
 
   // Skeleton projectiles
+
   const projectiles = [];
+
   function skeletonShoot(skel) {
+
     const geo = new THREE.SphereGeometry(0.08, 6, 6);
+
     const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xdddddd }));
+
     const from = skel.pos.clone().add(new THREE.Vector3(0, 0.6, 0));
+
     mesh.position.copy(from);
+
     scene.add(mesh);
+
     projectiles.push({ mesh, from, to: player.pos.clone(), t: 0, dur: 0.35, dmg: 7 });
+
   }
+
   function updateProjectiles(dt) {
+
     for (let i = projectiles.length - 1; i >= 0; i--) {
+
       const p = projectiles[i];
+
       p.t += dt / p.dur;
+
       p.mesh.position.lerpVectors(p.from, p.to, Math.min(1, p.t));
+
       if (p.t >= 1) {
+
         scene.remove(p.mesh);
+
         if (Math.hypot(player.pos.x - p.to.x, player.pos.z - p.to.z) < 2.2) applyDamage(p.dmg);
+
         projectiles.splice(i, 1);
+
       }
+
     }
+
   }
+
+
 
   function updateMobs(dt, now, isNight) {
+
     for (let i = mobs.length - 1; i >= 0; i--) {
+
       const m = mobs[i];
+
       const distToPlayer = Math.hypot(m.pos.x - player.pos.x, m.pos.z - player.pos.z);
+
       const despawnsAtDay = (m.type === 'zombie' || m.type === 'skeleton') && !isNight;
+
       if (distToPlayer > 45 || despawnsAtDay) {
+
         mobGroup.remove(m.group); mobs.splice(i, 1); continue;
+
       }
+
       if (m.type === 'chicken' || m.type === 'cow' || m.type === 'pig' || m.type === 'sheep') {
+
         if (now > m.nextDirT) { m.dir = Math.random() * Math.PI * 2; m.nextDirT = now + 2000 + Math.random() * 3000; }
+
         const spd = (m.type === 'chicken' ? 1.2 : 0.9) * dt;
+
         m.pos.x += Math.cos(m.dir) * spd; m.pos.z += Math.sin(m.dir) * spd;
+
       } else if (m.type === 'zombie') {
+
         if (distToPlayer < 14) {
+
           const ang = Math.atan2(player.pos.z - m.pos.z, player.pos.x - m.pos.x);
+
           m.dir = ang;
+
           if (distToPlayer > 1.3) {
+
             const spd = 2.0 * dt;
+
             m.pos.x += Math.cos(m.dir) * spd; m.pos.z += Math.sin(m.dir) * spd;
+
           } else if (now - m.lastAttackT > 1000) {
+
             m.lastAttackT = now; applyDamage(10);
+
           }
+
         }
+
       } else if (m.type === 'skeleton') {
+
         if (distToPlayer < 14) {
+
           const ang = Math.atan2(player.pos.z - m.pos.z, player.pos.x - m.pos.x);
+
           m.dir = ang;
+
           if (distToPlayer > 6) {
+
             const spd = 1.6 * dt;
+
             m.pos.x += Math.cos(m.dir) * spd; m.pos.z += Math.sin(m.dir) * spd;
+
           } else if (distToPlayer < 2.5 && now - m.lastAttackT > 1200) {
+
             m.lastAttackT = now; applyDamage(6);
+
           } else if (now - m.lastAttackT > 1600) {
+
             m.lastAttackT = now; skeletonShoot(m);
+
           }
+
         }
+
       }
+
       const gy = findGroundY(m.pos.x, m.pos.z, m.pos.y);
+
       m.pos.y += (gy - m.pos.y) * Math.min(1, dt * 8);
+
       m.group.position.copy(m.pos);
+
       m.group.rotation.y = -m.dir + Math.PI / 2;
+
     }
+
   }
+
+
 
   let lastMobSpawnCheck = 0;
+
   function maybeSpawnMobs(now, isNight) {
+
     if (now - lastMobSpawnCheck < 4000) return;
+
     lastMobSpawnCheck = now;
+
     const count = (t) => mobs.filter(m => m.type === t).length;
+
     const rainMult = isRaining ? 1.4 : 1;
+
     if (!isNight) {
+
       if (count('chicken') < MAX_CHICKENS && Math.random() < 0.6) spawnMob('chicken');
+
       if (count('cow') < MAX_COWS && Math.random() < 0.4) spawnMob('cow');
+
       if (count('pig') < MAX_PIGS && Math.random() < 0.4) spawnMob('pig');
+
       if (count('sheep') < MAX_SHEEP && Math.random() < 0.4) spawnMob('sheep');
+
       if (isRaining && count('zombie') < MAX_ZOMBIES && Math.random() < 0.06) spawnMob('zombie'); // langit gelap pas hujan siang
+
     } else {
+
       if (count('zombie') < MAX_ZOMBIES && Math.random() < Math.min(1, 0.7 * rainMult)) spawnMob('zombie');
+
       if (count('skeleton') < MAX_SKELETONS && Math.random() < Math.min(1, 0.4 * rainMult)) spawnMob('skeleton');
+
     }
+
   }
+
+
 
   // ================= DAY / NIGHT =================
+
   const CYCLE_SECONDS = 180;
+
   let elapsed = 0;
+
   let brightness = 1;
+
   function updateDayNight(dt) {
+
     elapsed += dt;
+
     const phase = (elapsed % CYCLE_SECONDS) / CYCLE_SECONDS;
+
     brightness = Math.max(0.12, (Math.sin(phase * Math.PI * 2 - Math.PI / 2) + 1) / 2);
+
     const c = new THREE.Color();
+
     c.lerpColors(NIGHT_COLOR, DAY_COLOR, brightness);
+
     if (isRaining) c.lerp(new THREE.Color(0x55697a), 0.4);
+
     scene.background = c;
+
     scene.fog.color = c;
+
     hemiLight.intensity = (0.25 + 0.85 * brightness) * (isRaining ? 0.75 : 1);
+
     sunLight.intensity = (0.15 + 0.85 * brightness) * (isRaining ? 0.7 : 1);
+
     document.getElementById('timeIcon').innerHTML = brightness < 0.35 ? svgIcon('moon', 'ic-moon') : svgIcon('sun', 'ic-sun');
+
     return brightness < 0.35;
+
   }
+
+
 
   // ================= CUACA (HUJAN) =================
+
   let isRaining = false, nextWeatherCheck = 0;
+
   const RAIN_COUNT = isMobile ? 50 : 140;
+
   const rainDrops = [];
+
   for (let i = 0; i < RAIN_COUNT; i++) rainDrops.push(new THREE.Vector3());
+
   const rainGeo = new THREE.BufferGeometry();
+
   rainGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(RAIN_COUNT * 6), 3));
+
   const rainLines = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0x9fc6ff, transparent: true, opacity: 0.55 }));
+
   rainLines.visible = false;
+
   scene.add(rainLines);
+
   function resetRaindrop(i) {
+
     const r = 18;
+
     rainDrops[i].set(
+
       player.pos.x + (Math.random() * 2 - 1) * r,
+
       player.pos.y + 12 + Math.random() * 10,
+
       player.pos.z + (Math.random() * 2 - 1) * r
+
     );
+
   }
+
   for (let i = 0; i < RAIN_COUNT; i++) resetRaindrop(i);
+
   function updateRain(dt) {
+
     if (!isRaining) { rainLines.visible = false; return; }
+
     rainLines.visible = true;
+
     const posAttr = rainGeo.getAttribute('position');
+
     for (let i = 0; i < RAIN_COUNT; i++) {
+
       const p = rainDrops[i];
+
       p.y -= dt * 14;
+
       if (p.y < player.pos.y - 6 || Math.hypot(p.x - player.pos.x, p.z - player.pos.z) > 22) resetRaindrop(i);
+
       posAttr.setXYZ(i * 2, p.x, p.y, p.z);
+
       posAttr.setXYZ(i * 2 + 1, p.x, p.y - 0.4, p.z);
+
     }
+
     posAttr.needsUpdate = true;
+
   }
+
   function updateWeather(now) {
+
     if (now > nextWeatherCheck) {
+
       nextWeatherCheck = now + 45000 + Math.random() * 60000;
+
       isRaining = Math.random() < 0.3;
+
     }
+
   }
+
+
 
   // ================= AUDIO (procedural, no assets) =================
+
   let audioCtx = null;
+
   function ensureAudio() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } }
+
   function playTone(freq, dur, type, vol) {
+
     if (!sfxOn) return;
+
     ensureAudio();
+
     if (!audioCtx) return;
+
     const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+
     osc.type = type; osc.frequency.value = freq; gain.gain.value = vol;
+
     osc.connect(gain); gain.connect(audioCtx.destination);
+
     osc.start();
+
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+
     osc.stop(audioCtx.currentTime + dur);
+
   }
+
   function sfxMine() { playTone(220, 0.08, 'square', 0.04); }
+
   function sfxFootstep() { playTone(90, 0.05, 'triangle', 0.02); }
+
   function sfxHurt() { playTone(140, 0.15, 'sawtooth', 0.05); }
+
   function sfxEat() { playTone(300, 0.1, 'sine', 0.03); }
+
   document.getElementById('eatBtn').addEventListener('click', sfxEat);
+
   canvas.addEventListener('mousedown', () => { ensureAudio(); }, { once: true });
+
   if (isMobile) document.body.addEventListener('touchstart', () => { ensureAudio(); }, { once: true, passive: true });
 
+
+
   // ================= MINIMAP =================
+
   const mmCanvas = document.getElementById('minimap');
+
   const mmCtx = mmCanvas.getContext('2d');
+
   function drawMinimap() {
+
     const size = 84, cells = 28, cell = size / cells;
+
     mmCtx.clearRect(0, 0, size, size);
+
     const px = Math.round(player.pos.x), pz = Math.round(player.pos.z);
+
     for (let i = 0; i < cells; i++) {
+
       for (let j = 0; j < cells; j++) {
+
         const wx = px + (i - cells / 2), wz = pz + (j - cells / 2);
+
         const h = groundHeightAt(wx, wz);
+
         const biome = biomeAt(wx, wz);
+
         let color = h <= 4 ? '#2b6fd1' : (biome === 'desert' ? '#dccb7a' : biome === 'snow' ? '#f5f8fa' : (h > 11 ? '#8c8c8c' : '#5fb83a'));
+
         mmCtx.fillStyle = color;
+
         mmCtx.fillRect(i * cell, j * cell, cell, cell);
+
       }
+
     }
+
     mmCtx.fillStyle = '#ff5555';
+
     mmCtx.beginPath(); mmCtx.arc(size / 2, size / 2, 3, 0, Math.PI * 2); mmCtx.fill();
+
   }
+
+
 
   // ================= SAVE / LOAD (localStorage, fallback ke window.storage kalau tersedia) =================
+
   // Pakai window.storage kalau berjalan di lingkungan artifact Claude (biar tetap kompatibel),
+
   // tapi default ke localStorage biar tetap jalan kalau di-deploy sebagai website/PWA berdiri sendiri.
+
   const storage = (window.storage && typeof window.storage.get === 'function') ? window.storage : {
+
     async get(key) {
+
       const v = localStorage.getItem(key);
+
       if (v === null) throw new Error('Key not found: ' + key);
+
       return { key, value: v };
+
     },
+
     async set(key, value) {
+
       try { localStorage.setItem(key, value); return { key, value }; }
+
       catch (e) { return null; }
+
     },
+
     async delete(key) {
+
       localStorage.removeItem(key);
+
       return { key, deleted: true };
+
     },
+
     async list(prefix) {
+
       const keys = Object.keys(localStorage).filter(k => !prefix || k.startsWith(prefix));
+
       return { keys };
+
     }
+
   };
+
   // Merge aman: tolak key __proto__/constructor/prototype biar data save (apalagi hasil import file)
+
   // gak bisa polusi Object.prototype global.
+
   function safeAssign(target, src) {
+
     if (!src || typeof src !== 'object') return target;
+
     for (const k of Object.keys(src)) {
+
       if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
+
       target[k] = src[k];
+
     }
+
     return target;
+
   }
+
   // Kompresi worldDiffs: dulu disimpan sebagai [ "x,y,z", "typeName" ] (boros string berulang).
+
   // Sekarang dipadatkan jadi [x, y, z, typeId] numerik pakai tabel tipe blok, jauh lebih hemat
+
   // ukuran save begitu dunia yang dieksplor/diubah makin luas. Save lama tetap kebaca (fallback diffs).
+
   const DIFF_TYPE_TABLE = ['', ...Object.keys(BLOCK_TYPES)];
+
   const DIFF_TYPE_INDEX = {}; DIFF_TYPE_TABLE.forEach((t, i) => DIFF_TYPE_INDEX[t] = i);
+
   function compactDiffs() {
+
     const out = [];
+
     for (const [k, v] of worldDiffs) {
+
       const id = DIFF_TYPE_INDEX[v];
+
       if (id === undefined) continue;
+
       const p = k.split(',').map(Number);
+
       out.push([p[0], p[1], p[2], id]);
+
     }
+
     return out;
+
   }
+
   function loadCompactDiffs(arr) {
+
     arr.forEach(entry => {
+
       if (!Array.isArray(entry) || entry.length !== 4) return;
+
       const type = DIFF_TYPE_TABLE[entry[3]];
+
       if (type === undefined) return;
+
       worldDiffs.set(key(entry[0], entry[1], entry[2]), type);
+
     });
+
   }
+
   function buildSaveData() {
+
     return {
+
       diffsC: compactDiffs(),
+
       inventory, pos: [player.pos.x, player.pos.y, player.pos.z],
+
       yaw: player.yaw, health: player.health, hunger: player.hunger, minedCount,
+
       minedByType, statsMobsKilled, statsDeaths, playSeconds, armorEquipped,
+
       seed: WORLD_SEED,
+
       achievements: Array.from(unlockedAchievements),
+
       chestsOpened, sleepsCount, cropsHarvested,
+
       crops: Array.from(cropData.entries()).map(([k, c]) => [k, c.crop, c.stage, Date.now() - c.plantedAt]),
+
     };
+
   }
+
   // Validasi struktur save sebelum diterapkan. Return true kalau data cukup valid untuk dipakai.
+
   function isValidSaveData(data) {
+
     if (!data || typeof data !== 'object') return false;
+
     if (data.diffs !== undefined && !Array.isArray(data.diffs)) return false;
+
     if (data.diffsC !== undefined && !Array.isArray(data.diffsC)) return false;
+
     if (data.pos !== undefined && (!Array.isArray(data.pos) || data.pos.length !== 3 || !data.pos.every((n) => typeof n === 'number' && isFinite(n)))) return false;
+
     return true;
+
   }
+
   const clampNum = (v, lo, hi, fallback) => (typeof v === 'number' && isFinite(v)) ? Math.min(hi, Math.max(lo, v)) : fallback;
+
   function applySaveData(data) {
+
     if (!isValidSaveData(data)) throw new Error('Save data tidak valid / rusak');
+
     worldDiffs.clear();
+
     if (Array.isArray(data.diffsC)) loadCompactDiffs(data.diffsC);
+
     else (data.diffs || []).forEach(([k, v]) => worldDiffs.set(k, v));
+
     safeAssign(inventory, data.inventory || {});
+
     if (data.pos) player.pos.set(data.pos[0], data.pos[1], data.pos[2]);
+
     if (typeof data.yaw === 'number' && isFinite(data.yaw)) player.yaw = data.yaw;
+
     player.health = clampNum(data.health, 0, 100, player.health);
+
     player.hunger = clampNum(data.hunger, 0, 100, player.hunger);
+
     if (typeof data.minedCount === 'number' && isFinite(data.minedCount)) minedCount = Math.max(0, data.minedCount);
+
     if (data.minedByType) safeAssign(minedByType, data.minedByType);
+
     if (typeof data.statsMobsKilled === 'number' && isFinite(data.statsMobsKilled)) statsMobsKilled = Math.max(0, data.statsMobsKilled);
+
     if (typeof data.statsDeaths === 'number' && isFinite(data.statsDeaths)) statsDeaths = Math.max(0, data.statsDeaths);
+
     if (typeof data.playSeconds === 'number' && isFinite(data.playSeconds)) playSeconds = Math.max(0, data.playSeconds);
+
     if (typeof data.armorEquipped === 'boolean') armorEquipped = data.armorEquipped;
+
     if (typeof data.seed === 'number' && isFinite(data.seed)) WORLD_SEED = data.seed;
+
     if (Array.isArray(data.achievements)) { unlockedAchievements.clear(); data.achievements.forEach(id => unlockedAchievements.add(id)); }
+
     if (typeof data.chestsOpened === 'number' && isFinite(data.chestsOpened)) chestsOpened = Math.max(0, data.chestsOpened);
+
     if (typeof data.sleepsCount === 'number' && isFinite(data.sleepsCount)) sleepsCount = Math.max(0, data.sleepsCount);
+
     if (typeof data.cropsHarvested === 'number' && isFinite(data.cropsHarvested)) cropsHarvested = Math.max(0, data.cropsHarvested);
+
     cropData.clear();
+
     if (Array.isArray(data.crops)) {
+
       data.crops.forEach(entry => {
+
         if (!Array.isArray(entry) || entry.length !== 4) return;
+
         const [k, crop, stage, age] = entry;
+
         if (!CROP_DEFS[crop]) return;
+
         cropData.set(k, { crop, stage: Math.max(0, stage | 0), plantedAt: Date.now() - (age || 0) });
+
       });
+
     }
+
   }
+
   async function saveGame() {
+
     try {
+
       // Backup save lama dulu sebelum ditimpa, biar ada fallback kalau save baru ternyata korup.
+
       try {
+
         const prev = await storage.get(slotKey(activeSlot), false);
+
         if (prev && prev.value) await storage.set(backupKey(activeSlot), prev.value, false);
+
       } catch (e) {}
+
       const res = await storage.set(slotKey(activeSlot), JSON.stringify(buildSaveData()), false);
+
       const msg = document.getElementById('saveMsg');
+
       msg.textContent = res ? 'Tersimpan!' : 'Gagal simpan';
+
       setTimeout(() => msg.textContent = '', 2000);
+
     } catch (err) {
+
       const msg = document.getElementById('saveMsg');
+
       msg.textContent = 'Gagal simpan';
+
       setTimeout(() => msg.textContent = '', 2000);
+
     }
+
   }
+
   function backupKey(slot) { return slotKey(slot) + '-backup'; }
+
   async function restoreBackup() {
+
     const msg = document.getElementById('saveMsg');
+
     try {
+
       const res = await storage.get(backupKey(activeSlot), false);
+
       if (!res || !res.value) { msg.textContent = 'Tidak ada backup'; setTimeout(() => msg.textContent = '', 2000); return; }
+
       applySaveData(JSON.parse(res.value));
+
       refreshHotbarUI();
+
       updateChunks(player.pos.x, player.pos.z, true);
+
       msg.textContent = 'Backup dipulihkan!';
+
     } catch (e) {
+
       msg.textContent = 'Backup rusak/tidak valid';
+
     }
+
     setTimeout(() => msg.textContent = '', 2000);
+
   }
+
   async function loadGame() {
+
     try {
+
       let res = await storage.get(slotKey(activeSlot), false);
+
       if ((!res || !res.value) && activeSlot === 1) {
+
         // migrasi dari save versi lama
+
         try { res = await storage.get('blockworld-save-v1', false); } catch (e) {}
+
       }
+
       if (!res || !res.value) return false;
+
       applySaveData(JSON.parse(res.value));
+
       return true;
+
     } catch (err) { return false; }
+
   }
+
   function exportSave() {
+
     const blob = new Blob([JSON.stringify(buildSaveData())], { type: 'application/json' });
+
     const a = document.createElement('a');
+
     a.href = URL.createObjectURL(blob);
+
     a.download = 'blockworld-save-slot' + activeSlot + '.json';
+
     document.body.appendChild(a); a.click(); a.remove();
+
   }
+
   function importSaveFile(file) {
+
     const reader = new FileReader();
+
     reader.onload = () => {
+
       const msg = document.getElementById('saveMsg');
+
       try {
+
         applySaveData(JSON.parse(reader.result));
+
         refreshHotbarUI();
+
         updateChunks(player.pos.x, player.pos.z, true);
+
         msg.textContent = 'Save diimpor!';
+
       } catch (e) {
+
         msg.textContent = 'File save tidak valid/rusak';
+
       }
+
       setTimeout(() => msg.textContent = '', 2000);
+
     };
+
     reader.onerror = () => {
+
       const msg = document.getElementById('saveMsg');
+
       msg.textContent = 'Gagal membaca file';
+
       setTimeout(() => msg.textContent = '', 2000);
+
     };
+
     reader.readAsText(file);
+
   }
+
   document.getElementById('saveBtn').addEventListener('click', saveGame);
+
   document.getElementById('restoreBackupBtn').addEventListener('click', () => {
+
     if (confirm('Pulihkan backup terakhir? Progress saat ini yang belum disimpan akan hilang.')) restoreBackup();
+
   });
+
   document.getElementById('sleepBtn').addEventListener('click', trySleep);
+
   document.getElementById('shootBtn').addEventListener('click', shootArrow);
+
   document.addEventListener('keydown', (e) => { if (e.code === 'KeyF' && isPlaying()) shootArrow(); });
 
+
+
   document.getElementById('copySaveBtn').addEventListener('click', async () => {
+
     const code = btoa(unescape(encodeURIComponent(JSON.stringify(buildSaveData()))));
+
     try { await navigator.clipboard.writeText(code); showToast('Kode save disalin! Tempel di Notes/Drive/WA buat backup manual.'); }
+
     catch (e) { showToast('Gagal menyalin otomatis, coba salin manual'); }
+
   });
+
   document.getElementById('pasteImportBtn').addEventListener('click', () => {
+
     const raw = document.getElementById('pasteSaveArea').value.trim();
+
     if (!raw) return;
+
     try {
+
       const json = decodeURIComponent(escape(atob(raw)));
+
       applySaveData(JSON.parse(json));
+
       refreshHotbarUI();
+
       updateChunks(player.pos.x, player.pos.z, true);
+
       refreshSeedUI();
+
       showToast('Save berhasil diimpor dari kode!');
+
     } catch (e) { showToast('Kode save tidak valid'); }
+
   });
+
+
 
   function refreshSeedUI() { document.getElementById('seedDisplay').textContent = String(WORLD_SEED); }
+
   document.getElementById('copySeedBtn').addEventListener('click', async () => {
+
     try { await navigator.clipboard.writeText(String(WORLD_SEED)); showToast('Seed disalin!'); }
+
     catch (e) { showToast('Gagal menyalin'); }
+
   });
+
   document.getElementById('applySeedBtn').addEventListener('click', () => {
+
     const input = document.getElementById('seedInput').value.trim();
+
     if (!input) return;
+
     let newSeed = 0;
+
     if (/^-?\d+$/.test(input)) newSeed = parseInt(input);
+
     else for (let i = 0; i < input.length; i++) newSeed = (newSeed * 31 + input.charCodeAt(i)) >>> 0;
+
     if (!confirm('Ganti world seed? Area yang belum pernah kamu ubah akan generate ulang dengan seed baru (area yang udah kamu tambang/bangun tetap seperti semula).')) return;
+
     WORLD_SEED = newSeed;
+
     refreshSeedUI();
+
     for (const ck of Array.from(loadedChunks.keys())) unloadChunk(ck);
+
     updateChunks(player.pos.x, player.pos.z, true);
+
     showToast('Seed diterapkan!');
+
   });
+
+
 
   let renderRadiusPref = RENDER_RADIUS, graphicsQuality = 'medium';
+
   try { const v = localStorage.getItem('blockworld-render-radius'); if (v) renderRadiusPref = parseInt(v) || renderRadiusPref; } catch (e) {}
+
   try { const q = localStorage.getItem('blockworld-graphics-quality'); if (q) graphicsQuality = q; } catch (e) {}
+
   RENDER_RADIUS = renderRadiusPref;
+
   document.getElementById('renderDistRange').value = RENDER_RADIUS;
+
   document.getElementById('renderDistRange').addEventListener('input', (e) => {
+
     RENDER_RADIUS = parseInt(e.target.value) || RENDER_RADIUS;
+
     try { localStorage.setItem('blockworld-render-radius', String(RENDER_RADIUS)); } catch (e) {}
+
     updateChunks(player.pos.x, player.pos.z, true);
+
   });
+
   function applyGraphicsQuality(q) {
+
     graphicsQuality = q;
+
     const dprMap = { low: 1, medium: Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5), high: Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2) };
+
     renderer.setPixelRatio(dprMap[q] || 1);
+
     const fogMap = { low: [14, 30], medium: [isMobile ? 22 : 38, isMobile ? 50 : 85], high: [isMobile ? 28 : 45, isMobile ? 60 : 100] };
+
     const fv = fogMap[q] || fogMap.medium;
+
     scene.fog.near = fv[0]; scene.fog.far = fv[1];
+
     try { localStorage.setItem('blockworld-graphics-quality', q); } catch (e) {}
+
   }
+
   document.getElementById('qualitySelect').value = graphicsQuality;
+
   applyGraphicsQuality(graphicsQuality);
+
   document.getElementById('qualitySelect').addEventListener('change', (e) => applyGraphicsQuality(e.target.value));
 
+
+
   // ================= TUTORIAL SINGKAT (sekali tampil) =================
+
   let tutorialSeen = false;
+
   try { tutorialSeen = localStorage.getItem('blockworld-tutorial-seen') === '1'; } catch (e) {}
+
   function maybeShowTutorial() {
+
     if (tutorialSeen) return;
+
     const box = document.getElementById('tutorialControlsBox');
+
     box.innerHTML = isMobile
+
       ? `<div class="controlRow"><kbd>Joystick kiri</kbd><span class="lbl">gerak</span></div>
+
          <div class="controlRow"><kbd>Geser layar</kbd><span class="lbl">nengok sekitar</span></div>
+
          <div class="controlRow"><kbd>Tombol bulat</kbd><span class="lbl">lompat</span></div>
+
          <div class="controlRow"><kbd>Tombol merah</kbd><span class="lbl">tahan buat nambang</span></div>
+
          <div class="controlRow"><kbd>Tombol hijau</kbd><span class="lbl">pasang blok/tanam bibit</span></div>
+
          <div class="controlRow"><kbd>Panah/Tidur</kbd><span class="lbl">tombol di kanan atas</span></div>`
+
       : `<div class="controlRow"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span class="lbl">gerak</span></div>
+
          <div class="controlRow"><kbd>Mouse</kbd><span class="lbl">lihat sekitar</span></div>
+
          <div class="controlRow"><kbd>Klik Kiri</kbd><span class="lbl">nambang</span> &nbsp; <kbd>Klik Kanan</kbd><span class="lbl">pasang/tanam</span></div>
+
          <div class="controlRow"><kbd>1-9</kbd><span class="lbl">pilih hotbar</span> &nbsp; <kbd>F</kbd><span class="lbl">panah</span></div>`;
+
     document.getElementById('tutorialModal').style.display = 'flex';
+
   }
+
   document.getElementById('tutorialOkBtn').addEventListener('click', () => {
+
     tutorialSeen = true;
+
     try { localStorage.setItem('blockworld-tutorial-seen', '1'); } catch (e) {}
+
     document.getElementById('tutorialModal').style.display = 'none';
+
   });
+
   document.getElementById('tutorialCloseBtn').addEventListener('click', () => document.getElementById('tutorialModal').style.display = 'none');
 
+
+
   // ================= HUD UPDATE =================
+
   function updateHud() {
+
     document.getElementById('healthNum').textContent = Math.round(player.health);
+
     document.getElementById('healthFill').style.width = Math.max(0, player.health) + '%';
+
     document.getElementById('hungerNum').textContent = Math.round(player.hunger);
+
     document.getElementById('hungerFill').style.width = Math.max(0, player.hunger) + '%';
+
     document.getElementById('coords').textContent = `X:${Math.round(player.pos.x)} Y:${Math.round(player.pos.y)} Z:${Math.round(player.pos.z)}`;
+
   }
+
+
 
   let toastTimer = null;
+
   function showToast(html) {
+
     const el = document.getElementById('toastMsg');
+
     el.innerHTML = html;
+
     el.style.display = 'block';
+
     el.style.opacity = '1';
+
     if (toastTimer) clearTimeout(toastTimer);
+
     toastTimer = setTimeout(() => {
+
       el.style.opacity = '0';
+
       setTimeout(() => { el.style.display = 'none'; }, 200);
+
     }, 1200);
+
     if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) {} }
+
   }
+
+
 
   function respawnPlayer() {
+
     document.getElementById('deadMsg').style.display = 'block';
+
     setTimeout(() => document.getElementById('deadMsg').style.display = 'none', 1500);
+
     player.health = 100; player.hunger = 70;
+
     player.pos.set(0.5, findGroundY(0, 0, 20) + 1, 0.5);
+
     player.velY = 0;
+
     statsDeaths++;
+
   }
+
+
 
   // ================= INIT WORLD (after load attempt) =================
+
   async function init() {
+
     try {
+
       const r = await storage.get('blockworld-active-slot', false);
+
       if (r && r.value) activeSlot = parseInt(r.value) || 1;
+
     } catch (e) {}
+
     const loaded = await loadGame();
+
     updateChunks(player.pos.x, player.pos.z, true);
+
     if (!loaded) {
+
       player.pos.y = findGroundY(0, 0, 20) + 2;
+
     }
+
     refreshHotbarUI();
+
     animate();
+
   }
 
+
+
   // ================= MAIN LOOP =================
+
   const clock = new THREE.Clock();
+
   let frameCount = 0, fpsTimer = 0, lastAutosave = 0, lastFootstepT = 0, lastMinimapDraw = 0, lastAchievementCheck = 0;
+
   let lastMinimapX = null, lastMinimapZ = null;
 
+
+
   function animate() {
+
     requestAnimationFrame(animate);
+
     const dt = Math.min(clock.getDelta(), 0.05);
+
     const now = performance.now();
 
+
+
     frameCount++; fpsTimer += dt;
+
     if (fpsTimer >= 0.5) {
+
       document.getElementById('fps').textContent = Math.round(frameCount / fpsTimer) + ' FPS';
+
       frameCount = 0; fpsTimer = 0;
+
     }
+
+
 
     const isNight = updateDayNight(dt);
 
+
+
     if (isPlaying() && player.health > 0) {
+
       playSeconds += dt;
+
       const sprint = player.sprinting ? 1.6 : 1;
+
       const forward = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
+
       const right = new THREE.Vector3(Math.sin(player.yaw + Math.PI / 2), 0, Math.cos(player.yaw + Math.PI / 2));
+
       let move = new THREE.Vector3();
+
       let isMoving = false;
+
       if (isMobile) {
+
         move.addScaledVector(forward, -joyAxis.y);
+
         move.addScaledVector(right, joyAxis.x);
+
         if (move.lengthSq() > 1) move.normalize();
+
         isMoving = move.lengthSq() > 0.01;
+
         move.multiplyScalar(player.speed * sprint * dt);
+
       } else {
+
         if (keysDown['KeyW']) move.add(forward);
+
         if (keysDown['KeyS']) move.sub(forward);
+
         if (keysDown['KeyD']) move.add(right);
+
         if (keysDown['KeyA']) move.sub(right);
+
         isMoving = move.lengthSq() > 0;
+
         if (move.lengthSq() > 0) move.normalize().multiplyScalar(player.speed * sprint * dt);
+
       }
+
+
 
       const inLiquid = liquidAt(player.pos.x, player.pos.y - 1, player.pos.z);
+
       const tryPos = player.pos.clone();
+
       tryPos.x += move.x; if (!collidesAt(tryPos)) player.pos.x = tryPos.x;
+
       tryPos.copy(player.pos); tryPos.z += move.z; if (!collidesAt(tryPos)) player.pos.z = tryPos.z;
 
+
+
       const gravity = inLiquid === 'water' ? 7 : 20;
+
       player.velY -= gravity * dt;
+
       if (inLiquid === 'water') player.velY = Math.max(player.velY, -3);
+
       if ((keysDown['Space'] || touchJump) && (player.onGround || inLiquid === 'water')) {
+
         player.velY = inLiquid === 'water' ? 3.2 : 8;
+
         player.onGround = false;
+
       }
+
       const tryY = player.pos.clone(); tryY.y += player.velY * dt;
+
       if (!collidesAt(tryY)) {
+
         player.pos.y = tryY.y; player.onGround = false;
+
       } else {
+
         if (player.velY < 0) {
+
           if (!player.wasOnGround) {
+
             const fallDist = player.fallStartY - player.pos.y;
+
             if (fallDist > 4) applyDamage((fallDist - 4) * 6);
+
           }
+
           player.onGround = true;
+
         }
+
         player.velY = 0;
+
       }
+
       if (player.wasOnGround && !player.onGround) player.fallStartY = player.pos.y;
+
       player.wasOnGround = player.onGround;
 
+
+
       // lava damage
+
       const feetLiquid = liquidAt(player.pos.x, player.pos.y - 1.5, player.pos.z);
+
       if (feetLiquid === 'lava' && now - player.lastLavaTick > 400) {
+
         player.lastLavaTick = now; applyDamage(6);
+
       }
 
+
+
       // hunger (lari nguras lebih cepat)
+
       player.hunger = Math.max(0, player.hunger - (100 / 600) * dt * (player.sprinting ? 1.8 : 1));
+
       if (player.hunger <= 0) player.health = Math.max(0, player.health - 2 * dt);
+
       else if (player.hunger > 60 && player.health < 100) player.health = Math.min(100, player.health + 2 * dt);
+
+
 
       if (isMoving && player.onGround && now - lastFootstepT > 350) { lastFootstepT = now; sfxFootstep(); }
 
+
+
       camera.position.copy(player.pos);
+
       camera.rotation.order = 'YXZ';
+
       camera.rotation.y = player.yaw;
+
       camera.rotation.x = player.pitch;
 
+
+
       updateChunks(player.pos.x, player.pos.z, false);
+
       maybeSpawnMobs(now, isNight);
+
       updateMobs(dt, now, isNight);
+
       updateProjectiles(dt);
+
       updateMining(dt);
+
       updateGhost();
+
       updateCrops(now);
+
       updateWeather(now);
+
       updateRain(dt);
+
       if (now - lastAchievementCheck > 1000) { lastAchievementCheck = now; checkAchievements(); }
+
+
 
       if (player.health <= 0) respawnPlayer();
 
+
+
       if (now - lastAutosave > 20000) { lastAutosave = now; saveGame(); }
+
       // redraw minimap cuma kalau posisi berubah cukup jauh (hemat baterai di HP),
+
       // dengan fallback interval biar tetap update kalau dunia berubah (blok ditambang/taruh) walau diam.
+
       const movedEnough = lastMinimapX === null || Math.abs(player.pos.x - lastMinimapX) > 1 || Math.abs(player.pos.z - lastMinimapZ) > 1;
+
       if ((movedEnough && now - lastMinimapDraw > 150) || now - lastMinimapDraw > 2000) {
+
         lastMinimapDraw = now; lastMinimapX = player.pos.x; lastMinimapZ = player.pos.z;
+
         drawMinimap();
+
       }
+
     } else {
+
       ghostMesh.visible = false;
+
     }
+
+
 
     updateHud();
 
+
+
     const t = performance.now();
+
     worldGroup.children.forEach((m) => {
+
       if (m.userData.spawnT) {
+
         const tt = Math.min(1, (t - m.userData.spawnT) / 120);
+
         m.scale.setScalar(tt);
+
         if (tt >= 1) delete m.userData.spawnT;
+
       }
+
     });
 
+
+
     renderer.render(scene, camera);
+
   }
+
+
 
   window.addEventListener('resize', () => {
+
     camera.aspect = window.innerWidth / window.innerHeight;
+
     camera.updateProjectionMatrix();
+
     renderer.setSize(window.innerWidth, window.innerHeight);
+
     checkOrientation();
+
   });
+
   window.addEventListener('orientationchange', checkOrientation);
+
   function checkOrientation() {
+
     const portrait = isMobile && window.innerHeight > window.innerWidth;
+
     document.getElementById('rotateOverlay').style.display = portrait ? 'flex' : 'none';
+
   }
+
   checkOrientation();
+
   window.addEventListener('beforeunload', () => { saveGame(); });
 
+
+
   init();
+
 })();
 
+
+
 if ('serviceWorker' in navigator) {
+
   window.addEventListener('load', () => {
+
     navigator.serviceWorker.register('sw.js').catch(() => {});
+
   });
+
 }
+
 </script>
+
 </body>
+
 </html>
+
 <!-- cache-bust trigger -->
