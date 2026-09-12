@@ -327,14 +327,69 @@
   #touchBreakBtn { background: radial-gradient(circle at 35% 30%, rgba(230,90,90,0.6), rgba(180,50,50,0.45)); border-color: rgba(255,140,130,0.55); }
   #touchPlaceBtn { background: radial-gradient(circle at 35% 30%, rgba(100,190,100,0.6), rgba(60,150,60,0.45)); border-color: rgba(150,230,150,0.55); }
 
+  /* ================= SVG ICONS (replacing emoji) ================= */
+  .svgicon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex-shrink: 0; }
+  .icoRow { display: inline-flex; align-items: center; gap: 5px; }
+  .ic-heart { color: var(--danger); }
+  .ic-hunger { color: var(--gold); }
+  .ic-sun { color: var(--gold); }
+  .ic-moon { color: #cfe0ea; }
+  .ic-danger { color: var(--danger); }
+  .ic-gold { color: var(--gold); }
+  .ic-iron { color: #cdd6d8; }
+  .ic-flame { color: #ff8a3d; }
+  .ic-accent { color: var(--accent); }
+  .invItem .ico { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; }
+  .invItem .ico .svgicon { width: 20px; height: 20px; }
+  #rotateOverlay .icon { width: 56px; height: 56px; margin: 0 auto 14px; animation: rotateHint 1.6s ease-in-out infinite; }
+  #rotateOverlay .icon .svgicon { width: 100%; height: 100%; }
 </style>
 </head>
 <body>
 
+<svg id="iconSprite" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+<defs>
+<symbol id="ic-pickaxe" viewBox="0 0 24 24"><path d="M4 20l7-7"/><path d="M10 6c2-2.4 5.8-3.4 8.7-1.6-.8 3-3.7 5.9-6.7 6.9-1.3.4-2.6.3-3.6-.2l-1.1-1.1c-.5-1.5 0-2.5 2.7-4z"/></symbol>
+<symbol id="ic-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.8 2.5 4.2 6 4.2 9s-1.4 6.5-4.2 9c-2.8-2.5-4.2-6-4.2-9s1.4-6.5 4.2-9z"/></symbol>
+<symbol id="ic-tools" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 1 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2 2.6-2.6z"/></symbol>
+<symbol id="ic-warning" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 9.5v4"/><circle cx="12" cy="16.7" r="0.6" fill="currentColor" stroke="none"/></symbol>
+<symbol id="ic-drumstick" viewBox="0 0 24 24"><path d="M13 4c3 0 6.5 3.2 6.5 6.5 0 1.8-.9 2.9-1.9 3.9l-3 3-2.1-2.1 3-3c1-1 1-2.8 0-3.8-1-1-2.8-1-3.8 0l-3 3-2.1-2.1 3-3C10.6 5.3 11.8 4 13 4z"/><circle cx="6.6" cy="17.4" r="2.6"/></symbol>
+<symbol id="ic-clipboard" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M8 10h8M8 14h8M8 18h5"/></symbol>
+<symbol id="ic-heart" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 20.5c-4.6-3-9-6.9-9-11.2C3 6.4 5.1 4 7.8 4c1.8 0 3.4 1 4.2 2.6C12.8 5 14.4 4 16.2 4 18.9 4 21 6.4 21 9.3c0 4.3-4.4 8.2-9 11.2z"/></symbol>
+<symbol id="ic-backpack" viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="13" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/><rect x="9" y="12" width="6" height="4" rx="1"/></symbol>
+<symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M4 20h16"/></symbol>
+<symbol id="ic-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
+<symbol id="ic-arrow-down" viewBox="0 0 24 24"><path d="M12 4v14M6 13l6 6 6-6"/></symbol>
+<symbol id="ic-arrow-up" viewBox="0 0 24 24"><path d="M12 20V6M6 11l6-6 6 6"/></symbol>
+<symbol id="ic-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M10 11v6M14 11v6"/></symbol>
+<symbol id="ic-skull" viewBox="0 0 24 24"><path d="M12 3c-4.4 0-8 3.4-8 7.6 0 2.6 1.5 4.9 3.7 6.3V19a1 1 0 0 0 1 1h1.6v-2h1.4v2h1.4v-2h1.4v2H17a1 1 0 0 0 1-1v-2.1c2.2-1.4 3.7-3.7 3.7-6.3C21.7 6.4 16.4 3 12 3z"/><circle cx="9" cy="11" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="11" r="1.2" fill="currentColor" stroke="none"/></symbol>
+<symbol id="ic-phone-rotate" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 19h2"/><path d="M18.5 8.5l2 1.8-2 1.8M5.5 8.5l-2 1.8 2 1.8"/></symbol>
+<symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></symbol>
+<symbol id="ic-utensils" viewBox="0 0 24 24"><path d="M6 3v7a2 2 0 0 0 4 0V3M8 10v11M16 3c-1.5 0-2 2-2 4s.5 4 2 4v10"/></symbol>
+<symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="ic-close" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol>
+<symbol id="ic-stopwatch" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6M12 2v2"/></symbol>
+<symbol id="ic-apple" viewBox="0 0 24 24"><path d="M12 8c-3.5-3-8-1-8 4 0 4.5 4 9 8 9s8-4.5 8-9c0-5-4.5-7-8-4z"/><path d="M12 8V5c0-1 1-2 2-2"/></symbol>
+<symbol id="ic-steak" viewBox="0 0 24 24"><path d="M6 14c-2-2-2-6 1-8s7-2 9 1c2 3 1 6-1 8-1.5 1.5-4 1-6 2-1.5.7-2 1-3-1-1-1.5-.5-1.5 0-2z"/><circle cx="9" cy="11" r="0.9" fill="currentColor" stroke="none"/><circle cx="13" cy="13" r="0.9" fill="currentColor" stroke="none"/></symbol>
+<symbol id="ic-bacon" viewBox="0 0 24 24"><path d="M4 6c4-2 6 2 10 0s6 2 6 2-3 2-4 4c-1 2 1 3 1 3s-4 2-8 0-6-2-6-2 3-2 4-4c1-2-1-3-3-3z"/></symbol>
+<symbol id="ic-bone" viewBox="0 0 24 24"><path d="M7 12a2.5 2.5 0 1 0-3-3 2.5 2.5 0 0 0 1 4l10 10a2.5 2.5 0 0 0 4 1 2.5 2.5 0 0 0-3-3L7 12z"/></symbol>
+<symbol id="ic-zombie" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M9 8l1.5 1.5M15 8l-1.5 1.5M9 12.3c1 1 4 1 5 0"/><path d="M12 15v6M9 19h6"/></symbol>
+<symbol id="ic-ingot" viewBox="0 0 24 24"><path d="M6 9h12l2 6H4z"/><path d="M6 9l1-3h10l1 3"/></symbol>
+<symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z"/></symbol>
+<symbol id="ic-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></symbol>
+<symbol id="ic-brick" viewBox="0 0 24 24"><rect x="3" y="9" width="8" height="6"/><rect x="13" y="9" width="8" height="6"/><rect x="8" y="15" width="8" height="6"/></symbol>
+<symbol id="ic-fire" viewBox="0 0 24 24"><path d="M12 2c1 3-3 4-3 8a3 3 0 0 0 6 0c0-1-1-2-1-3 2 1 3 4 3 6a5 5 0 0 1-10 0c0-4 3-6 5-11z"/></symbol>
+<symbol id="ic-log" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="6" rx="3"/><circle cx="6" cy="12" r="2"/></symbol>
+<symbol id="ic-torch" viewBox="0 0 24 24"><path d="M12 2c2 2 3 4 1 6-1 1-2 0-2-1 0 1-1 2-2 1-2-2-1-4 3-6z"/><path d="M12 9v13"/><path d="M9 22h6"/></symbol>
+<symbol id="ic-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h8V4"/><path d="M8 21v-6h8v6"/></symbol>
+</defs>
+</svg>
+
 <div id="versionBadge"><span class="dot"></span> BlockWorld v2.5 — Lihat Update</div>
 
 <div id="hint">
-  <div class="badgeIcon">⛏️</div>
+  <div class="badgeIcon"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></div>
   <h1>BlockWorld</h1>
   <span class="tagline">Bangun, jelajahi, dan bertahan hidup</span>
 
@@ -359,19 +414,19 @@
   </div>
 
   <div class="noteBox">
-    <div class="noteRow"><span class="em">🌍</span><span>Dunia gak terbatas, ada gurun/salju/dataran, gua &amp; bijih di bawah tanah</span></div>
-    <div class="noteRow"><span class="em">⛏️</span><span>Tambang butuh waktu &amp; pickaxe yang cukup buat bijih keras</span></div>
-    <div class="noteRow"><span class="em">🛠️</span><span>Bikin Meja Kerja &amp; Furnace buat crafting, smelting, dan masak</span></div>
-    <div class="noteRow"><span class="em">🌋</span><span>Hati-hati <b>lava</b>, <b>zombie</b>, dan <b>skeleton</b> malam hari</span></div>
-    <div class="noteRow"><span class="em">🍗</span><span>Jaga lapar — makan apel/daging hasil buruan atau kebun</span></div>
+    <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-globe"/></svg></span><span>Dunia gak terbatas, ada gurun/salju/dataran, gua &amp; bijih di bawah tanah</span></div>
+    <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></span><span>Tambang butuh waktu &amp; pickaxe yang cukup buat bijih keras</span></div>
+    <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-tools"/></svg></span><span>Bikin Meja Kerja &amp; Furnace buat crafting, smelting, dan masak</span></div>
+    <div class="noteRow"><span class="em"><svg class="svgicon ic-danger"><use href="#ic-warning"/></svg></span><span>Hati-hati <b>lava</b>, <b>zombie</b>, dan <b>skeleton</b> malam hari</span></div>
+    <div class="noteRow"><span class="em"><svg class="svgicon ic-hunger"><use href="#ic-drumstick"/></svg></span><span>Jaga lapar — makan apel/daging hasil buruan atau kebun</span></div>
   </div>
 
-  <div id="patchNotesLink">📋 Lihat semua update &amp; perbaikan</div>
+  <div id="patchNotesLink" class="icoRow"><svg class="svgicon"><use href="#ic-clipboard"/></svg> Lihat semua update &amp; perbaikan</div>
 </div>
 
 <div id="patchModal" class="modalOverlay">
   <div id="patchCard" class="modalCard">
-    <h2>📋 Riwayat Update <span id="patchCloseBtn" class="modalClose">✕</span></h2>
+    <h2 class="icoRow"><svg class="svgicon"><use href="#ic-clipboard"/></svg> Riwayat Update <span id="patchCloseBtn" class="modalClose"><svg class="svgicon"><use href="#ic-close"/></svg></span></h2>
     <div class="patchSub">Semua perubahan yang udah ditambahin ke BlockWorld</div>
 
     <div class="patchEntry newest">
@@ -455,7 +510,7 @@
           <li>Ganti nama jadi BlockWorld + tampilan menu baru</li>
           <li>Dunia tak terbatas (chunk streaming otomatis)</li>
           <li>Siklus siang &amp; malam</li>
-          <li>Sistem nyawa (❤️) dan lapar (🍗)</li>
+          <li>Sistem nyawa (<svg class="svgicon ic-heart"><use href="#ic-heart"/></svg>) dan lapar (<svg class="svgicon ic-hunger"><use href="#ic-drumstick"/></svg>)</li>
           <li>Blok baru: air, lava, kaca, bata</li>
           <li>Inventory nyata — harus nambang dulu baru bisa pasang</li>
           <li>Crafting sederhana (pasir→kaca, batu→bata)</li>
@@ -504,7 +559,7 @@
 
 <div id="invModal" class="modalOverlay">
   <div class="modalCard">
-    <h2>🎒 Tas <span id="invCloseBtn" class="modalClose">✕</span></h2>
+    <h2 class="icoRow"><svg class="svgicon"><use href="#ic-backpack"/></svg> Tas <span id="invCloseBtn" class="modalClose"><svg class="svgicon"><use href="#ic-close"/></svg></span></h2>
     <div class="modalSub">Item di luar hotbar (bahan, makanan, alat, zirah)</div>
     <div id="invGrid" class="invGrid"></div>
   </div>
@@ -512,14 +567,14 @@
 
 <div id="statsModal" class="modalOverlay">
   <div class="modalCard">
-    <h2>📊 Statistik <span id="statsCloseBtn" class="modalClose">✕</span></h2>
+    <h2 class="icoRow"><svg class="svgicon"><use href="#ic-chart"/></svg> Statistik <span id="statsCloseBtn" class="modalClose"><svg class="svgicon"><use href="#ic-close"/></svg></span></h2>
     <div id="statsBody"></div>
   </div>
 </div>
 
 <div id="settingsModal" class="modalOverlay">
   <div class="modalCard">
-    <h2>⚙️ Setting <span id="settingsCloseBtn" class="modalClose">✕</span></h2>
+    <h2 class="icoRow"><svg class="svgicon"><use href="#ic-gear"/></svg> Setting <span id="settingsCloseBtn" class="modalClose"><svg class="svgicon"><use href="#ic-close"/></svg></span></h2>
     <div class="modalSub">Slot save, sensitivitas, dan suara</div>
 
     <div style="font-size:12px; margin-bottom:6px; opacity:0.8;">Slot Save Aktif</div>
@@ -528,8 +583,8 @@
     <div class="settingsRow">
       <span>Ekspor / Impor Save</span>
       <span>
-        <span class="smallBtn" id="exportBtn">⬇️ Ekspor</span>
-        <span class="smallBtn" id="importBtn">⬆️ Impor</span>
+        <span class="smallBtn icoRow" id="exportBtn"><svg class="svgicon"><use href="#ic-arrow-down"/></svg> Ekspor</span>
+        <span class="smallBtn icoRow" id="importBtn"><svg class="svgicon"><use href="#ic-arrow-up"/></svg> Impor</span>
         <input type="file" id="importFile" accept="application/json" style="display:none">
       </span>
     </div>
@@ -546,16 +601,16 @@
 
     <div class="settingsRow">
       <span>Reset Dunia / Save (slot aktif)</span>
-      <span class="smallBtn" id="resetWorldBtn" style="color:#ff8080;">🗑️ Reset</span>
+      <span class="smallBtn icoRow" id="resetWorldBtn" style="color:#ff8080;"><svg class="svgicon"><use href="#ic-trash"/></svg> Reset</span>
     </div>
   </div>
 </div>
 
-<div id="deadMsg">💀 Kamu mati... respawn</div>
+<div id="deadMsg" class="icoRow"><svg class="svgicon"><use href="#ic-skull"/></svg> Kamu mati... respawn</div>
 <div id="toastMsg"></div>
 
 <div id="rotateOverlay">
-  <div class="icon">📱</div>
+  <div class="icon"><svg class="svgicon"><use href="#ic-phone-rotate"/></svg></div>
   <div class="msg">Putar HP kamu ke mode <b>Horizontal (Landscape)</b><br>biar tampilan game lebih lega, kayak Minecraft asli</div>
 </div>
 
@@ -576,10 +631,10 @@
 </div>
 
 <div id="hud" style="display:none;">
-  <div>⛏️ <span id="blockCount">0</span> ditambang &nbsp; <span id="timeIcon">☀️</span></div>
-  <div class="barLabel"><span>❤️ Nyawa</span><span id="healthNum">100</span></div>
+  <div class="icoRow"><svg class="svgicon"><use href="#ic-pickaxe"/></svg> <span id="blockCount">0</span> ditambang &nbsp; <span id="timeIcon" class="icoRow"><svg class="svgicon ic-sun"><use href="#ic-sun"/></svg></span></div>
+  <div class="barLabel"><span class="icoRow"><svg class="svgicon ic-heart"><use href="#ic-heart"/></svg> Nyawa</span><span id="healthNum">100</span></div>
   <div class="barBg"><div class="barFill" id="healthFill" style="width:100%"></div></div>
-  <div class="barLabel"><span>🍗 Lapar</span><span id="hungerNum">100</span></div>
+  <div class="barLabel"><span class="icoRow"><svg class="svgicon ic-hunger"><use href="#ic-drumstick"/></svg> Lapar</span><span id="hungerNum">100</span></div>
   <div class="barBg"><div class="barFill" id="hungerFill" style="width:100%"></div></div>
   <div id="coords">X:0 Y:0 Z:0</div>
   <div id="toolInfo">Tool: Tangan</div>
@@ -589,12 +644,12 @@
   <div id="fps"></div>
   <canvas id="minimap" width="84" height="84"></canvas>
   <div class="actionGrid">
-    <button class="smallBtn" id="eatBtn">🍽️ Makan (<span id="foodCount">0</span>)</button>
-    <button class="smallBtn" id="craftToggleBtn">🛠️ Crafting</button>
-    <button class="smallBtn" id="invToggleBtn">🎒 Tas</button>
-    <button class="smallBtn" id="statsToggleBtn">📊 Statistik</button>
-    <button class="smallBtn" id="settingsToggleBtn">⚙️ Setting</button>
-    <button class="smallBtn" id="saveBtn">💾 Simpan</button>
+    <button class="smallBtn icoRow" id="eatBtn"><svg class="svgicon"><use href="#ic-utensils"/></svg> Makan (<span id="foodCount">0</span>)</button>
+    <button class="smallBtn icoRow" id="craftToggleBtn"><svg class="svgicon"><use href="#ic-tools"/></svg> Crafting</button>
+    <button class="smallBtn icoRow" id="invToggleBtn"><svg class="svgicon"><use href="#ic-backpack"/></svg> Tas</button>
+    <button class="smallBtn icoRow" id="statsToggleBtn"><svg class="svgicon"><use href="#ic-chart"/></svg> Statistik</button>
+    <button class="smallBtn icoRow" id="settingsToggleBtn"><svg class="svgicon"><use href="#ic-gear"/></svg> Setting</button>
+    <button class="smallBtn icoRow" id="saveBtn"><svg class="svgicon"><use href="#ic-save"/></svg> Simpan</button>
   </div>
   <span id="saveMsg"></span>
 </div>
@@ -607,8 +662,8 @@
 <div id="touchJumpBtn" style="display:none;">LOMPAT</div>
 <div id="touchSprintBtn" style="display:none;">LARI</div>
 <div id="touchActionBtns" style="display:none;">
-  <div class="touchBtn" id="touchPlaceBtn">➕</div>
-  <div class="touchBtn" id="touchBreakBtn">⛏️</div>
+  <div class="touchBtn" id="touchPlaceBtn"><svg class="svgicon"><use href="#ic-plus"/></svg></div>
+  <div class="touchBtn" id="touchBreakBtn"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -616,6 +671,11 @@
 (function() {
   // ================= MOBILE DETECTION (must run first) =================
   const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+  // ================= ICON HELPER (SVG sprite, replaces emoji) =================
+  function svgIcon(name, cls) {
+    return `<svg class="svgicon${cls ? ' ' + cls : ''}"><use href="#ic-${name}"/></svg>`;
+  }
 
   // ================= SCENE / RENDERER =================
   const scene = new THREE.Scene();
@@ -704,13 +764,14 @@
   function bestFood() { return FOOD_ORDER.find(f => inventory[f] > 0); }
 
   const ITEM_LABELS = {
-    apple: '🍎 Apel', raw_chicken: '🍗 Ayam Mentah', cooked_chicken: '🍗 Ayam Matang',
-    raw_beef: '🥩 Daging Mentah', cooked_beef: '🥩 Daging Matang',
-    raw_porkchop: '🥓 Babi Mentah', cooked_porkchop: '🥓 Babi Matang',
-    rotten_flesh: '🧟 Daging Busuk', bone: '🦴 Tulang',
-    iron_ingot: '🔩 Iron Ingot', gold_ingot: '🟡 Gold Ingot',
-    pickaxe_wood: '⛏️ Pickaxe Kayu', pickaxe_stone: '⛏️ Pickaxe Batu', pickaxe_iron: '⛏️ Pickaxe Besi',
-    iron_armor: '🛡️ Zirah Besi',
+    apple: { icon: 'apple', text: 'Apel' },
+    raw_chicken: { icon: 'drumstick', text: 'Ayam Mentah' }, cooked_chicken: { icon: 'drumstick', text: 'Ayam Matang', cls: 'ic-flame' },
+    raw_beef: { icon: 'steak', text: 'Daging Mentah' }, cooked_beef: { icon: 'steak', text: 'Daging Matang', cls: 'ic-flame' },
+    raw_porkchop: { icon: 'bacon', text: 'Babi Mentah' }, cooked_porkchop: { icon: 'bacon', text: 'Babi Matang', cls: 'ic-flame' },
+    rotten_flesh: { icon: 'zombie', text: 'Daging Busuk' }, bone: { icon: 'bone', text: 'Tulang' },
+    iron_ingot: { icon: 'ingot', text: 'Iron Ingot', cls: 'ic-iron' }, gold_ingot: { icon: 'ingot', text: 'Gold Ingot', cls: 'ic-gold' },
+    pickaxe_wood: { icon: 'pickaxe', text: 'Pickaxe Kayu' }, pickaxe_stone: { icon: 'pickaxe', text: 'Pickaxe Batu' }, pickaxe_iron: { icon: 'pickaxe', text: 'Pickaxe Besi', cls: 'ic-iron' },
+    iron_armor: { icon: 'shield', text: 'Zirah Besi', cls: 'ic-iron' },
   };
 
   // ================= WORLD / CHUNK SYSTEM =================
@@ -940,20 +1001,20 @@
   }
 
   const CRAFT_RECIPES = [
-    { id: 'craftGlass', label: '🧪 1 Pasir → 1 Kaca', need: { sand: 1 }, give: { glass: 1 } },
-    { id: 'craftBrick', label: '🧱 1 Batu → 1 Bata', need: { stone: 1 }, give: { brick: 1 } },
-    { id: 'craftFurnace', label: '🔥 4 Batu → 1 Furnace', need: { stone: 4 }, give: { furnace: 1 } },
-    { id: 'craftWorkbench', label: '🪵 4 Kayu → 1 Meja Kerja', need: { wood: 4 }, give: { workbench: 1 } },
-    { id: 'craftTorch', label: '🕯️ 1 Kayu+1 Batu Bara → 4 Obor', need: { wood: 1, coal_ore: 1 }, give: { torch: 4 } },
-    { id: 'craftPickWood', label: '⛏️ 3 Kayu → Pickaxe Kayu', need: { wood: 3 }, give: { pickaxe_wood: 1 }, nearWorkbench: true },
-    { id: 'craftPickStone', label: '⛏️ 3 Batu → Pickaxe Batu', need: { stone: 3 }, give: { pickaxe_stone: 1 }, nearWorkbench: true },
-    { id: 'craftPickIron', label: '⛏️ 3 Iron Ingot → Pickaxe Besi', need: { iron_ingot: 3 }, give: { pickaxe_iron: 1 }, nearWorkbench: true },
-    { id: 'craftArmor', label: '🛡️ 4 Iron Ingot → Zirah Besi', need: { iron_ingot: 4 }, give: { iron_armor: 1 }, nearWorkbench: true },
-    { id: 'smeltIron', label: '♨️ Bijih Besi+Batu Bara → Iron Ingot', need: { iron_ore: 1, coal_ore: 1 }, give: { iron_ingot: 1 }, nearFurnace: true },
-    { id: 'smeltGold', label: '♨️ Bijih Emas+Batu Bara → Gold Ingot', need: { gold_ore: 1, coal_ore: 1 }, give: { gold_ingot: 1 }, nearFurnace: true },
-    { id: 'cookChicken', label: '♨️ Ayam Mentah+Batu Bara → Ayam Matang', need: { raw_chicken: 1, coal_ore: 1 }, give: { cooked_chicken: 1 }, nearFurnace: true },
-    { id: 'cookBeef', label: '♨️ Daging Mentah+Batu Bara → Daging Matang', need: { raw_beef: 1, coal_ore: 1 }, give: { cooked_beef: 1 }, nearFurnace: true },
-    { id: 'cookPork', label: '♨️ Babi Mentah+Batu Bara → Babi Matang', need: { raw_porkchop: 1, coal_ore: 1 }, give: { cooked_porkchop: 1 }, nearFurnace: true },
+    { id: 'craftGlass', icon: 'flask', label: '1 Pasir → 1 Kaca', need: { sand: 1 }, give: { glass: 1 } },
+    { id: 'craftBrick', icon: 'brick', label: '1 Batu → 1 Bata', need: { stone: 1 }, give: { brick: 1 } },
+    { id: 'craftFurnace', icon: 'fire', cls: 'ic-flame', label: '4 Batu → 1 Furnace', need: { stone: 4 }, give: { furnace: 1 } },
+    { id: 'craftWorkbench', icon: 'log', label: '4 Kayu → 1 Meja Kerja', need: { wood: 4 }, give: { workbench: 1 } },
+    { id: 'craftTorch', icon: 'torch', cls: 'ic-flame', label: '1 Kayu+1 Batu Bara → 4 Obor', need: { wood: 1, coal_ore: 1 }, give: { torch: 4 } },
+    { id: 'craftPickWood', icon: 'pickaxe', label: '3 Kayu → Pickaxe Kayu', need: { wood: 3 }, give: { pickaxe_wood: 1 }, nearWorkbench: true },
+    { id: 'craftPickStone', icon: 'pickaxe', label: '3 Batu → Pickaxe Batu', need: { stone: 3 }, give: { pickaxe_stone: 1 }, nearWorkbench: true },
+    { id: 'craftPickIron', icon: 'pickaxe', cls: 'ic-iron', label: '3 Iron Ingot → Pickaxe Besi', need: { iron_ingot: 3 }, give: { pickaxe_iron: 1 }, nearWorkbench: true },
+    { id: 'craftArmor', icon: 'shield', cls: 'ic-iron', label: '4 Iron Ingot → Zirah Besi', need: { iron_ingot: 4 }, give: { iron_armor: 1 }, nearWorkbench: true },
+    { id: 'smeltIron', icon: 'fire', cls: 'ic-flame', label: 'Bijih Besi+Batu Bara → Iron Ingot', need: { iron_ore: 1, coal_ore: 1 }, give: { iron_ingot: 1 }, nearFurnace: true },
+    { id: 'smeltGold', icon: 'fire', cls: 'ic-flame', label: 'Bijih Emas+Batu Bara → Gold Ingot', need: { gold_ore: 1, coal_ore: 1 }, give: { gold_ingot: 1 }, nearFurnace: true },
+    { id: 'cookChicken', icon: 'fire', cls: 'ic-flame', label: 'Ayam Mentah+Batu Bara → Ayam Matang', need: { raw_chicken: 1, coal_ore: 1 }, give: { cooked_chicken: 1 }, nearFurnace: true },
+    { id: 'cookBeef', icon: 'fire', cls: 'ic-flame', label: 'Daging Mentah+Batu Bara → Daging Matang', need: { raw_beef: 1, coal_ore: 1 }, give: { cooked_beef: 1 }, nearFurnace: true },
+    { id: 'cookPork', icon: 'fire', cls: 'ic-flame', label: 'Babi Mentah+Batu Bara → Babi Matang', need: { raw_porkchop: 1, coal_ore: 1 }, give: { cooked_porkchop: 1 }, nearFurnace: true },
   ];
   function refreshCraftPanel() {
     const panel = document.getElementById('craftPanel');
@@ -964,8 +1025,8 @@
       if (r.nearFurnace && !nf) return;
       const can = Object.entries(r.need).every(([k, v]) => (inventory[k] || 0) >= v);
       const btn = document.createElement('div');
-      btn.className = 'craftBtn';
-      btn.textContent = r.label;
+      btn.className = 'craftBtn icoRow';
+      btn.innerHTML = svgIcon(r.icon, r.cls) + ' ' + r.label;
       if (!can) btn.style.opacity = '0.4';
       btn.addEventListener('click', () => {
         if (!Object.entries(r.need).every(([k, v]) => (inventory[k] || 0) >= v)) return;
@@ -1000,10 +1061,10 @@
     const items = Object.keys(inventory).filter(k => inventory[k] > 0 && !HOTBAR.includes(k));
     if (!items.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;opacity:0.6;font-size:12px;">Kosong</div>'; return; }
     items.forEach(k => {
-      const label = ITEM_LABELS[k] || k;
+      const label = ITEM_LABELS[k] || { icon: null, text: k };
       const div = document.createElement('div');
       div.className = 'invItem';
-      div.innerHTML = `<div class="ico">${label.split(' ')[0]}</div><div>${label.replace(/^\S+\s/, '')}</div><div>x${inventory[k]}</div>`;
+      div.innerHTML = `<div class="ico">${label.icon ? svgIcon(label.icon, label.cls) : ''}</div><div>${label.text}</div><div>x${inventory[k]}</div>`;
       if (k === 'iron_armor') {
         const btn = document.createElement('div');
         btn.className = 'invBtn';
@@ -1028,10 +1089,10 @@
   function refreshStats() {
     const body = document.getElementById('statsBody');
     let html = '';
-    html += `<div class="statRow"><span>⏱️ Waktu main</span><span>${fmtTime(playSeconds)}</span></div>`;
-    html += `<div class="statRow"><span>⛏️ Total ditambang</span><span>${minedCount}</span></div>`;
-    html += `<div class="statRow"><span>💀 Mob dikalahkan</span><span>${statsMobsKilled}</span></div>`;
-    html += `<div class="statRow"><span>☠️ Jumlah mati</span><span>${statsDeaths}</span></div>`;
+    html += `<div class="statRow"><span class="icoRow">${svgIcon('stopwatch')} Waktu main</span><span>${fmtTime(playSeconds)}</span></div>`;
+    html += `<div class="statRow"><span class="icoRow">${svgIcon('pickaxe')} Total ditambang</span><span>${minedCount}</span></div>`;
+    html += `<div class="statRow"><span class="icoRow">${svgIcon('skull')} Mob dikalahkan</span><span>${statsMobsKilled}</span></div>`;
+    html += `<div class="statRow"><span class="icoRow">${svgIcon('skull', 'ic-danger')} Jumlah mati</span><span>${statsDeaths}</span></div>`;
     Object.keys(minedByType).sort((a, b) => minedByType[b] - minedByType[a]).forEach(t => {
       html += `<div class="statRow"><span>${BLOCK_TYPES[t] ? BLOCK_TYPES[t].name : t}</span><span>${minedByType[t]}</span></div>`;
     });
@@ -1306,7 +1367,7 @@
     const tier = def.tier || 0;
     if (tier > currentToolTier()) {
       const needName = TOOL_NAMES[tier] || 'alat lebih baik';
-      showToast(`⛏️ Butuh ${needName}!`);
+      showToast(`<span class="icoRow">${svgIcon('pickaxe')} Butuh ${needName}!</span>`);
       return;
     }
     miningTarget = { x: ud.x, y: ud.y, z: ud.z, type: ud.type };
@@ -1547,7 +1608,7 @@
     scene.fog.color = c;
     hemiLight.intensity = 0.25 + 0.85 * brightness;
     sunLight.intensity = 0.15 + 0.85 * brightness;
-    document.getElementById('timeIcon').textContent = brightness < 0.35 ? '🌙' : '☀️';
+    document.getElementById('timeIcon').innerHTML = brightness < 0.35 ? svgIcon('moon', 'ic-moon') : svgIcon('sun', 'ic-sun');
     return brightness < 0.35;
   }
 
@@ -1696,9 +1757,9 @@
   }
 
   let toastTimer = null;
-  function showToast(text) {
+  function showToast(html) {
     const el = document.getElementById('toastMsg');
-    el.textContent = text;
+    el.innerHTML = html;
     el.style.display = 'block';
     el.style.opacity = '1';
     if (toastTimer) clearTimeout(toastTimer);
