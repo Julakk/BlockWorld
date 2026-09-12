@@ -88,11 +88,9 @@
   .slot.empty { border-color: rgba(255,255,255,0.05); }
   .slot.empty .cnt { display: none; }
 
-  #craftPanel { display: none; gap: 7px; flex-wrap: wrap; max-width: 92vw; justify-content: center; background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 8px; border-radius: var(--radius-md); border: 1px solid var(--panel-border); box-shadow: var(--shadow-panel); animation: slideUpFade 0.18s ease; }
-  .craftBtn { color: white; font-size: 11px; text-shadow: 1px 1px 2px black; background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.16); border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease; font-weight: 600; }
-  .craftBtn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.28); }
-  .craftBtn:active { background: rgba(255,255,255,0.26); transform: scale(0.96); }
+  /* v3.2: Panel Crafting sekarang pakai grid slot kotak yang sama persis dengan Tas (.invGrid/.invItem) */
+  #craftPanel { display: none; max-width: 92vw; max-height: 40vh; overflow-y: auto; background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 8px; border-radius: var(--radius-md); border: 1px solid var(--panel-border); box-shadow: var(--shadow-panel); animation: slideUpFade 0.18s ease; }
+  .craftDisabled { opacity: 0.4; }
 
   /* ================= HUD ================= */
   #hud {
@@ -118,7 +116,7 @@
     box-shadow: var(--shadow-panel); transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease; font-weight: 600; }
   .smallBtn:hover { border-color: var(--panel-border-strong); background: rgba(255,255,255,0.11); }
   .smallBtn:active { transform: scale(0.95); }
-  #eatBtn:disabled, .craftBtn:disabled { opacity: 0.35; cursor: default; }
+  #eatBtn:disabled { opacity: 0.35; cursor: default; }
   #saveMsg { color: var(--gold); font-size: 11px; text-shadow: 1px 1px 2px black; font-weight: 700; }
   #minimap { width: 88px; height: 88px; border-radius: var(--radius-sm); border: 2px solid var(--panel-border-strong); background: #111; box-shadow: var(--shadow-panel); }
   #compassLabel { font-size: 10px; font-weight: 700; color: var(--text-dim); text-shadow: 1px 1px 2px black; letter-spacing: 0.3px; }
@@ -304,11 +302,26 @@
   .settingsRow input[type=range] { flex: 1; accent-color: var(--accent); }
   .settingsRow input[type=checkbox] { accent-color: var(--accent); width: 17px; height: 17px; }
 
-  #deadMsg {
-    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
-    color: var(--danger); font-size: 28px; font-weight: 800; text-shadow: 2px 2px 10px black;
-    z-index: 25; display: none; pointer-events: none; letter-spacing: 0.3px;
+  /* ===== Layar Respawn/Mati (v3.2) ===== */
+  #deathScreen {
+    position: fixed; inset: 0; z-index: 35; display: none; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(90,10,10,0.5) 0%, rgba(15,2,2,0.94) 100%);
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+    animation: modalPop 0.25s cubic-bezier(.2,.9,.3,1.1);
   }
+  #deathScreen .card { text-align: center; color: #fff; text-shadow: 2px 2px 6px black; padding: 20px; max-width: 90vw; }
+  #deathScreen .deathIcon { width: 58px; height: 58px; margin: 0 auto 10px; }
+  #deathScreen .deathIcon .svgicon { width: 100%; height: 100%; }
+  #deathScreen h1 { font-size: 32px; color: var(--danger); margin: 0 0 6px; letter-spacing: 0.4px; font-weight: 800; }
+  #deathScreen .sub { font-size: 12.5px; color: #e8c9c9; margin-bottom: 18px; opacity: 0.9; }
+  #deathScreen #deathFinalStats { font-size: 12px; color: #f0d8d8; margin-bottom: 24px; opacity: 0.95; line-height: 1.7; }
+  #respawnBtn {
+    display: inline-flex; margin: 0 auto; padding: 12px 34px; border-radius: 999px;
+    background: var(--accent-grad); border: 1px solid rgba(255,255,255,0.35);
+    font-weight: 800; font-size: 14px; letter-spacing: 0.3px; color: #14230c; cursor: pointer;
+    box-shadow: 0 4px 0 #2f6e1c, 0 10px 22px rgba(74,158,48,0.4); transition: transform 0.1s ease;
+  }
+  #respawnBtn:active { transform: scale(0.95); }
 
   #toastMsg {
     position: fixed; top: 22%; left: 50%; transform: translate(-50%, -50%);
@@ -421,7 +434,7 @@
 </defs>
 </svg>
 
-<div id="versionBadge"><span class="dot"></span> BlockWorld v3.1 — Lihat Update</div>
+<div id="versionBadge"><span class="dot"></span> BlockWorld v3.2 — Lihat Update</div>
 
 <div id="hint">
   <div class="badgeIcon"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></div>
@@ -470,6 +483,20 @@
     <div class="patchSub">Semua perubahan yang udah ditambahin ke BlockWorld</div>
 
     <div class="patchEntry newest">
+      <div class="patchBadge">v3.2</div>
+      <div>
+        <div class="patchTitle">Polish &amp; Performa</div>
+        <ul>
+          <li>Optimasi FPS render jarak jauh: blok yang tertutup rapat di semua sisi (misal batu jauh di bawah tanah) sekarang gak dibikin objek render sama sekali sampai salah satu sisinya kebuka — mengurangi drastis jumlah objek yang harus digambar begitu Jarak Render dinaikkan. Blok statis lain juga gak lagi hitung ulang posisinya tiap frame</li>
+          <li>Hemat baterai HP: render &amp; update logic otomatis berhenti total begitu app dipindah ke background (minimize/ganti app/kunci layar), bukan cuma dikurangi — progress ikut disimpan otomatis saat itu juga</li>
+          <li>Kompres save lebih lanjut: data perubahan dunia (worldDiffs) sekarang dipadatkan jadi biner+base64, lebih hemat lagi dibanding array angka JSON sebelumnya. Save versi lama tetap kebaca</li>
+          <li>Panel Statistik &amp; Panel Crafting dirombak jadi grid slot kotak yang seragam dengan Tas — rekap blok ditambang &amp; pencapaian tampil sebagai ikon+angka, resep crafting tinggal diketuk</li>
+          <li>Layar Respawn/Mati baru: begitu nyawa habis, layar "Kamu Mati!" penuh muncul dengan rekap singkat (blok ditambang, mob dikalahkan, kematian ke-berapa) dan tombol Respawn manual, gantiin teks kecil sekilas yang lama</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="patchEntry">
       <div class="patchBadge">v3.1</div>
       <div>
         <div class="patchTitle">Konten &amp; Eksplorasi: Perahu, Mancing, Minimap+Kompas</div>
@@ -786,7 +813,15 @@
   </div>
 </div>
 
-<div id="deadMsg" class="icoRow"><svg class="svgicon"><use href="#ic-skull"/></svg> Kamu mati... respawn</div>
+<div id="deathScreen">
+  <div class="card">
+    <div class="deathIcon"><svg class="svgicon ic-danger"><use href="#ic-skull"/></svg></div>
+    <h1>Kamu Mati!</h1>
+    <div class="sub">Nyawa &amp; lapar dipulihkan begitu kamu respawn</div>
+    <div id="deathFinalStats"></div>
+    <div id="respawnBtn" class="icoRow"><svg class="svgicon"><use href="#ic-heart"/></svg> Respawn</div>
+  </div>
+</div>
 <div id="toastMsg"></div>
 
 <div id="rotateOverlay">
@@ -806,7 +841,7 @@
 </div>
 
 <div id="hotbarWrap" style="display:none;">
-  <div id="craftPanel"></div>
+  <div id="craftPanel" class="invGrid"></div>
   <div id="hotbar"></div>
 </div>
 
@@ -1036,33 +1071,71 @@
     mesh.position.set(x, y, z);
     mesh.userData = { x, y, z, type };
     if (animate) { mesh.scale.set(0.01, 0.01, 0.01); mesh.userData.spawnT = performance.now(); }
+    else { mesh.matrixAutoUpdate = false; mesh.updateMatrix(); } // v3.2 perf: blok statis gak perlu hitung ulang matrix tiap frame
     worldGroup.add(mesh);
     world.set(k, { mesh, type });
+  }
+  // v3.2 perf: materialisasi blok yang sebelumnya disembunyikan (occlusion culling, lihat generateChunk)
+  // begitu salah satu tetangganya kebuka (ditambang/dibongkar), biar gak ada lubang render.
+  function materializeHiddenBlock(x, y, z) {
+    const k = key(x, y, z);
+    const entry = world.get(k);
+    if (!entry || entry.mesh) return;
+    const mesh = new THREE.Mesh(boxGeo, getMaterial(entry.type));
+    mesh.position.set(x, y, z);
+    mesh.userData = { x, y, z, type: entry.type };
+    mesh.matrixAutoUpdate = false; mesh.updateMatrix();
+    worldGroup.add(mesh);
+    entry.mesh = mesh;
+  }
+  function revealExposedNeighbors(x, y, z) {
+    const deltas = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+    for (const [dx, dy, dz] of deltas) {
+      const entry = world.get(key(x + dx, y + dy, z + dz));
+      if (entry && !entry.mesh) materializeHiddenBlock(x + dx, y + dy, z + dz);
+    }
   }
   function destroyBlockMesh(x, y, z) {
     const k = key(x, y, z);
     const b = world.get(k);
     if (!b) return;
-    worldGroup.remove(b.mesh);
+    if (b.mesh) worldGroup.remove(b.mesh);
     world.delete(k);
+    revealExposedNeighbors(x, y, z);
   }
 
-  function placeGenBlock(x, y, z, type, keysInChunk) {
-    const k = key(x, y, z);
-    if (worldDiffs.has(k)) {
-      const d = worldDiffs.get(k);
-      if (d === '') return;
-      type = d;
-    }
-    createBlockMesh(x, y, z, type, false);
-    keysInChunk.push(k);
+  // v3.2 perf (Optimasi FPS render jarak jauh): blok yang tertutup rapat di 6 sisinya oleh
+  // blok solid+buram lain (misal batu jauh di bawah tanah) gak akan pernah kelihatan mata,
+  // jadi gak usah dibikin mesh sama sekali — cuma dicatat tipenya di `world` (mesh: null) biar
+  // collision/mining tetap kebaca normal. Begitu salah satu sisinya kebuka, baru dimaterialisasi
+  // (lihat destroyBlockMesh -> revealExposedNeighbors). Ini bisa motong jumlah objek Three.js
+  // yang harus di-render/di-traverse tiap frame secara drastis begitu Jarak Render dinaikkan,
+  // karena mayoritas blok di bawah tanah pada dasarnya gak pernah kelihatan.
+  function occludesNeighbor(type) {
+    if (!type) return false;
+    const def = BLOCK_TYPES[type];
+    return !!def && !def.liquid && !def.nonSolid && !def.transparent && !def.isItem;
   }
 
   function generateChunk(cx, cz) {
     const ck = cx + ',' + cz;
     if (loadedChunks.has(ck)) return;
-    const keysInChunk = [];
     const x0 = cx * CHUNK_SIZE, z0 = cz * CHUNK_SIZE;
+    // Semua blok chunk ini "direncanakan" dulu ke sini sebelum ada mesh yang benar-benar
+    // dibikin, biar keputusan sembunyikan/tampilkan bisa lihat seluruh isi chunk sekaligus.
+    const localBlocks = new Map(); // "x,y,z" -> type
+
+    function planBlock(x, y, z, type) {
+      const k = key(x, y, z);
+      if (worldDiffs.has(k)) {
+        const d = worldDiffs.get(k);
+        if (d === '') { localBlocks.delete(k); return; }
+        type = d;
+      }
+      localBlocks.set(k, type);
+    }
+    function clearLocal(x, y, z) { localBlocks.delete(key(x, y, z)); }
+
     for (let x = x0; x < x0 + CHUNK_SIZE; x++) {
       for (let z = z0; z < z0 + CHUNK_SIZE; z++) {
         const h = groundHeightAt(x, z);
@@ -1083,26 +1156,26 @@
             else if (rv < 0.14) type = 'coal_ore';
             if (y < h - 4 && y > 2 && caveNoise(x, y, z) > 1.35) continue; // gua: lubang kosong
           }
-          placeGenBlock(x, y, z, type, keysInChunk);
+          planBlock(x, y, z, type);
         }
         if (h < 4) {
-          for (let y = h + 1; y <= 4; y++) placeGenBlock(x, y, z, 'water', keysInChunk);
+          for (let y = h + 1; y <= 4; y++) planBlock(x, y, z, 'water');
         } else if (h <= 6 && seededRandom(x, z, 2) < 0.004) {
-          placeGenBlock(x, h, z, 'lava', keysInChunk);
+          planBlock(x, h, z, 'lava');
         } else if (h > 5 && biome !== 'desert' && seededRandom(x, z, 20) < 0.0025) {
           // struktur sumur kecil
           for (let rx = -1; rx <= 1; rx++) for (let rz = -1; rz <= 1; rz++) {
-            if (Math.abs(rx) === 1 || Math.abs(rz) === 1) placeGenBlock(x + rx, h + 1, z + rz, 'brick', keysInChunk);
+            if (Math.abs(rx) === 1 || Math.abs(rz) === 1) planBlock(x + rx, h + 1, z + rz, 'brick');
           }
-          placeGenBlock(x, h, z, 'water', keysInChunk);
+          planBlock(x, h, z, 'water');
         } else if (h > 5 && biome !== 'desert' && seededRandom(x, z, 1) < 0.02) {
           const th = 4 + Math.floor(seededRandom(x, z, 3) * 2);
-          for (let ty = 1; ty <= th; ty++) placeGenBlock(x, h + ty, z, 'wood', keysInChunk);
+          for (let ty = 1; ty <= th; ty++) planBlock(x, h + ty, z, 'wood');
           for (let lx = -2; lx <= 2; lx++)
             for (let lz = -2; lz <= 2; lz++)
               for (let ly = th; ly <= th + 2; ly++) {
                 if (Math.abs(lx) + Math.abs(lz) + Math.abs(ly - th - 1) <= 3 && seededRandom(x + lx * 13, z + lz * 7, ly + 4) < 0.85) {
-                  placeGenBlock(x + lx, h + ly, z + lz, 'leaves', keysInChunk);
+                  planBlock(x + lx, h + ly, z + lz, 'leaves');
                 }
               }
         }
@@ -1120,26 +1193,48 @@
             const bx = rx + dx, by = ry + dy, bz = rz + dz;
             const isWall = Math.abs(dx) === 1 || Math.abs(dz) === 1 || dy === 0 || dy === 2;
             if (isWall) {
-              destroyBlockMesh(bx, by, bz);
-              placeGenBlock(bx, by, bz, 'brick', keysInChunk);
+              clearLocal(bx, by, bz);
+              planBlock(bx, by, bz, 'brick');
             } else {
-              destroyBlockMesh(bx, by, bz);
+              clearLocal(bx, by, bz);
             }
           }
         }
       }
-      destroyBlockMesh(rx, ry + 1, rz);
-      placeGenBlock(rx, ry + 1, rz, 'chest', keysInChunk);
+      clearLocal(rx, ry + 1, rz);
+      planBlock(rx, ry + 1, rz, 'chest');
     }
     // apply player-built blocks in this chunk that aren't part of base terrain
     for (const [k, type] of worldDiffs) {
-      if (type === '' || world.has(k)) continue;
+      if (type === '') continue;
       const parts = k.split(',').map(Number);
       const dx = parts[0], dz = parts[2];
       if (dx >= x0 && dx < x0 + CHUNK_SIZE && dz >= z0 && dz < z0 + CHUNK_SIZE) {
-        createBlockMesh(dx, parts[1], dz, type, false);
-        keysInChunk.push(k);
+        localBlocks.set(k, type);
       }
+    }
+
+    // Materialisasi: tentukan tiap blok kebuka (dapat mesh) atau ketutup total (disembunyikan).
+    const keysInChunk = [];
+    function typeAt(x, y, z) {
+      const k = key(x, y, z);
+      if (localBlocks.has(k)) return localBlocks.get(k);
+      const w = world.get(k);
+      return w ? w.type : null;
+    }
+    for (const [k, type] of localBlocks) {
+      if (world.has(k)) { keysInChunk.push(k); continue; }
+      const parts = k.split(',').map(Number);
+      const x = parts[0], y = parts[1], z = parts[2];
+      let hidden = false;
+      if (occludesNeighbor(type)) {
+        hidden = occludesNeighbor(typeAt(x + 1, y, z)) && occludesNeighbor(typeAt(x - 1, y, z)) &&
+                 occludesNeighbor(typeAt(x, y + 1, z)) && occludesNeighbor(typeAt(x, y - 1, z)) &&
+                 occludesNeighbor(typeAt(x, y, z + 1)) && occludesNeighbor(typeAt(x, y, z - 1));
+      }
+      if (hidden) world.set(k, { mesh: null, type });
+      else createBlockMesh(x, y, z, type, false);
+      keysInChunk.push(k);
     }
     loadedChunks.set(ck, keysInChunk);
   }
@@ -1149,7 +1244,7 @@
     if (!keys) return;
     for (const k of keys) {
       const b = world.get(k);
-      if (b) { worldGroup.remove(b.mesh); world.delete(k); }
+      if (b) { if (b.mesh) worldGroup.remove(b.mesh); world.delete(k); }
     }
     loadedChunks.delete(ck);
   }
@@ -1407,33 +1502,39 @@
     { id: 'craftFishingRod', icon: 'fishing-rod', label: '3 Kayu+1 Wol → 1 Joran Pancing', need: { wood: 3, wool: 1 }, give: { fishing_rod: 1 }, nearWorkbench: true },
     { id: 'cookFish', icon: 'fire', cls: 'ic-flame', label: 'Ikan Mentah+Batu Bara → Ikan Matang', need: { raw_fish: 1, coal_ore: 1 }, give: { cooked_fish: 1 }, nearFurnace: true },
   ];
+  // v3.2: slot Crafting sekarang berupa kotak ikon (persis .invItem di Tas) bukan pil teks.
+  // Tap slot buat langsung craft; nama resep lengkap muncul lewat title (hover) & toast konfirmasi.
   function refreshCraftPanel() {
     const panel = document.getElementById('craftPanel');
     panel.innerHTML = '';
     const nb = nearBlock('workbench', 2), nf = nearBlock('furnace', 2);
+    let shown = 0;
     CRAFT_RECIPES.forEach(r => {
       if (r.nearWorkbench && !nb) return;
       if (r.nearFurnace && !nf) return;
+      shown++;
       const can = Object.entries(r.need).every(([k, v]) => (inventory[k] || 0) >= v);
-      const btn = document.createElement('div');
-      btn.className = 'craftBtn icoRow';
-      btn.innerHTML = svgIcon(r.icon, r.cls) + ' ' + r.label;
-      if (!can) btn.style.opacity = '0.4';
-      btn.addEventListener('click', () => {
-        if (!Object.entries(r.need).every(([k, v]) => (inventory[k] || 0) >= v)) return;
+      const slot = document.createElement('div');
+      slot.className = 'invItem' + (can ? '' : ' craftDisabled');
+      slot.title = r.label;
+      slot.innerHTML = `<div class="ico">${svgIcon(r.icon, r.cls)}</div>`;
+      slot.addEventListener('click', () => {
+        if (!Object.entries(r.need).every(([k, v]) => (inventory[k] || 0) >= v)) { showToast(r.label); return; }
         Object.entries(r.need).forEach(([k, v]) => inventory[k] -= v);
         Object.entries(r.give).forEach(([k, v]) => inventory[k] = (inventory[k] || 0) + v);
+        const result = r.label.split('→')[1];
+        showToast('Dibuat: ' + (result ? result.trim() : r.label));
         refreshHotbarUI(); refreshCraftPanel();
       });
-      panel.appendChild(btn);
+      panel.appendChild(slot);
     });
-    if (!panel.children.length) panel.innerHTML = '<div style="color:#ccc;font-size:11px;">Resep lain butuh Meja Kerja / Furnace di dekatmu</div>';
+    if (!shown) panel.innerHTML = '<div class="invEmpty">Resep lain butuh Meja Kerja / Furnace di dekatmu</div>';
   }
 
   document.getElementById('craftToggleBtn').addEventListener('click', () => {
     const p = document.getElementById('craftPanel');
-    const willOpen = p.style.display !== 'flex';
-    p.style.display = willOpen ? 'flex' : 'none';
+    const willOpen = p.style.display !== 'grid';
+    p.style.display = willOpen ? 'grid' : 'none';
     if (willOpen) refreshCraftPanel();
   });
   document.getElementById('eatBtn').addEventListener('click', () => {
@@ -1528,24 +1629,67 @@
     });
   }
 
+  // v3.2: Panel Statistik dirender sebagai grid slot kotak yang sama persis dengan Tas
+  // (.invGrid/.invItem/.invSection) — ikon+angka buat ringkasan, swatch warna+jumlah buat
+  // rekap blok yang ditambang, dan badge kunci/selesai buat pencapaian.
+  function makeStatSlot(iconName, iconCls, value, label) {
+    const div = document.createElement('div');
+    div.className = 'invItem';
+    div.title = label + (value !== undefined ? ': ' + value : '');
+    div.innerHTML = `<div class="ico">${svgIcon(iconName, iconCls)}</div><span class="cnt">${value}</span>`;
+    div.addEventListener('click', () => showToast(label + ': ' + value));
+    return div;
+  }
+  function makeBlockStatSlot(type, count) {
+    const div = document.createElement('div');
+    div.className = 'invItem';
+    const def = BLOCK_TYPES[type];
+    const colorHex = def ? '#' + def.color.toString(16).padStart(6, '0') : '#888';
+    const name = def ? def.name : type;
+    div.title = name + ' x' + count;
+    div.innerHTML = `<div class="ico"><div style="width:22px;height:22px;border-radius:5px;background:${colorHex};box-shadow:inset 0 0 0 1px rgba(0,0,0,0.3)"></div></div><span class="cnt">${count}</span>`;
+    div.addEventListener('click', () => showToast(name + ' &times;' + count));
+    return div;
+  }
+  function makeAchievementSlot(a) {
+    const done = unlockedAchievements.has(a.id);
+    const div = document.createElement('div');
+    div.className = 'invItem' + (done ? ' equipped' : '');
+    if (!done) div.style.opacity = '0.4';
+    div.title = a.label + (done ? ' (selesai)' : ' (belum)');
+    div.innerHTML = `<div class="ico">${svgIcon(done ? 'chart' : 'skull', done ? 'ic-gold' : '')}</div>`;
+    div.addEventListener('click', () => showToast((done ? '✔ ' : '• ') + a.label));
+    return div;
+  }
   function refreshStats() {
     const body = document.getElementById('statsBody');
-    let html = '';
-    html += `<div class="statRow"><span class="icoRow">${svgIcon('stopwatch')} Waktu main</span><span>${fmtTime(playSeconds)}</span></div>`;
-    html += `<div class="statRow"><span class="icoRow">${svgIcon('pickaxe')} Total ditambang</span><span>${minedCount}</span></div>`;
-    html += `<div class="statRow"><span class="icoRow">${svgIcon('skull')} Mob dikalahkan</span><span>${statsMobsKilled}</span></div>`;
-    html += `<div class="statRow"><span class="icoRow">${svgIcon('skull', 'ic-danger')} Jumlah mati</span><span>${statsDeaths}</span></div>`;
-    html += `<div class="statRow"><span>Hasil kebun dipanen</span><span>${cropsHarvested}</span></div>`;
-    html += `<div class="statRow"><span>Peti harta dibuka</span><span>${chestsOpened}</span></div>`;
-    Object.keys(minedByType).sort((a, b) => minedByType[b] - minedByType[a]).forEach(t => {
-      html += `<div class="statRow"><span>${BLOCK_TYPES[t] ? BLOCK_TYPES[t].name : t}</span><span>${minedByType[t]}</span></div>`;
-    });
-    html += `<div style="margin-top:10px;font-weight:700;font-size:12px;opacity:0.85;">Pencapaian (${unlockedAchievements.size}/${ACHIEVEMENTS.length})</div>`;
-    ACHIEVEMENTS.forEach(a => {
-      const done = unlockedAchievements.has(a.id);
-      html += `<div class="statRow" style="opacity:${done ? 1 : 0.4}"><span>${done ? '✔' : '•'} ${a.label}</span></div>`;
-    });
-    body.innerHTML = html;
+    body.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'invGrid';
+
+    const summaryH = document.createElement('div'); summaryH.className = 'invSection'; summaryH.textContent = 'Ringkasan';
+    grid.appendChild(summaryH);
+    grid.appendChild(makeStatSlot('stopwatch', null, fmtTime(playSeconds), 'Waktu main'));
+    grid.appendChild(makeStatSlot('pickaxe', null, minedCount, 'Total ditambang'));
+    grid.appendChild(makeStatSlot('skull', 'ic-danger', statsMobsKilled, 'Mob dikalahkan'));
+    grid.appendChild(makeStatSlot('skull', null, statsDeaths, 'Jumlah mati'));
+    grid.appendChild(makeStatSlot('apple', null, cropsHarvested, 'Hasil kebun dipanen'));
+    grid.appendChild(makeStatSlot('ingot', 'ic-gold', chestsOpened, 'Peti harta dibuka'));
+
+    const minedTypes = Object.keys(minedByType).sort((a, b) => minedByType[b] - minedByType[a]);
+    if (minedTypes.length) {
+      const h = document.createElement('div'); h.className = 'invSection'; h.textContent = 'Ditambang';
+      grid.appendChild(h);
+      minedTypes.forEach(t => grid.appendChild(makeBlockStatSlot(t, minedByType[t])));
+    }
+
+    const achH = document.createElement('div');
+    achH.className = 'invSection';
+    achH.textContent = `Pencapaian (${unlockedAchievements.size}/${ACHIEVEMENTS.length})`;
+    grid.appendChild(achH);
+    ACHIEVEMENTS.forEach(a => grid.appendChild(makeAchievementSlot(a)));
+
+    body.appendChild(grid);
   }
   document.getElementById('statsToggleBtn').addEventListener('click', () => { refreshStats(); statsModal.style.display = 'flex'; });
   document.getElementById('statsCloseBtn').addEventListener('click', () => statsModal.style.display = 'none');
@@ -2407,9 +2551,46 @@
       worldDiffs.set(key(entry[0], entry[1], entry[2]), type);
     });
   }
+  // v3.2 (Kompres save lebih lanjut): dulu tiap diff disimpan sebagai JSON array [x,y,z,id]
+  // (banyak kurung siku & koma yang makan ruang). Sekarang tiap entry dipadatkan jadi 11 byte
+  // biner (x:Int32, y:Int16, z:Int32, id:Uint8) lalu semuanya digabung jadi satu string base64
+  // ("diffsB") — hasilnya jauh lebih hemat daripada teks JSON, apalagi kalau area yang udah
+  // dieksplor/diubah makin luas. Format lama (diffsC array, atau diffs string paling lama)
+  // tetap kebaca biar save lama gak rusak.
+  function encodeDiffsBinary(diffsArr) {
+    const n = diffsArr.length;
+    const bytes = new Uint8Array(n * 11);
+    const dv = new DataView(bytes.buffer);
+    for (let i = 0; i < n; i++) {
+      const off = i * 11, e = diffsArr[i];
+      dv.setInt32(off, e[0], true);
+      dv.setInt16(off + 4, e[1], true);
+      dv.setInt32(off + 6, e[2], true);
+      dv.setUint8(off + 10, e[3] & 0xff);
+    }
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
+  function decodeDiffsBinary(b64) {
+    try {
+      const binary = atob(b64);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+      const dv = new DataView(bytes.buffer);
+      const n = Math.floor(len / 11);
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const off = i * 11;
+        out.push([dv.getInt32(off, true), dv.getInt16(off + 4, true), dv.getInt32(off + 6, true), dv.getUint8(off + 10)]);
+      }
+      return out;
+    } catch (e) { return []; }
+  }
   function buildSaveData() {
     return {
-      diffsC: compactDiffs(),
+      diffsB: encodeDiffsBinary(compactDiffs()),
       inventory, pos: [player.pos.x, player.pos.y, player.pos.z],
       yaw: player.yaw, health: player.health, hunger: player.hunger, minedCount,
       minedByType, statsMobsKilled, statsDeaths, playSeconds, armorEquipped,
@@ -2424,6 +2605,7 @@
     if (!data || typeof data !== 'object') return false;
     if (data.diffs !== undefined && !Array.isArray(data.diffs)) return false;
     if (data.diffsC !== undefined && !Array.isArray(data.diffsC)) return false;
+    if (data.diffsB !== undefined && typeof data.diffsB !== 'string') return false;
     if (data.pos !== undefined && (!Array.isArray(data.pos) || data.pos.length !== 3 || !data.pos.every((n) => typeof n === 'number' && isFinite(n)))) return false;
     return true;
   }
@@ -2431,7 +2613,8 @@
   function applySaveData(data) {
     if (!isValidSaveData(data)) throw new Error('Save data tidak valid / rusak');
     worldDiffs.clear();
-    if (Array.isArray(data.diffsC)) loadCompactDiffs(data.diffsC);
+    if (typeof data.diffsB === 'string') loadCompactDiffs(decodeDiffsBinary(data.diffsB));
+    else if (Array.isArray(data.diffsC)) loadCompactDiffs(data.diffsC);
     else (data.diffs || []).forEach(([k, v]) => worldDiffs.set(k, v));
     safeAssign(inventory, data.inventory || {});
     if (data.pos) player.pos.set(data.pos[0], data.pos[1], data.pos[2]);
@@ -2653,14 +2836,26 @@
     if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) {} }
   }
 
-  function respawnPlayer() {
-    document.getElementById('deadMsg').style.display = 'block';
-    setTimeout(() => document.getElementById('deadMsg').style.display = 'none', 1500);
+  // v3.2 (Layar respawn/mati): dulu cuma teks kecil sekilas lalu langsung respawn otomatis.
+  // Sekarang layar mati penuh muncul & ngeblokir gerak (player.health tetap 0) sampai pemain
+  // sendiri yang ngetuk tombol Respawn, mirip layar "You Died" ala Minecraft.
+  let playerDead = false;
+  function triggerDeath() {
+    if (playerDead) return;
+    playerDead = true;
+    statsDeaths++;
+    document.getElementById('deathFinalStats').innerHTML =
+      `${svgIcon('pickaxe')} ${minedCount} blok ditambang &nbsp;•&nbsp; ${svgIcon('skull', 'ic-danger')} ${statsMobsKilled} mob dikalahkan &nbsp;•&nbsp; Kematian ke-${statsDeaths}`;
+    document.getElementById('deathScreen').style.display = 'flex';
+  }
+  function doRespawn() {
     player.health = 100; player.hunger = 70;
     player.pos.set(0.5, findGroundY(0, 0, 20) + 1, 0.5);
     player.velY = 0;
-    statsDeaths++;
+    playerDead = false;
+    document.getElementById('deathScreen').style.display = 'none';
   }
+  document.getElementById('respawnBtn').addEventListener('click', doRespawn);
 
   // ================= INIT WORLD (after load attempt) =================
   async function init() {
@@ -2683,8 +2878,23 @@
   let frameCount = 0, fpsTimer = 0, lastAutosave = 0, lastFootstepT = 0, lastMinimapDraw = 0, lastAchievementCheck = 0;
   let lastMinimapX = null, lastMinimapZ = null;
 
+  // v3.2 (Hemat baterai HP): pas tab/app pindah ke background (minimize, ganti app lain, kunci
+  // layar), banyak WebView Android gak otomatis nge-throttle requestAnimationFrame kayak browser
+  // desktop, jadi kita matiin manual seluruh update logic+render+audio biar CPU/GPU/baterai gak
+  // kepake sia-sia pas gak kelihatan. Progress otomatis disimpan begitu app disembunyikan.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (audioCtx && audioCtx.state === 'running') { try { audioCtx.suspend(); } catch (e) {} }
+      saveGame();
+    } else {
+      if (audioCtx && audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) {} }
+      clock.getDelta(); // buang delta yang numpuk selama background biar gak ada lompatan dt gede pas balik
+    }
+  });
+
   function animate() {
     requestAnimationFrame(animate);
+    if (document.hidden) { clock.getDelta(); return; } // auto-throttle: gak render/update apa pun pas gak kelihatan
     const dt = Math.min(clock.getDelta(), 0.05);
     const now = performance.now();
 
@@ -2820,7 +3030,7 @@
       updateRain(dt);
       if (now - lastAchievementCheck > 1000) { lastAchievementCheck = now; checkAchievements(); }
 
-      if (player.health <= 0) respawnPlayer();
+      if (player.health <= 0 && !playerDead) triggerDeath();
 
       if (now - lastAutosave > 20000) { lastAutosave = now; saveGame(); }
       // redraw minimap cuma kalau posisi berubah cukup jauh (hemat baterai di HP),
@@ -2841,7 +3051,7 @@
       if (m.userData.spawnT) {
         const tt = Math.min(1, (t - m.userData.spawnT) / 120);
         m.scale.setScalar(tt);
-        if (tt >= 1) delete m.userData.spawnT;
+        if (tt >= 1) { delete m.userData.spawnT; m.matrixAutoUpdate = false; m.updateMatrix(); }
       }
     });
 
