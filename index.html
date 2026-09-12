@@ -328,8 +328,9 @@
   #touchPlaceBtn { background: radial-gradient(circle at 35% 30%, rgba(100,190,100,0.6), rgba(60,150,60,0.45)); border-color: rgba(150,230,150,0.55); }
 
   /* ================= SVG ICONS (replacing emoji) ================= */
-  .svgicon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex-shrink: 0; }
+  .svgicon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .icoRow { display: inline-flex; align-items: center; gap: 5px; }
+  .icoRow > .svgicon { width: 1.35em; height: 1.35em; }
   .ic-heart { color: var(--danger); }
   .ic-hunger { color: var(--gold); }
   .ic-sun { color: var(--gold); }
