@@ -121,6 +121,7 @@
   #eatBtn:disabled, .craftBtn:disabled { opacity: 0.35; cursor: default; }
   #saveMsg { color: var(--gold); font-size: 11px; text-shadow: 1px 1px 2px black; font-weight: 700; }
   #minimap { width: 88px; height: 88px; border-radius: var(--radius-sm); border: 2px solid var(--panel-border-strong); background: #111; box-shadow: var(--shadow-panel); }
+  #compassLabel { font-size: 10px; font-weight: 700; color: var(--text-dim); text-shadow: 1px 1px 2px black; letter-spacing: 0.3px; }
   .actionGrid { display: grid; grid-template-columns: repeat(2, auto); gap: 6px; }
   .actionGrid .smallBtn { padding: 7px 9px; font-size: 10.5px; white-space: nowrap; }
 
@@ -134,6 +135,7 @@
     #topRight { top: 8px; right: 8px; gap: 5px; }
     #fps { font-size: 9.5px; }
     #minimap { width: 52px; height: 52px; }
+    #compassLabel { font-size: 8.5px; }
     .actionGrid { gap: 4px; }
     .actionGrid .smallBtn { padding: 5px 7px; font-size: 9.5px; }
     #saveMsg { font-size: 9.5px; }
@@ -155,6 +157,7 @@
   @media (max-height: 380px) and (pointer: coarse) {
     #topRight { gap: 3px; }
     #minimap { width: 40px; height: 40px; }
+    #compassLabel { display: none; }
     .actionGrid .smallBtn { padding: 4px 6px; font-size: 8.5px; }
     #hud { width: 132px; font-size: 9.5px; padding: 6px 8px; }
   }
@@ -412,10 +415,13 @@
 <symbol id="ic-bucket" viewBox="0 0 24 24"><path d="M5 8h14l-1.6 11.5a2 2 0 0 1-2 1.5H8.6a2 2 0 0 1-2-1.5L5 8z"/><path d="M7 8a5 5 0 0 1 10 0"/></symbol>
 <symbol id="ic-door" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1"/><circle cx="14.5" cy="12" r="0.9" fill="currentColor" stroke="none"/></symbol>
 <symbol id="ic-ladder" viewBox="0 0 24 24"><path d="M7 2v20M17 2v20M7 7h10M7 12h10M7 17h10"/></symbol>
+<symbol id="ic-boat" viewBox="0 0 24 24"><path d="M3 14h18l-2.6 5.2a2 2 0 0 1-1.8 1.1H7.4a2 2 0 0 1-1.8-1.1L3 14z"/><path d="M12 14V4"/><path d="M12 6l6 3-6 2.2"/></symbol>
+<symbol id="ic-fish" viewBox="0 0 24 24"><path d="M2 12c4-5 10-7 15-5 2 .9 4 2.5 5 5-1 2.5-3 4.1-5 5-5 2-11 0-15-5z"/><path d="M17 9.3l3-2.8M17 14.7l3 2.8"/><circle cx="7.2" cy="11.2" r="0.9" fill="currentColor" stroke="none"/></symbol>
+<symbol id="ic-fishing-rod" viewBox="0 0 24 24"><path d="M3 21L15.5 5.5"/><path d="M15.5 5.5c1.8 0 3.6-1 4.5-3"/><path d="M15.5 5.5c1.5 4.3.4 9.6-3 13.5"/><circle cx="12.3" cy="19" r="0.9" fill="currentColor" stroke="none"/></symbol>
 </defs>
 </svg>
 
-<div id="versionBadge"><span class="dot"></span> BlockWorld v3.0 — Lihat Update</div>
+<div id="versionBadge"><span class="dot"></span> BlockWorld v3.1 — Lihat Update</div>
 
 <div id="hint">
   <div class="badgeIcon"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></div>
@@ -450,6 +456,9 @@
     <div class="noteRow"><span class="em em-danger"><svg class="svgicon ic-danger"><use href="#ic-warning"/></svg></span><span>Hati-hati <b>lava</b>, <b>zombie</b>, dan <b>skeleton</b> malam hari</span></div>
     <div class="noteRow"><span class="em em-hunger"><svg class="svgicon ic-hunger"><use href="#ic-drumstick"/></svg></span><span>Jaga lapar — makan apel/daging hasil buruan atau kebun</span></div>
     <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-bucket"/></svg></span><span>Tangga buat manjat, Pintu diketuk buat buka/tutup, Ember buat ambil &amp; tuang Air/Lava</span></div>
+    <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-boat"/></svg></span><span>Perahu buat nyebrang Air lebih cepat — tombol "Naik Perahu" pas berdiri di atas Air</span></div>
+    <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-fishing-rod"/></svg></span><span>Joran Pancing: arahkan ke Air lalu tahan tombol tambang buat mancing Ikan</span></div>
+    <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-globe"/></svg></span><span>Minimap sekarang ada kompas (U/S/B/T) &amp; panah arah hadap biar gak nyasar</span></div>
   </div>
 
   <div id="patchNotesLink" class="icoRow"><svg class="svgicon"><use href="#ic-clipboard"/></svg> Lihat semua update &amp; perbaikan</div>
@@ -461,6 +470,18 @@
     <div class="patchSub">Semua perubahan yang udah ditambahin ke BlockWorld</div>
 
     <div class="patchEntry newest">
+      <div class="patchBadge">v3.1</div>
+      <div>
+        <div class="patchTitle">Konten &amp; Eksplorasi: Perahu, Mancing, Minimap+Kompas</div>
+        <ul>
+          <li>Item baru: <b>Perahu</b> &mdash; craft dari 5 Kayu di Meja Kerja. Tombol "Naik Perahu" muncul kalau lagi berdiri persis di atas Air; selama naik, gerak jauh lebih cepat &amp; gak tenggelam, otomatis turun (item Perahu balik ke Tas) begitu nyampe darat</li>
+          <li>Item baru: <b>Joran Pancing</b> &mdash; craft dari 3 Kayu+1 Wol di Meja Kerja. Pilih di hotbar, arahkan ke Air, lalu tahan tombol tambang (klik kiri / tombol merah) buat mancing &mdash; dapat <b>Ikan Mentah</b> yang bisa dimasak jadi Ikan Matang di Furnace (sumber makanan baru)</li>
+          <li>Minimap sekarang punya <b>kompas</b>: huruf arah mata angin (U/S/B/T) tetap di tepi peta, plus panah kuning kecil di tengah yang nunjuk arah hadap kamera saat itu, dan label teks arah (Utara/Timur Laut/dst) di bawah minimap</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="patchEntry">
       <div class="patchBadge">v3.0</div>
       <div>
         <div class="patchTitle">Fondasi: Fix Collision/Fall Damage + Ladder, Pintu &amp; Ember</div>
@@ -802,6 +823,7 @@
 <div id="topRight" style="display:none;">
   <div id="fps"></div>
   <canvas id="minimap" width="84" height="84"></canvas>
+  <div id="compassLabel">Utara</div>
   <div class="actionGrid">
     <button class="smallBtn icoRow" id="eatBtn"><svg class="svgicon"><use href="#ic-utensils"/></svg> Makan (<span id="foodCount">0</span>)</button>
     <button class="smallBtn icoRow" id="craftToggleBtn"><svg class="svgicon"><use href="#ic-tools"/></svg> Crafting</button>
@@ -811,6 +833,7 @@
     <button class="smallBtn icoRow" id="saveBtn"><svg class="svgicon"><use href="#ic-save"/></svg> Simpan</button>
     <button class="smallBtn icoRow" id="sleepBtn"><svg class="svgicon"><use href="#ic-moon"/></svg> Tidur</button>
     <button class="smallBtn icoRow" id="shootBtn"><svg class="svgicon"><use href="#ic-pickaxe"/></svg> Panah</button>
+    <button class="smallBtn icoRow" id="boatBtn"><svg class="svgicon"><use href="#ic-boat"/></svg> Naik Perahu</button>
   </div>
   <span id="saveMsg"></span>
 </div>
@@ -901,6 +924,8 @@
     bucket:       { color: 0xb9bec2, name: 'Ember', hardness: 0, isItem: true },
     water_bucket: { color: 0x2b6fd1, name: 'Ember Berisi Air', hardness: 0, isItem: true },
     lava_bucket:  { color: 0xdd4b16, name: 'Ember Berisi Lava', hardness: 0, isItem: true },
+    boat:         { color: 0x9c6b3a, name: 'Perahu', hardness: 0, isItem: true },
+    fishing_rod:  { color: 0x6b4423, name: 'Joran Pancing', hardness: 0, isItem: true },
   };
   // Kalau sebuah blok ditambang dalam bentuk "varian" (mis. Pintu lagi kebuka), hasil yang
   // masuk ke inventory tetap item dasarnya (Pintu), bukan varian yang gak bisa ditaruh lagi.
@@ -908,7 +933,7 @@
   const HOTBAR = ['grass','dirt','stone','wood','leaves','sand','glass','brick','snow',
     'coal_ore','iron_ore','gold_ore','diamond_ore','torch','furnace','workbench','bed',
     'ladder','door',
-    'wheat_seeds','carrot_seeds','bucket','water_bucket','lava_bucket'];
+    'wheat_seeds','carrot_seeds','bucket','water_bucket','lava_bucket','boat','fishing_rod'];
   const SEED_CROP_MAP = { wheat_seeds: 'wheat', carrot_seeds: 'carrot' };
   let selectedIndex = 0;
 
@@ -940,13 +965,13 @@
   HOTBAR.forEach(t => inventory[t] = 0);
   ['apple','raw_chicken','cooked_chicken','raw_beef','cooked_beef','raw_porkchop','cooked_porkchop',
    'rotten_flesh','bone','iron_ingot','gold_ingot','pickaxe_wood','pickaxe_stone','pickaxe_iron','iron_armor',
-   'wool','bow','arrow','wheat','carrot','bread']
+   'wool','bow','arrow','wheat','carrot','bread','raw_fish','cooked_fish']
    .forEach(t => inventory[t] = 0);
   let armorEquipped = false;
 
   const FOOD_VALUES = { apple: 25, raw_chicken: 15, cooked_chicken: 35, raw_beef: 15, cooked_beef: 38,
-    raw_porkchop: 15, cooked_porkchop: 36, rotten_flesh: 8, carrot: 20, bread: 30 };
-  const FOOD_ORDER = ['bread','cooked_beef','cooked_porkchop','cooked_chicken','carrot','apple','raw_beef','raw_porkchop','raw_chicken','rotten_flesh'];
+    raw_porkchop: 15, cooked_porkchop: 36, rotten_flesh: 8, carrot: 20, bread: 30, raw_fish: 12, cooked_fish: 32 };
+  const FOOD_ORDER = ['bread','cooked_beef','cooked_porkchop','cooked_chicken','cooked_fish','carrot','apple','raw_beef','raw_porkchop','raw_chicken','raw_fish','rotten_flesh'];
   function bestFood() { return FOOD_ORDER.find(f => inventory[f] > 0); }
 
   const ITEM_LABELS = {
@@ -962,6 +987,8 @@
     wheat: { icon: 'log', text: 'Gandum' }, carrot: { icon: 'apple', text: 'Wortel' }, bread: { icon: 'apple', text: 'Roti' },
     ladder: { icon: 'ladder', text: 'Tangga' }, door: { icon: 'door', text: 'Pintu' },
     bucket: { icon: 'bucket', text: 'Ember' }, water_bucket: { icon: 'bucket', text: 'Ember Berisi Air' }, lava_bucket: { icon: 'bucket', text: 'Ember Berisi Lava', cls: 'ic-flame' },
+    boat: { icon: 'boat', text: 'Perahu' }, fishing_rod: { icon: 'fishing-rod', text: 'Joran Pancing' },
+    raw_fish: { icon: 'fish', text: 'Ikan Mentah' }, cooked_fish: { icon: 'fish', text: 'Ikan Matang', cls: 'ic-flame' },
   };
 
   // ================= WORLD / CHUNK SYSTEM =================
@@ -1376,6 +1403,9 @@
     { id: 'craftLadder', icon: 'ladder', label: '2 Kayu → 3 Tangga', need: { wood: 2 }, give: { ladder: 3 }, nearWorkbench: true },
     { id: 'craftDoor', icon: 'door', label: '3 Kayu → 1 Pintu', need: { wood: 3 }, give: { door: 1 }, nearWorkbench: true },
     { id: 'craftBucket', icon: 'bucket', label: '3 Iron Ingot → 1 Ember', need: { iron_ingot: 3 }, give: { bucket: 1 }, nearWorkbench: true },
+    { id: 'craftBoat', icon: 'boat', label: '5 Kayu → 1 Perahu', need: { wood: 5 }, give: { boat: 1 }, nearWorkbench: true },
+    { id: 'craftFishingRod', icon: 'fishing-rod', label: '3 Kayu+1 Wol → 1 Joran Pancing', need: { wood: 3, wool: 1 }, give: { fishing_rod: 1 }, nearWorkbench: true },
+    { id: 'cookFish', icon: 'fire', cls: 'ic-flame', label: 'Ikan Mentah+Batu Bara → Ikan Matang', need: { raw_fish: 1, coal_ore: 1 }, give: { cooked_fish: 1 }, nearFurnace: true },
   ];
   function refreshCraftPanel() {
     const panel = document.getElementById('craftPanel');
@@ -1539,6 +1569,7 @@
         try { await storage.set('blockworld-active-slot', String(n), false); } catch (e) {}
         await loadGame();
         refreshHotbarUI();
+        refreshBoatBtn();
         refreshSlotRow();
       });
       row.appendChild(b);
@@ -1567,8 +1598,39 @@
     pos: new THREE.Vector3(0.5, 0, 0.5),
     velY: 0, yaw: 0, pitch: 0, onGround: false, speed: 6,
     health: 100, hunger: 100, fallStartY: 0, wasOnGround: true, lastLavaTick: 0, sprinting: false,
+    riding: false,
   };
   let minedCount = 0;
+
+  // ================= PERAHU (Boat) =================
+  // Naik perahu cuma bisa persis di atas Air. Selama naik: gerak lebih cepat & mengapung
+  // rata di permukaan air (gak tenggelam, gak kena fall damage), dan otomatis turun begitu
+  // nyampe darat (blok di bawah kaki bukan Air lagi).
+  const BOAT_SPEED_MULT = 2.1;
+  function toggleBoat() {
+    if (player.riding) {
+      player.riding = false;
+      inventory.boat = (inventory.boat || 0) + 1;
+      showToast(svgIcon('boat') + ' Turun dari perahu');
+      refreshHotbarUI();
+      refreshBoatBtn();
+      return;
+    }
+    if (!(inventory.boat > 0)) { showToast('Butuh Perahu (craft di Meja Kerja)'); return; }
+    const feetLiquid = liquidAt(player.pos.x, player.pos.y - 1.55, player.pos.z);
+    if (feetLiquid !== 'water') { showToast('Naik perahu cuma bisa persis di atas Air'); return; }
+    inventory.boat--;
+    player.riding = true;
+    player.velY = 0;
+    showToast(svgIcon('boat') + ' Naik perahu! Lebih cepat menyebrang air');
+    refreshHotbarUI();
+    refreshBoatBtn();
+  }
+  function refreshBoatBtn() {
+    const btn = document.getElementById('boatBtn');
+    if (!btn) return;
+    btn.innerHTML = svgIcon('boat') + ' ' + (player.riding ? 'Turun Perahu' : 'Naik Perahu');
+  }
 
   function flashDamage() {
     const el = document.getElementById('dmgFlash');
@@ -1649,7 +1711,7 @@
     document.getElementById('touchJumpBtn').style.display = (playing && isMobile) ? 'flex' : 'none';
     document.getElementById('touchSprintBtn').style.display = (playing && isMobile) ? 'flex' : 'none';
     document.getElementById('touchActionBtns').style.display = (playing && isMobile) ? 'flex' : 'none';
-    if (!playing) cancelMining();
+    if (!playing) cancelHoldActions();
   }
 
   async function tryFullscreen() {
@@ -1756,7 +1818,7 @@
     const sprintBtn = document.getElementById('touchSprintBtn');
     sprintBtn.addEventListener('touchstart', (e) => { e.preventDefault(); player.sprinting = !player.sprinting; sprintBtn.classList.toggle('on', player.sprinting); }, { passive: false });
     document.getElementById('touchBreakBtn').addEventListener('touchstart', (e) => { e.preventDefault(); tryStartAction('break'); }, { passive: false });
-    document.getElementById('touchBreakBtn').addEventListener('touchend', () => { cancelMining(); });
+    document.getElementById('touchBreakBtn').addEventListener('touchend', () => { cancelHoldActions(); });
     document.getElementById('touchPlaceBtn').addEventListener('touchstart', (e) => { e.preventDefault(); tryStartAction('place'); }, { passive: false });
   }
 
@@ -1785,6 +1847,49 @@
     ghostMesh.position.set(nx, ny, nz);
     ghostMesh.visible = true;
   }
+
+  // Hold-to-fish (mirip hold-to-mine, tapi target-nya Air & hasilnya Ikan)
+  let fishingTarget = null, fishingProgress = 0, fishingWaitTime = 0;
+  function tryStartFishing() {
+    if (!inventory.fishing_rod || inventory.fishing_rod <= 0) { showToast('Butuh Joran Pancing'); return; }
+    raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+    const intersects = raycaster.intersectObjects(worldGroup.children);
+    if (!intersects.length || intersects[0].object.userData.type !== 'water') { showToast('Arahkan ke Air buat mancing'); return; }
+    const ud = intersects[0].object.userData;
+    fishingTarget = { x: ud.x, y: ud.y, z: ud.z };
+    fishingProgress = 0;
+    fishingWaitTime = 2 + Math.random() * 3;
+    document.getElementById('miningRing').style.display = 'block';
+  }
+  function cancelFishing() {
+    if (!fishingTarget) return;
+    fishingTarget = null; fishingProgress = 0;
+    document.getElementById('miningRing').style.display = 'none';
+    setRingProgress(0);
+  }
+  function updateFishing(dt) {
+    if (!fishingTarget) return;
+    raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+    const intersects = raycaster.intersectObjects(worldGroup.children);
+    const hit = intersects[0];
+    if (!hit || hit.object.userData.x !== fishingTarget.x || hit.object.userData.y !== fishingTarget.y || hit.object.userData.z !== fishingTarget.z) {
+      cancelFishing(); return;
+    }
+    fishingProgress += dt;
+    setRingProgress(Math.min(1, fishingProgress / fishingWaitTime));
+    if (fishingProgress >= fishingWaitTime) {
+      cancelFishing();
+      if (Math.random() < 0.75) {
+        inventory.raw_fish = (inventory.raw_fish || 0) + 1;
+        showToast(svgIcon('fish') + ' Dapat Ikan Mentah!');
+      } else {
+        showToast('Kail nyangkut, gak dapat apa-apa');
+      }
+      refreshHotbarUI();
+      sfxMine();
+    }
+  }
+  function cancelHoldActions() { cancelMining(); cancelFishing(); }
 
   // Hold-to-mine
   let miningTarget = null, miningProgress = 0, miningBreakTime = 0;
@@ -1829,6 +1934,7 @@
   function tryStartAction(kind) {
     if (!isPlaying()) return;
     if (kind === 'place') { doPlace(); return; }
+    if (HOTBAR[selectedIndex] === 'fishing_rod') { tryStartFishing(); return; }
     mobRaycaster.setFromCamera({ x: 0, y: 0 }, camera);
     const mobHits = mobRaycaster.intersectObjects(mobGroup.children, true);
     if (mobHits.length > 0) {
@@ -1873,7 +1979,7 @@
     if (isMobile || document.pointerLockElement !== canvas) return;
     tryStartAction(e.button === 0 ? 'break' : 'place');
   });
-  canvas.addEventListener('mouseup', (e) => { if (e.button === 0) cancelMining(); });
+  canvas.addEventListener('mouseup', (e) => { if (e.button === 0) cancelHoldActions(); });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
   // ================= COLLISION =================
@@ -2189,6 +2295,17 @@
   // ================= MINIMAP =================
   const mmCanvas = document.getElementById('minimap');
   const mmCtx = mmCanvas.getContext('2d');
+  // Kompas: minimap selalu "utara di atas" (gak ikut rotasi kamera), jadi arah mata angin
+  // tetap di posisi tetap (N=atas/-Z, S=bawah/+Z, E=kanan/+X, W=kiri/-X). Panah kecil di
+  // tengah nunjuk ke arah hadap pemain saat itu, biar tetap kebaca arah jalan pas eksplor.
+  const COMPASS_LABELS = ['Utara','Timur Laut','Timur','Tenggara','Selatan','Barat Daya','Barat','Barat Laut'];
+  function compassHeadingText(yaw) {
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+    let bearing = Math.atan2(fx, -fz) * 180 / Math.PI;
+    bearing = (bearing + 360) % 360;
+    const idx = Math.round(bearing / 45) % 8;
+    return COMPASS_LABELS[idx];
+  }
   function drawMinimap() {
     const size = 84, cells = 28, cell = size / cells;
     mmCtx.clearRect(0, 0, size, size);
@@ -2203,8 +2320,36 @@
         mmCtx.fillRect(i * cell, j * cell, cell, cell);
       }
     }
+    // Huruf arah mata angin di tepi (peta gak rotasi, jadi posisinya tetap)
+    mmCtx.font = 'bold 9px sans-serif';
+    mmCtx.textAlign = 'center';
+    mmCtx.textBaseline = 'middle';
+    mmCtx.fillStyle = 'rgba(255,255,255,0.85)';
+    mmCtx.shadowColor = 'rgba(0,0,0,0.9)';
+    mmCtx.shadowBlur = 2;
+    mmCtx.fillText('U', size / 2, 8);
+    mmCtx.fillText('S', size / 2, size - 8);
+    mmCtx.fillText('B', 8, size / 2);
+    mmCtx.fillText('T', size - 8, size / 2);
+    mmCtx.shadowBlur = 0;
+    // Panah kecil di tengah nunjuk arah hadap pemain (forward vector kamera)
+    const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw);
+    const cx = size / 2, cy = size / 2, arrowLen = 9;
+    const tipX = cx + fx * arrowLen, tipY = cy + fz * arrowLen;
+    const backX = cx - fx * 4, backY = cy - fz * 4;
+    const perpX = -fz * 3.2, perpY = fx * 3.2;
+    mmCtx.fillStyle = '#ffd54a';
+    mmCtx.beginPath();
+    mmCtx.moveTo(tipX, tipY);
+    mmCtx.lineTo(backX + perpX, backY + perpY);
+    mmCtx.lineTo(backX - perpX, backY - perpY);
+    mmCtx.closePath();
+    mmCtx.fill();
+    // Titik posisi pemain
     mmCtx.fillStyle = '#ff5555';
-    mmCtx.beginPath(); mmCtx.arc(size / 2, size / 2, 3, 0, Math.PI * 2); mmCtx.fill();
+    mmCtx.beginPath(); mmCtx.arc(size / 2, size / 2, 2.5, 0, Math.PI * 2); mmCtx.fill();
+    const cl = document.getElementById('compassLabel');
+    if (cl) cl.textContent = compassHeadingText(player.yaw);
   }
 
   // ================= SAVE / LOAD (localStorage, fallback ke window.storage kalau tersedia) =================
@@ -2268,7 +2413,7 @@
       inventory, pos: [player.pos.x, player.pos.y, player.pos.z],
       yaw: player.yaw, health: player.health, hunger: player.hunger, minedCount,
       minedByType, statsMobsKilled, statsDeaths, playSeconds, armorEquipped,
-      seed: WORLD_SEED,
+      seed: WORLD_SEED, riding: player.riding,
       achievements: Array.from(unlockedAchievements),
       chestsOpened, sleepsCount, cropsHarvested,
       crops: Array.from(cropData.entries()).map(([k, c]) => [k, c.crop, c.stage, Date.now() - c.plantedAt]),
@@ -2300,6 +2445,7 @@
     if (typeof data.playSeconds === 'number' && isFinite(data.playSeconds)) playSeconds = Math.max(0, data.playSeconds);
     if (typeof data.armorEquipped === 'boolean') armorEquipped = data.armorEquipped;
     if (typeof data.seed === 'number' && isFinite(data.seed)) WORLD_SEED = data.seed;
+    if (typeof data.riding === 'boolean') player.riding = data.riding;
     if (Array.isArray(data.achievements)) { unlockedAchievements.clear(); data.achievements.forEach(id => unlockedAchievements.add(id)); }
     if (typeof data.chestsOpened === 'number' && isFinite(data.chestsOpened)) chestsOpened = Math.max(0, data.chestsOpened);
     if (typeof data.sleepsCount === 'number' && isFinite(data.sleepsCount)) sleepsCount = Math.max(0, data.sleepsCount);
@@ -2339,6 +2485,7 @@
       if (!res || !res.value) { msg.textContent = 'Tidak ada backup'; setTimeout(() => msg.textContent = '', 2000); return; }
       applySaveData(JSON.parse(res.value));
       refreshHotbarUI();
+      refreshBoatBtn();
       updateChunks(player.pos.x, player.pos.z, true);
       msg.textContent = 'Backup dipulihkan!';
     } catch (e) {
@@ -2372,6 +2519,7 @@
       try {
         applySaveData(JSON.parse(reader.result));
         refreshHotbarUI();
+        refreshBoatBtn();
         updateChunks(player.pos.x, player.pos.z, true);
         msg.textContent = 'Save diimpor!';
       } catch (e) {
@@ -2392,6 +2540,7 @@
   });
   document.getElementById('sleepBtn').addEventListener('click', trySleep);
   document.getElementById('shootBtn').addEventListener('click', shootArrow);
+  document.getElementById('boatBtn').addEventListener('click', toggleBoat);
   document.addEventListener('keydown', (e) => { if (e.code === 'KeyF' && isPlaying()) shootArrow(); });
 
   document.getElementById('copySaveBtn').addEventListener('click', async () => {
@@ -2406,6 +2555,7 @@
       const json = decodeURIComponent(escape(atob(raw)));
       applySaveData(JSON.parse(json));
       refreshHotbarUI();
+      refreshBoatBtn();
       updateChunks(player.pos.x, player.pos.z, true);
       refreshSeedUI();
       showToast('Save berhasil diimpor dari kode!');
@@ -2524,6 +2674,7 @@
       player.pos.y = findGroundY(0, 0, 20) + 2;
     }
     refreshHotbarUI();
+    refreshBoatBtn();
     animate();
   }
 
@@ -2573,10 +2724,35 @@
       const feetLiquid = liquidAt(player.pos.x, player.pos.y - 1.55, player.pos.z);
       const climbing = isTouchingLadder(player.pos);
       const tryPos = player.pos.clone();
-      tryPos.x += move.x; if (!collidesAt(tryPos)) player.pos.x = tryPos.x;
-      tryPos.copy(player.pos); tryPos.z += move.z; if (!collidesAt(tryPos)) player.pos.z = tryPos.z;
+      tryPos.x += move.x * (player.riding ? BOAT_SPEED_MULT : 1);
+      if (!collidesAt(tryPos)) player.pos.x = tryPos.x;
+      tryPos.copy(player.pos);
+      tryPos.z += move.z * (player.riding ? BOAT_SPEED_MULT : 1);
+      if (!collidesAt(tryPos)) player.pos.z = tryPos.z;
 
-      if (climbing) {
+      // Perahu: kalau air di bawah kaki udah abis (nyampe darat), otomatis turun & baliknya
+      // item Perahu ke Tas, biar player gak "ngambang" di darat.
+      if (player.riding) {
+        const rideLiquid = liquidAt(player.pos.x, player.pos.y - 1.55, player.pos.z);
+        if (rideLiquid !== 'water') {
+          player.riding = false;
+          inventory.boat = (inventory.boat || 0) + 1;
+          showToast(svgIcon('boat') + ' Perahu berhenti di darat, turun otomatis');
+          refreshHotbarUI(); refreshBoatBtn();
+        }
+      }
+
+      if (player.riding) {
+        // Ngambang rata di permukaan Air: gak ada gravitasi/tenggelam, gak ada fall damage,
+        // posisi Y di-lerp halus ke permukaan biar gak "loncat-loncat" pas ombak/blok air ganti.
+        const waterBlockY = Math.round(player.pos.y - 1.55);
+        const targetY = waterBlockY + 2.05;
+        player.pos.y += (targetY - player.pos.y) * Math.min(1, dt * 6);
+        player.velY = 0;
+        player.onGround = false;
+        player.wasOnGround = false;
+        player.fallStartY = player.pos.y;
+      } else if (climbing) {
         // Manjat Tangga: gravitasi dimatikan, naik/turun dikendalikan manual, gak ada fall damage.
         let climbDir = 0;
         if (keysDown['Space'] || touchJump || (!isMobile && keysDown['KeyW']) || (isMobile && joyAxis.y < -0.15)) climbDir = 1;
@@ -2637,6 +2813,7 @@
       updateMobs(dt, now, isNight);
       updateProjectiles(dt);
       updateMining(dt);
+      updateFishing(dt);
       updateGhost();
       updateCrops(now);
       updateWeather(now);
