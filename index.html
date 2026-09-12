@@ -124,8 +124,11 @@
   .actionGrid { display: grid; grid-template-columns: repeat(2, auto); gap: 6px; }
   .actionGrid .smallBtn { padding: 7px 9px; font-size: 10.5px; white-space: nowrap; }
 
-  /* ================= COMPACT LAYOUT: short / landscape phone screens ================= */
-  @media (max-height: 480px) and (pointer: coarse) {
+  /* ================= COMPACT LAYOUT: all touch/mobile devices =================
+     Always applied on coarse-pointer (touch) devices — not just short screens —
+     because the circular touch buttons (jump/sprint/place/break) share the same
+     right-hand column as the topRight menu on every mobile viewport height. */
+  @media (pointer: coarse) {
     #hud { padding: 8px 10px; width: 152px; font-size: 10.5px; }
     #hud > div:first-child { font-size: 11px; }
     #topRight { top: 8px; right: 8px; gap: 5px; }
@@ -140,10 +143,17 @@
     .slot .swatch { width: 22px; height: 22px; }
     #joystickZone { left: 12px; bottom: 10px; width: 92px; height: 92px; }
     #joystickStick { width: 42px; height: 42px; }
-    #touchActionBtns { right: 14px; bottom: 60px; gap: 8px; }
+    #touchActionBtns { right: 14px; bottom: 58px; gap: 8px; }
     #touchJumpBtn { right: 16px; bottom: 10px; width: 46px; height: 46px; font-size: 9px; }
     #touchSprintBtn { right: 66px; bottom: 10px; width: 36px; height: 36px; font-size: 8px; }
-    .touchBtn { width: 46px; height: 46px; font-size: 17px; }
+    .touchBtn { width: 42px; height: 42px; font-size: 16px; }
+  }
+  /* Extra shrink for very short landscape heights on top of the coarse-pointer rules above */
+  @media (max-height: 380px) and (pointer: coarse) {
+    #topRight { gap: 3px; }
+    #minimap { width: 40px; height: 40px; }
+    .actionGrid .smallBtn { padding: 4px 6px; font-size: 8.5px; }
+    #hud { width: 132px; font-size: 9.5px; padding: 6px 8px; }
   }
 
   /* ================= START SCREEN ================= */
