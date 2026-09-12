@@ -110,13 +110,11 @@
   .modalOverlay {
     position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,0.55);
     display: none; align-items: center; justify-content: center;
-    transform: translateZ(0); will-change: transform; backface-visibility: hidden;
   }
   .modalCard {
     width: min(440px, 88vw); max-height: 80vh; overflow-y: auto;
     background: #14181a; border: 1px solid rgba(255,255,255,0.15); border-radius: 14px;
     color: white; text-shadow: none; padding: 18px 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    transform: translateZ(0); will-change: transform;
   }
   .modalCard h2 { margin: 0 0 4px 0; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
   .modalClose { cursor: pointer; font-size: 16px; color: #aaa; padding: 2px 8px; }
