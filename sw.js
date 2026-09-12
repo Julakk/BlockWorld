@@ -1,6 +1,6 @@
 // Service worker sederhana untuk BlockWorld — cache app-shell biar bisa main offline
 // setelah kunjungan pertama. Save/load pemain tetap pakai localStorage, bukan cache ini.
-const CACHE_NAME = 'blockworld-v-f7174ee06f';
+const CACHE_NAME = 'blockworld-v-8566f0354c';
 const APP_SHELL = [
   './',
   './index.html',
