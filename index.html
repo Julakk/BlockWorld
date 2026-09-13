@@ -397,6 +397,7 @@
   .ic-danger { color: var(--danger); }
   .ic-gold { color: var(--gold); }
   .ic-iron { color: #cdd6d8; }
+  .ic-diamond { color: #6ff0e8; }
   .ic-flame { color: #ff8a3d; }
   .ic-accent { color: var(--accent); }
   .invItem .ico .svgicon { width: 24px; height: 24px; }
@@ -451,7 +452,7 @@
 </defs>
 </svg>
 
-<div id="versionBadge"><span class="dot"></span> BlockWorld v3.3 — Lihat Update</div>
+<div id="versionBadge"><span class="dot"></span> BlockWorld v3.4 — Lihat Update</div>
 
 <div id="hint">
   <div class="badgeIcon"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></div>
@@ -483,7 +484,9 @@
     <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-globe"/></svg></span><span>Dunia gak terbatas, ada gurun/salju/dataran, gua &amp; bijih di bawah tanah</span></div>
     <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></span><span>Tambang butuh waktu &amp; pickaxe yang cukup buat bijih keras</span></div>
     <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-tools"/></svg></span><span>Bikin Meja Kerja &amp; Furnace buat crafting, smelting, dan masak</span></div>
-    <div class="noteRow"><span class="em em-danger"><svg class="svgicon ic-danger"><use href="#ic-warning"/></svg></span><span>Hati-hati <b>lava</b>, <b>zombie</b>, dan <b>skeleton</b> malam hari</span></div>
+    <div class="noteRow"><span class="em em-danger"><svg class="svgicon ic-danger"><use href="#ic-warning"/></svg></span><span>Hati-hati <b>lava</b>, <b>zombie</b>, <b>skeleton</b>, dan <b>spider</b> malam hari</span></div>
+    <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-bone"/></svg></span><span>Kasih <b>Tulang</b> ke Anjing/Wolf liar buat menjinakinnya &mdash; nanti ikut &amp; bantu nyerang zombie</span></div>
+    <div class="noteRow"><span class="em"><svg class="svgicon ic-flame"><use href="#ic-torch"/></svg></span><span>Obor beneran nyalain cahaya di sekitarnya &mdash; tahan slot hotbar buat "sedot" tipe blok yang lagi ditembak kamera</span></div>
     <div class="noteRow"><span class="em em-hunger"><svg class="svgicon ic-hunger"><use href="#ic-drumstick"/></svg></span><span>Jaga lapar — makan apel/daging hasil buruan atau kebun</span></div>
     <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-bucket"/></svg></span><span>Tangga buat manjat, Pintu diketuk buat buka/tutup, Ember buat ambil &amp; tuang Air/Lava</span></div>
     <div class="noteRow"><span class="em"><svg class="svgicon"><use href="#ic-boat"/></svg></span><span>Perahu buat nyebrang Air lebih cepat — tombol "Naik Perahu" pas berdiri di atas Air</span></div>
@@ -500,6 +503,22 @@
     <div class="patchSub">Semua perubahan yang udah ditambahin ke BlockWorld</div>
 
     <div class="patchEntry newest">
+      <div class="patchBadge">v3.4</div>
+      <div>
+        <div class="patchTitle">Ranjang, Obor Nyala, Pick Block, Spider, Berlian &amp; Anjing</div>
+        <ul>
+          <li>Titik respawn sekarang di <b>Ranjang</b> terakhir dipakai buat tidur, bukan selalu balik ke (0,0)</li>
+          <li><b>Obor</b> beneran nerangin sekitarnya (lampu titik kecil) &mdash; malam hari kerasa beda kalau udah pasang obor di sekitar rumah/tambang</li>
+          <li>Tahan (tap-and-hold) slot hotbar buat "menyedot" tipe blok yang lagi ditembak kamera ke slot itu, mirip pick block di Minecraft</li>
+          <li>Mob musuh baru: <b>Spider</b> &mdash; lebih cepat &amp; lincah manjat kontur/tebing, muncul malam hari bareng zombie &amp; skeleton</li>
+          <li>Tier alat/zirah <b>Berlian</b>: Pickaxe Berlian &amp; Zirah Berlian (di atas Besi), craft langsung dari Bijih Berlian di Meja Kerja</li>
+          <li>Mob jinak baru: <b>Anjing/Wolf</b> &mdash; kasih Tulang buat dijinakin, begitu jinak bakal ikut kemana-mana &amp; otomatis nyerang zombie di dekatnya</li>
+          <li>Pencapaian di panel Statistik sekarang tampil dengan ikon yang beda-beda sesuai jenisnya, bukan ikon generik lagi</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="patchEntry">
       <div class="patchBadge">v3.3</div>
       <div>
         <div class="patchTitle">Perombakan UI/UX Menyeluruh</div>
@@ -1020,22 +1039,23 @@
 
   // ================= TOOLS =================
   function currentToolTier() {
+    if (inventory.pickaxe_diamond > 0) return 4;
     if (inventory.pickaxe_iron > 0) return 3;
     if (inventory.pickaxe_stone > 0) return 2;
     if (inventory.pickaxe_wood > 0) return 1;
     return 0;
   }
-  function toolSpeedMult(tier) { return [1, 1.6, 2.6, 4][tier] || 1; }
-  const TOOL_NAMES = ['Tangan', 'Pickaxe Kayu', 'Pickaxe Batu', 'Pickaxe Besi'];
+  function toolSpeedMult(tier) { return [1, 1.6, 2.6, 4, 6][tier] || 1; }
+  const TOOL_NAMES = ['Tangan', 'Pickaxe Kayu', 'Pickaxe Batu', 'Pickaxe Besi', 'Pickaxe Berlian'];
 
   // ================= INVENTORY =================
   const inventory = {};
   HOTBAR.forEach(t => inventory[t] = 0);
   ['apple','raw_chicken','cooked_chicken','raw_beef','cooked_beef','raw_porkchop','cooked_porkchop',
-   'rotten_flesh','bone','iron_ingot','gold_ingot','pickaxe_wood','pickaxe_stone','pickaxe_iron','iron_armor',
-   'wool','bow','arrow','wheat','carrot','bread','raw_fish','cooked_fish']
+   'rotten_flesh','bone','iron_ingot','gold_ingot','pickaxe_wood','pickaxe_stone','pickaxe_iron','pickaxe_diamond','iron_armor','diamond_armor',
+   'wool','bow','arrow','wheat','carrot','bread','raw_fish','cooked_fish','string']
    .forEach(t => inventory[t] = 0);
-  let armorEquipped = false;
+  let equippedArmor = null; // null | 'iron' | 'diamond'
 
   const FOOD_VALUES = { apple: 25, raw_chicken: 15, cooked_chicken: 35, raw_beef: 15, cooked_beef: 38,
     raw_porkchop: 15, cooked_porkchop: 36, rotten_flesh: 8, carrot: 20, bread: 30, raw_fish: 12, cooked_fish: 32 };
@@ -1050,8 +1070,10 @@
     rotten_flesh: { icon: 'zombie', text: 'Daging Busuk' }, bone: { icon: 'bone', text: 'Tulang' },
     iron_ingot: { icon: 'ingot', text: 'Iron Ingot', cls: 'ic-iron' }, gold_ingot: { icon: 'ingot', text: 'Gold Ingot', cls: 'ic-gold' },
     pickaxe_wood: { icon: 'pickaxe', text: 'Pickaxe Kayu' }, pickaxe_stone: { icon: 'pickaxe', text: 'Pickaxe Batu' }, pickaxe_iron: { icon: 'pickaxe', text: 'Pickaxe Besi', cls: 'ic-iron' },
-    iron_armor: { icon: 'shield', text: 'Zirah Besi', cls: 'ic-iron' },
+    pickaxe_diamond: { icon: 'pickaxe', text: 'Pickaxe Berlian', cls: 'ic-diamond' },
+    iron_armor: { icon: 'shield', text: 'Zirah Besi', cls: 'ic-iron' }, diamond_armor: { icon: 'shield', text: 'Zirah Berlian', cls: 'ic-diamond' },
     wool: { icon: 'brick', text: 'Wol' }, bow: { icon: 'shield', text: 'Busur' }, arrow: { icon: 'pickaxe', text: 'Anak Panah' },
+    string: { icon: 'bone', text: 'Benang Laba-laba' },
     wheat: { icon: 'log', text: 'Gandum' }, carrot: { icon: 'apple', text: 'Wortel' }, bread: { icon: 'apple', text: 'Roti' },
     ladder: { icon: 'ladder', text: 'Tangga' }, door: { icon: 'door', text: 'Pintu' },
     bucket: { icon: 'bucket', text: 'Ember' }, water_bucket: { icon: 'bucket', text: 'Ember Berisi Air' }, lava_bucket: { icon: 'bucket', text: 'Ember Berisi Lava', cls: 'ic-flame' },
@@ -1069,6 +1091,44 @@
   scene.add(worldGroup);
 
   function key(x, y, z) { return x + ',' + y + ',' + z; }
+
+  // ================= LAMPU OBOR (PointLight nyata, dipakai ulang/pooled) =================
+  // Semua posisi Obor yang lagi ada di dunia dicatat di sini; tapi bikin THREE.PointLight
+  // sebanyak itu bisa berat kalau obor dipasang banyak-banyak. Jadi cuma sejumlah kecil
+  // PointLight yang benar-benar dibikin (pool), lalu tiap beberapa saat dipindah-pindah
+  // ke posisi obor TERDEKAT dari pemain — obor yang jauh dari pool tetap kelihatan (mesh-nya
+  // emissive) tapi gak nyalain lampu beneran, obor di sekitar pemain yang efeknya paling terasa.
+  const torchPositions = new Map(); // key -> {x,y,z}
+  const TORCH_LIGHT_POOL_SIZE = isMobile ? 4 : 10;
+  const torchLightPool = [];
+  for (let i = 0; i < TORCH_LIGHT_POOL_SIZE; i++) {
+    const l = new THREE.PointLight(0xffaa44, 1.1, 9, 2);
+    l.visible = false;
+    scene.add(l);
+    torchLightPool.push(l);
+  }
+  let lastTorchLightUpdate = 0;
+  function updateTorchLights(now) {
+    if (now - lastTorchLightUpdate < 400) return;
+    lastTorchLightUpdate = now;
+    if (torchPositions.size === 0) {
+      torchLightPool.forEach(l => l.visible = false);
+      return;
+    }
+    const nearest = Array.from(torchPositions.values())
+      .map(p => ({ p, d: (p.x - player.pos.x) ** 2 + (p.y - player.pos.y) ** 2 + (p.z - player.pos.z) ** 2 }))
+      .filter(o => o.d < 400) // radius ~20 blok
+      .sort((a, b) => a.d - b.d)
+      .slice(0, TORCH_LIGHT_POOL_SIZE);
+    torchLightPool.forEach((l, i) => {
+      if (nearest[i]) {
+        l.position.set(nearest[i].p.x, nearest[i].p.y + 0.3, nearest[i].p.z);
+        l.visible = true;
+      } else {
+        l.visible = false;
+      }
+    });
+  }
   // ================= WORLD SEED =================
   // Seed dipakai buat menggeser koordinat yang masuk ke fungsi noise, jadi tiap seed
   // menghasilkan dunia yang berbeda tapi tetap deterministik (bisa dibagikan ke teman).
@@ -1107,6 +1167,7 @@
     else { mesh.matrixAutoUpdate = false; mesh.updateMatrix(); } // v3.2 perf: blok statis gak perlu hitung ulang matrix tiap frame
     worldGroup.add(mesh);
     world.set(k, { mesh, type });
+    if (type === 'torch') torchPositions.set(k, { x, y, z });
   }
   // v3.2 perf: materialisasi blok yang sebelumnya disembunyikan (occlusion culling, lihat generateChunk)
   // begitu salah satu tetangganya kebuka (ditambang/dibongkar), biar gak ada lubang render.
@@ -1120,6 +1181,7 @@
     mesh.matrixAutoUpdate = false; mesh.updateMatrix();
     worldGroup.add(mesh);
     entry.mesh = mesh;
+    if (entry.type === 'torch') torchPositions.set(k, { x, y, z });
   }
   function revealExposedNeighbors(x, y, z) {
     const deltas = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
@@ -1134,6 +1196,7 @@
     if (!b) return;
     if (b.mesh) worldGroup.remove(b.mesh);
     world.delete(k);
+    if (b.type === 'torch') torchPositions.delete(k);
     revealExposedNeighbors(x, y, z);
   }
 
@@ -1479,6 +1542,31 @@
 
   // ================= HOTBAR / CRAFT UI =================
   const hotbarEl = document.getElementById('hotbar');
+  // ================= BLOCK PICKER (tap-and-hold ala "pick block" Minecraft) =================
+  // Tahan slot hotbar sebentar buat "menyedot" tipe blok yang lagi ditembak kamera ke slot
+  // itu, gak perlu geser-geser hotbar manual buat ganti ke blok yang lagi dilihat.
+  const PICK_HOLD_MS = 450;
+  function raycastLookedBlockType() {
+    if (!isPlaying()) return null;
+    raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+    const intersects = raycaster.intersectObjects(worldGroup.children);
+    if (!intersects.length) return null;
+    const ud = intersects[0].object.userData;
+    const type = MINE_ALIASES[ud.type] || ud.type;
+    if (!BLOCK_TYPES[type] || BLOCK_TYPES[type].liquid) return null;
+    return type;
+  }
+  function tryPickBlockToSlot(i) {
+    const looked = raycastLookedBlockType();
+    if (!looked) return;
+    if (HOTBAR[i] === looked) { selectedIndex = i; refreshHotbarUI(); return; }
+    // kalau tipe itu udah ada di slot lain, cukup pindah ke situ; kalau belum, "sedot" ke slot yang ditahan
+    const existingIdx = HOTBAR.indexOf(looked);
+    if (existingIdx >= 0) { selectedIndex = existingIdx; }
+    else { HOTBAR[i] = looked; selectedIndex = i; }
+    refreshHotbarUI();
+    showToast('Diambil: ' + BLOCK_TYPES[looked].name);
+  }
   function refreshHotbarUI() {
     hotbarEl.innerHTML = '';
     HOTBAR.forEach((type, i) => {
@@ -1487,7 +1575,17 @@
       slot.className = 'slot' + (i === selectedIndex ? ' active' : '') + (cnt === 0 ? ' empty' : '');
       slot.innerHTML = `<span class="key">${i + 1}</span><div class="swatch" style="background:#${BLOCK_TYPES[type].color.toString(16).padStart(6,'0')}"></div><span class="cnt">${cnt}</span>`;
       slot.title = BLOCK_TYPES[type].name;
-      slot.addEventListener('click', () => { selectedIndex = i; refreshHotbarUI(); });
+      let holdTimer = null, picked = false;
+      const startHold = () => {
+        picked = false;
+        holdTimer = setTimeout(() => { picked = true; tryPickBlockToSlot(i); }, PICK_HOLD_MS);
+      };
+      const endHold = () => { if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; } };
+      slot.addEventListener('pointerdown', startHold);
+      slot.addEventListener('pointerup', endHold);
+      slot.addEventListener('pointerleave', endHold);
+      slot.addEventListener('pointercancel', endHold);
+      slot.addEventListener('click', () => { if (picked) { picked = false; return; } selectedIndex = i; refreshHotbarUI(); });
       hotbarEl.appendChild(slot);
     });
     const bf = bestFood();
@@ -1519,6 +1617,8 @@
     { id: 'craftPickStone', icon: 'pickaxe', label: '3 Batu → Pickaxe Batu', need: { stone: 3 }, give: { pickaxe_stone: 1 }, nearWorkbench: true },
     { id: 'craftPickIron', icon: 'pickaxe', cls: 'ic-iron', label: '3 Iron Ingot → Pickaxe Besi', need: { iron_ingot: 3 }, give: { pickaxe_iron: 1 }, nearWorkbench: true },
     { id: 'craftArmor', icon: 'shield', cls: 'ic-iron', label: '4 Iron Ingot → Zirah Besi', need: { iron_ingot: 4 }, give: { iron_armor: 1 }, nearWorkbench: true },
+    { id: 'craftPickDiamond', icon: 'pickaxe', cls: 'ic-diamond', label: '3 Bijih Berlian → Pickaxe Berlian', need: { diamond_ore: 3 }, give: { pickaxe_diamond: 1 }, nearWorkbench: true },
+    { id: 'craftDiamondArmor', icon: 'shield', cls: 'ic-diamond', label: '4 Bijih Berlian → Zirah Berlian', need: { diamond_ore: 4 }, give: { diamond_armor: 1 }, nearWorkbench: true },
     { id: 'smeltIron', icon: 'fire', cls: 'ic-flame', label: 'Bijih Besi+Batu Bara → Iron Ingot', need: { iron_ore: 1, coal_ore: 1 }, give: { iron_ingot: 1 }, nearFurnace: true },
     { id: 'smeltGold', icon: 'fire', cls: 'ic-flame', label: 'Bijih Emas+Batu Bara → Gold Ingot', need: { gold_ore: 1, coal_ore: 1 }, give: { gold_ingot: 1 }, nearFurnace: true },
     { id: 'cookChicken', icon: 'fire', cls: 'ic-flame', label: 'Ayam Mentah+Batu Bara → Ayam Matang', need: { raw_chicken: 1, coal_ore: 1 }, give: { cooked_chicken: 1 }, nearFurnace: true },
@@ -1599,21 +1699,25 @@
   function openInventory() { refreshInvModal(); invModal.style.display = 'flex'; }
   // Kategori ala Minecraft: tiap section dipisah judul kecil, isinya slot kotak.
   const INV_SECTIONS = [
-    { title: 'Alat & Zirah', keys: ['pickaxe_wood', 'pickaxe_stone', 'pickaxe_iron', 'iron_armor', 'bow', 'arrow'] },
+    { title: 'Alat & Zirah', keys: ['pickaxe_wood', 'pickaxe_stone', 'pickaxe_iron', 'pickaxe_diamond', 'iron_armor', 'diamond_armor', 'bow', 'arrow'] },
     { title: 'Makanan', keys: ['bread', 'cooked_beef', 'cooked_porkchop', 'cooked_chicken', 'apple', 'carrot', 'raw_beef', 'raw_porkchop', 'raw_chicken', 'rotten_flesh'] },
-    { title: 'Bahan', keys: ['iron_ingot', 'gold_ingot', 'bone', 'wool', 'wheat'] },
+    { title: 'Bahan', keys: ['iron_ingot', 'gold_ingot', 'bone', 'wool', 'wheat', 'string'] },
   ];
+  const ARMOR_TYPES = { iron_armor: 'iron', diamond_armor: 'diamond' };
   function makeInvSlot(k) {
     const label = ITEM_LABELS[k] || { icon: null, text: k };
     const cnt = inventory[k] || 0;
+    const isArmor = !!ARMOR_TYPES[k];
+    const equipped = isArmor && equippedArmor === ARMOR_TYPES[k];
     const div = document.createElement('div');
-    div.className = 'invItem' + (k === 'iron_armor' && armorEquipped ? ' equipped' : '');
+    div.className = 'invItem' + (equipped ? ' equipped' : '');
     div.title = label.text + ' x' + cnt;
-    div.innerHTML = `${k === 'iron_armor' && armorEquipped ? '<span class="eqTag">Dipakai</span>' : ''}<div class="ico">${label.icon ? svgIcon(label.icon, label.cls) : ''}</div><span class="cnt">${cnt}</span>`;
+    div.innerHTML = `${equipped ? '<span class="eqTag">Dipakai</span>' : ''}<div class="ico">${label.icon ? svgIcon(label.icon, label.cls) : ''}</div><span class="cnt">${cnt}</span>`;
     div.addEventListener('click', () => {
-      if (k === 'iron_armor') {
-        armorEquipped = !armorEquipped;
-        showToast(armorEquipped ? 'Zirah besi dipakai' : 'Zirah besi dilepas');
+      if (isArmor) {
+        const my = ARMOR_TYPES[k];
+        equippedArmor = (equippedArmor === my) ? null : my;
+        showToast(equippedArmor === my ? label.text + ' dipakai' : label.text + ' dilepas');
         refreshInvModal();
       } else {
         showToast(label.text + ' &times;' + cnt);
@@ -1659,22 +1763,24 @@
 
   // ================= ACHIEVEMENTS (Pencapaian) =================
   const ACHIEVEMENTS = [
-    { id: 'mine100', label: 'Tambang 100 Blok', check: () => minedCount >= 100 },
-    { id: 'mine500', label: 'Tambang 500 Blok', check: () => minedCount >= 500 },
-    { id: 'survive3days', label: 'Bertahan 3 Hari', check: () => playSeconds >= CYCLE_SECONDS * 3 },
-    { id: 'firstKill', label: 'Kalahkan Mob Pertama', check: () => statsMobsKilled >= 1 },
-    { id: 'hunter10', label: 'Kalahkan 10 Mob', check: () => statsMobsKilled >= 10 },
-    { id: 'firstCrop', label: 'Panen Hasil Kebun Pertama', check: () => cropsHarvested >= 1 },
-    { id: 'firstChest', label: 'Buka Peti Harta Pertama', check: () => chestsOpened >= 1 },
-    { id: 'firstSleep', label: 'Tidur di Ranjang', check: () => sleepsCount >= 1 },
-    { id: 'ironTool', label: 'Bikin Pickaxe Besi', check: () => (inventory.pickaxe_iron || 0) >= 1 },
+    { id: 'mine100', label: 'Tambang 100 Blok', icon: 'pickaxe', check: () => minedCount >= 100 },
+    { id: 'mine500', label: 'Tambang 500 Blok', icon: 'ingot', cls: 'ic-gold', check: () => minedCount >= 500 },
+    { id: 'survive3days', label: 'Bertahan 3 Hari', icon: 'sun', cls: 'ic-sun', check: () => playSeconds >= CYCLE_SECONDS * 3 },
+    { id: 'firstKill', label: 'Kalahkan Mob Pertama', icon: 'zombie', check: () => statsMobsKilled >= 1 },
+    { id: 'hunter10', label: 'Kalahkan 10 Mob', icon: 'zombie', cls: 'ic-danger', check: () => statsMobsKilled >= 10 },
+    { id: 'firstCrop', label: 'Panen Hasil Kebun Pertama', icon: 'apple', check: () => cropsHarvested >= 1 },
+    { id: 'firstChest', label: 'Buka Peti Harta Pertama', icon: 'ingot', cls: 'ic-gold', check: () => chestsOpened >= 1 },
+    { id: 'firstSleep', label: 'Tidur di Ranjang', icon: 'moon', cls: 'ic-moon', check: () => sleepsCount >= 1 },
+    { id: 'ironTool', label: 'Bikin Pickaxe Besi', icon: 'pickaxe', cls: 'ic-iron', check: () => (inventory.pickaxe_iron || 0) >= 1 },
+    { id: 'diamondTool', label: 'Bikin Pickaxe Berlian', icon: 'pickaxe', cls: 'ic-diamond', check: () => (inventory.pickaxe_diamond || 0) >= 1 },
+    { id: 'tameWolf', label: 'Jinakin Anjing Pertama', icon: 'bone', check: () => mobs.some(m => m.type === 'wolf' && m.tamed) },
   ];
   const unlockedAchievements = new Set();
   function checkAchievements() {
     ACHIEVEMENTS.forEach(a => {
       if (!unlockedAchievements.has(a.id) && a.check()) {
         unlockedAchievements.add(a.id);
-        showToast('Pencapaian: ' + a.label);
+        showToast(svgIcon(a.icon, a.cls) + ' Pencapaian: ' + a.label);
       }
     });
   }
@@ -1707,7 +1813,7 @@
     div.className = 'invItem' + (done ? ' equipped' : '');
     if (!done) div.style.opacity = '0.4';
     div.title = a.label + (done ? ' (selesai)' : ' (belum)');
-    div.innerHTML = `<div class="ico">${svgIcon(done ? 'chart' : 'skull', done ? 'ic-gold' : '')}</div>`;
+    div.innerHTML = `<div class="ico">${svgIcon(a.icon || (done ? 'chart' : 'skull'), done ? (a.cls || 'ic-gold') : '')}</div>`;
     div.addEventListener('click', () => showToast((done ? '✔ ' : '• ') + a.label));
     return div;
   }
@@ -1833,16 +1939,34 @@
   }
   function applyDamage(amount) {
     if (amount <= 0) return;
-    const reduced = armorEquipped ? amount * 0.7 : amount;
+    const ARMOR_REDUCTION = { iron: 0.7, diamond: 0.5 };
+    const reduced = equippedArmor ? amount * ARMOR_REDUCTION[equippedArmor] : amount;
     player.health = Math.max(0, player.health - reduced);
     flashDamage();
     sfxHurt();
   }
 
   // ================= TIDUR (skip malam) =================
+  function findNearBlockPos(type, radius) {
+    const px = Math.round(player.pos.x), py = Math.round(player.pos.y), pz = Math.round(player.pos.z);
+    let best = null, bestDist = Infinity;
+    for (let dx = -radius; dx <= radius; dx++)
+      for (let dy = -radius; dy <= radius; dy++)
+        for (let dz = -radius; dz <= radius; dz++) {
+          const b = world.get(key(px + dx, py + dy, pz + dz));
+          if (b && b.type === type) {
+            const d = dx * dx + dy * dy + dz * dz;
+            if (d < bestDist) { bestDist = d; best = { x: px + dx, y: py + dy, z: pz + dz }; }
+          }
+        }
+    return best;
+  }
   function trySleep() {
     if (!(brightness < 0.35)) { showToast('Cuma bisa tidur pas malam hari'); return; }
-    if (!nearBlock('bed', 3)) { showToast('Butuh Ranjang di dekatmu'); return; }
+    const bedPos = findNearBlockPos('bed', 3);
+    if (!bedPos) { showToast('Butuh Ranjang di dekatmu'); return; }
+    // Titik spawn ranjang: posisi ranjang terakhir dipakai buat tidur, dipakai lagi pas respawn nanti.
+    player.bedSpawn = bedPos;
     const curPhase = (elapsed % CYCLE_SECONDS) / CYCLE_SECONDS;
     const targetPhase = 0.3;
     let delta = (targetPhase - curPhase) * CYCLE_SECONDS;
@@ -2134,7 +2258,12 @@
     if (mobHits.length > 0) {
       let obj = mobHits[0].object;
       while (obj && !obj.userData.mobRef) obj = obj.parent;
-      if (obj) { attackMob(obj.userData.mobRef, 25); return; }
+      if (obj) {
+        const mob = obj.userData.mobRef;
+        if (mob.type === 'wolf' && !mob.tamed) { tryTameWolf(mob); return; }
+        attackMob(mob, 25);
+        return;
+      }
     }
     raycaster.setFromCamera({ x: 0, y: 0 }, camera);
     const intersects = raycaster.intersectObjects(worldGroup.children);
@@ -2226,7 +2355,7 @@
   const mobGroup = new THREE.Group();
   scene.add(mobGroup);
   const mobs = [];
-  const MAX_CHICKENS = 5, MAX_ZOMBIES = 4, MAX_COWS = 4, MAX_PIGS = 4, MAX_SKELETONS = 3, MAX_SHEEP = 4;
+  const MAX_CHICKENS = 5, MAX_ZOMBIES = 4, MAX_COWS = 4, MAX_PIGS = 4, MAX_SKELETONS = 3, MAX_SHEEP = 4, MAX_SPIDERS = 3, MAX_WOLVES = 3;
 
   function makeChickenMesh() {
     const g = new THREE.Group();
@@ -2290,9 +2419,46 @@
     g.add(body); g.add(head);
     return g;
   }
-  const MOB_MESH_FACTORY = { chicken: makeChickenMesh, zombie: makeZombieMesh, cow: makeCowMesh, pig: makePigMesh, skeleton: makeSkeletonMesh, sheep: makeSheepMesh };
-  const MOB_DROPS = { chicken: 'raw_chicken', cow: 'raw_beef', pig: 'raw_porkchop', zombie: 'rotten_flesh', skeleton: 'bone', sheep: 'wool' };
-  const MOB_IS_HOSTILE = { zombie: true, skeleton: true };
+  function makeWolfMesh() {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xb8b0a0 }));
+    body.scale.set(0.4, 0.42, 0.8);
+    body.position.y = 0.2;
+    const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xa89f8e }));
+    head.scale.set(0.32, 0.3, 0.32);
+    head.position.set(0, 0.32, 0.48);
+    const tail = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xa89f8e }));
+    tail.scale.set(0.12, 0.12, 0.3);
+    tail.position.set(0, 0.32, -0.5);
+    g.add(body); g.add(head); g.add(tail);
+    return g;
+  }
+  function makeSpiderMesh() {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x241a1a }));
+    body.scale.set(0.7, 0.35, 0.9);
+    body.position.y = 0.25;
+    const head = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x1a1212 }));
+    head.scale.set(0.35, 0.3, 0.35);
+    head.position.set(0, 0.28, 0.55);
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xdd2222 });
+    const eyeGeo = new THREE.BoxGeometry(0.08, 0.08, 0.04);
+    const eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(0.08, 0.3, 0.72);
+    const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(-0.08, 0.3, 0.72);
+    const legMat = new THREE.MeshLambertMaterial({ color: 0x1e1616 });
+    for (let i = 0; i < 4; i++) {
+      const leg = new THREE.Mesh(boxGeo, legMat);
+      leg.scale.set(0.7, 0.06, 0.06);
+      const side = i < 2 ? 1 : -1, off = (i % 2) * 0.4 - 0.2;
+      leg.position.set(side * 0.45, 0.22, off);
+      g.add(leg);
+    }
+    g.add(body); g.add(head); g.add(eyeL); g.add(eyeR);
+    return g;
+  }
+  const MOB_MESH_FACTORY = { chicken: makeChickenMesh, zombie: makeZombieMesh, cow: makeCowMesh, pig: makePigMesh, skeleton: makeSkeletonMesh, sheep: makeSheepMesh, spider: makeSpiderMesh, wolf: makeWolfMesh };
+  const MOB_DROPS = { chicken: 'raw_chicken', cow: 'raw_beef', pig: 'raw_porkchop', zombie: 'rotten_flesh', skeleton: 'bone', sheep: 'wool', spider: 'string' };
+  const MOB_IS_HOSTILE = { zombie: true, skeleton: true, spider: true };
 
   function spawnMob(type) {
     const angle = Math.random() * Math.PI * 2;
@@ -2302,11 +2468,29 @@
     const y = findGroundY(x, z, player.pos.y);
     const group = MOB_MESH_FACTORY[type]();
     group.position.set(x, y, z);
-    const mobRef = { group, type, pos: new THREE.Vector3(x, y, z), velY: 0, dir: Math.random() * Math.PI * 2, nextDirT: 0, health: 100, lastAttackT: 0 };
+    const mobRef = { group, type, pos: new THREE.Vector3(x, y, z), velY: 0, dir: Math.random() * Math.PI * 2, nextDirT: 0, health: 100, lastAttackT: 0, tamed: false };
     group.userData.mobRef = mobRef;
     group.traverse(o => { o.userData.mobRef = mobRef; });
     mobGroup.add(group);
     mobs.push(mobRef);
+    return mobRef;
+  }
+
+  // ================= JINAKIN ANJING/WOLF =================
+  // Interaksi ke Wolf liar pakai Tulang (bukan diserang) buat coba jinakin — mirip Minecraft:
+  // ada peluang gagal (tulang tetap kepakai) sebelum akhirnya berhasil. Wolf yang udah jinak
+  // ikut pemain kemana-mana & otomatis nyerang zombie yang lewat di dekatnya.
+  function tryTameWolf(mob) {
+    if (!inventory.bone || inventory.bone <= 0) { showToast('Butuh Tulang buat jinakin Anjing'); return; }
+    inventory.bone--;
+    refreshHotbarUI();
+    if (Math.random() < 0.4) {
+      mob.tamed = true;
+      mob.group.traverse(o => { if (o.material && o.material.color) o.material.color.setHex(0xe8dcc0); });
+      showToast(svgIcon('bone') + ' Anjing berhasil dijinakin!');
+    } else {
+      showToast('Anjing belum mau, coba lagi...');
+    }
   }
 
   function attackMob(mob, dmg) {
@@ -2380,6 +2564,52 @@
             m.lastAttackT = now; skeletonShoot(m);
           }
         }
+      } else if (m.type === 'spider') {
+        // Spider: lebih cepat dari zombie & bisa "manjat" (gak kehalangin naik-turun kontur
+        // tanah karena posisi Y-nya ngikutin ketinggian tanah tiap kolom seperti mob lain,
+        // jadi dia efektif langsung naik ke tebing/tangga tanpa perlu jalur landai).
+        if (distToPlayer < 16) {
+          const ang = Math.atan2(player.pos.z - m.pos.z, player.pos.x - m.pos.x);
+          m.dir = ang;
+          if (distToPlayer > 1.2) {
+            const spd = 3.2 * dt;
+            m.pos.x += Math.cos(m.dir) * spd; m.pos.z += Math.sin(m.dir) * spd;
+          } else if (now - m.lastAttackT > 900) {
+            m.lastAttackT = now; applyDamage(8);
+          }
+        }
+      } else if (m.type === 'wolf') {
+        if (m.tamed) {
+          // Ikut pemain: diem kalau udah deket, jalan cepat kalau ketinggalan jauh.
+          if (distToPlayer > 3) {
+            const ang = Math.atan2(player.pos.z - m.pos.z, player.pos.x - m.pos.x);
+            m.dir = ang;
+            const spd = (distToPlayer > 8 ? 4.5 : 2.4) * dt;
+            m.pos.x += Math.cos(m.dir) * spd; m.pos.z += Math.sin(m.dir) * spd;
+          }
+          // Cari zombie terdekat di sekitar buat diserang otomatis.
+          let target = null, bestD = 64;
+          for (const other of mobs) {
+            if (other.type !== 'zombie') continue;
+            const d = (other.pos.x - m.pos.x) ** 2 + (other.pos.z - m.pos.z) ** 2;
+            if (d < bestD) { bestD = d; target = other; }
+          }
+          if (target) {
+            const ang = Math.atan2(target.pos.z - m.pos.z, target.pos.x - m.pos.x);
+            m.dir = ang;
+            const dTarget = Math.sqrt(bestD);
+            if (dTarget > 1.1) {
+              const spd = 3.5 * dt;
+              m.pos.x += Math.cos(m.dir) * spd; m.pos.z += Math.sin(m.dir) * spd;
+            } else if (now - m.lastAttackT > 800) {
+              m.lastAttackT = now; attackMob(target, 15);
+            }
+          }
+        } else {
+          if (now > m.nextDirT) { m.dir = Math.random() * Math.PI * 2; m.nextDirT = now + 2000 + Math.random() * 3000; }
+          const spd = 1.1 * dt;
+          m.pos.x += Math.cos(m.dir) * spd; m.pos.z += Math.sin(m.dir) * spd;
+        }
       }
       const gy = findGroundY(m.pos.x, m.pos.z, m.pos.y);
       m.pos.y += (gy - m.pos.y) * Math.min(1, dt * 8);
@@ -2399,10 +2629,12 @@
       if (count('cow') < MAX_COWS && Math.random() < 0.4) spawnMob('cow');
       if (count('pig') < MAX_PIGS && Math.random() < 0.4) spawnMob('pig');
       if (count('sheep') < MAX_SHEEP && Math.random() < 0.4) spawnMob('sheep');
+      if (count('wolf') < MAX_WOLVES && Math.random() < 0.15) spawnMob('wolf');
       if (isRaining && count('zombie') < MAX_ZOMBIES && Math.random() < 0.06) spawnMob('zombie'); // langit gelap pas hujan siang
     } else {
       if (count('zombie') < MAX_ZOMBIES && Math.random() < Math.min(1, 0.7 * rainMult)) spawnMob('zombie');
       if (count('skeleton') < MAX_SKELETONS && Math.random() < Math.min(1, 0.4 * rainMult)) spawnMob('skeleton');
+      if (count('spider') < MAX_SPIDERS && Math.random() < Math.min(1, 0.5 * rainMult)) spawnMob('spider');
     }
   }
 
@@ -2643,8 +2875,8 @@
       diffsB: encodeDiffsBinary(compactDiffs()),
       inventory, pos: [player.pos.x, player.pos.y, player.pos.z],
       yaw: player.yaw, health: player.health, hunger: player.hunger, minedCount,
-      minedByType, statsMobsKilled, statsDeaths, playSeconds, armorEquipped,
-      seed: WORLD_SEED, riding: player.riding,
+      minedByType, statsMobsKilled, statsDeaths, playSeconds, equippedArmor,
+      seed: WORLD_SEED, riding: player.riding, bedSpawn: player.bedSpawn || null,
       achievements: Array.from(unlockedAchievements),
       chestsOpened, sleepsCount, cropsHarvested,
       crops: Array.from(cropData.entries()).map(([k, c]) => [k, c.crop, c.stage, Date.now() - c.plantedAt]),
@@ -2676,9 +2908,12 @@
     if (typeof data.statsMobsKilled === 'number' && isFinite(data.statsMobsKilled)) statsMobsKilled = Math.max(0, data.statsMobsKilled);
     if (typeof data.statsDeaths === 'number' && isFinite(data.statsDeaths)) statsDeaths = Math.max(0, data.statsDeaths);
     if (typeof data.playSeconds === 'number' && isFinite(data.playSeconds)) playSeconds = Math.max(0, data.playSeconds);
-    if (typeof data.armorEquipped === 'boolean') armorEquipped = data.armorEquipped;
+    // Kompatibel save lama (armorEquipped: boolean, cuma zirah besi) & baru (equippedArmor: 'iron'/'diamond'/null)
+    if (typeof data.equippedArmor === 'string' || data.equippedArmor === null) equippedArmor = data.equippedArmor;
+    else if (typeof data.armorEquipped === 'boolean') equippedArmor = data.armorEquipped ? 'iron' : null;
     if (typeof data.seed === 'number' && isFinite(data.seed)) WORLD_SEED = data.seed;
     if (typeof data.riding === 'boolean') player.riding = data.riding;
+    if (data.bedSpawn && typeof data.bedSpawn.x === 'number') player.bedSpawn = { x: data.bedSpawn.x, y: data.bedSpawn.y, z: data.bedSpawn.z };
     if (Array.isArray(data.achievements)) { unlockedAchievements.clear(); data.achievements.forEach(id => unlockedAchievements.add(id)); }
     if (typeof data.chestsOpened === 'number' && isFinite(data.chestsOpened)) chestsOpened = Math.max(0, data.chestsOpened);
     if (typeof data.sleepsCount === 'number' && isFinite(data.sleepsCount)) sleepsCount = Math.max(0, data.sleepsCount);
@@ -2900,7 +3135,13 @@
   }
   function doRespawn() {
     player.health = 100; player.hunger = 70;
-    player.pos.set(0.5, findGroundY(0, 0, 20) + 1, 0.5);
+    // Respawn di Ranjang terakhir dipakai tidur (kalau masih ada); default (0,0) kalau belum pernah tidur.
+    if (player.bedSpawn) {
+      const bx = player.bedSpawn.x, by = player.bedSpawn.y, bz = player.bedSpawn.z;
+      player.pos.set(bx + 0.5, findGroundY(bx, bz, by + 3) + 1, bz + 0.5);
+    } else {
+      player.pos.set(0.5, findGroundY(0, 0, 20) + 1, 0.5);
+    }
     player.velY = 0;
     playerDead = false;
     document.getElementById('deathScreen').style.display = 'none';
@@ -3078,6 +3319,7 @@
       updateCrops(now);
       updateWeather(now);
       updateRain(dt);
+      updateTorchLights(now);
       if (now - lastAchievementCheck > 1000) { lastAchievementCheck = now; checkAchievements(); }
 
       if (player.health <= 0 && !playerDead) triggerDeath();
