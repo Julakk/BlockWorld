@@ -30,8 +30,13 @@ jobs:
         with:
           node-version: '20'
 
+      # FIX: paket 'tools' (default action ini) sudah dihapus dari repo Android SDK,
+      # jadi override cuma ke 'platform-tools'.
+      # Kalau build minta build-tools, ganti jadi: 'platform-tools build-tools;35.0.0'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
       - name: Install Bubblewrap CLI
         run: npm i -g @bubblewrap/cli
