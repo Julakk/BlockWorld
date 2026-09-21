@@ -30,13 +30,28 @@ jobs:
         with:
           node-version: '20'
 
-      # FIX: paket 'tools' (default action ini) sudah dihapus dari repo Android SDK,
-      # jadi override cuma ke 'platform-tools'.
-      # Kalau build minta build-tools, ganti jadi: 'platform-tools build-tools;35.0.0'
+      # Paket 'tools' (default action ini) sudah dihapus dari repo Android SDK -> override.
+      # build-tools 36.1.0 = versi yang diminta Bubblewrap, di-install duluan biar gak minta interaktif.
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools'
+          packages: 'platform-tools build-tools;36.1.0'
+
+      # FIX "The provided androidSdk isn't correct":
+      # Bubblewrap ngecek ada folder 'tools' atau 'bin' langsung di root SDK, sedangkan
+      # setup-android naruh sdkmanager di cmdline-tools/<versi>/bin. Salin ke root SDK
+      # (salin beneran, bukan symlink, karena sdkmanager cari folder lib di sebelah bin).
+      - name: Fix Android SDK layout for Bubblewrap
+        run: |
+          SRC=""
+          for d in "$ANDROID_HOME"/cmdline-tools/*/; do
+            if [ -x "${d}bin/sdkmanager" ]; then SRC="$d"; break; fi
+          done
+          if [ -z "$SRC" ]; then echo "cmdline-tools gak ketemu di $ANDROID_HOME"; exit 1; fi
+          echo "Salin dari: $SRC"
+          cp -rL "${SRC}." "$ANDROID_HOME/"
+          ls "$ANDROID_HOME"
+          test -x "$ANDROID_HOME/bin/sdkmanager" && echo "sdkmanager OK"
 
       - name: Install Bubblewrap CLI
         run: npm i -g @bubblewrap/cli
