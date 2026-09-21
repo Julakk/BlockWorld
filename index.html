@@ -67,27 +67,30 @@
 
   #dmgFlash { position: fixed; inset: 0; z-index: 26; background: radial-gradient(circle, rgba(200,20,20,0.06) 38%, rgba(180,10,10,0.55) 100%); pointer-events: none; opacity: 0; transition: opacity 0.15s; }
 
-  /* ================= HOTBAR ================= */
-  #hotbarWrap { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  /* ================= HOTBAR (gaya Minecraft: 9 slot + ikon kubus bertekstur) ================= */
+  #hotbarWrap { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  #hotbarNav { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 #000; user-select: none; -webkit-user-select: none; }
+  #hotbarNav button { width: 28px; height: 22px; padding: 0; border: 2px solid #000; border-radius: 0; cursor: pointer; font-size: 15px; line-height: 1; font-weight: 800; color: #fff; text-shadow: 1px 1px 0 #3f3f3f; background: #7d7d7d; box-shadow: inset 2px 2px 0 rgba(255,255,255,0.45), inset -2px -2px 0 rgba(0,0,0,0.45); }
+  #hotbarNav button:active { background: #5f5f5f; box-shadow: inset 2px 2px 0 rgba(0,0,0,0.45), inset -2px -2px 0 rgba(255,255,255,0.25); }
+  #hotbarName { min-width: 120px; text-align: center; }
+  #hotbarPage { opacity: 0.7; font-size: 10.5px; min-width: 26px; text-align: center; }
   #hotbar {
-    display: flex; gap: 7px; background: var(--panel); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    padding: 8px; border-radius: var(--radius-md); max-width: 92vw; flex-wrap: wrap; justify-content: center;
-    border: 1px solid var(--panel-border); box-shadow: var(--shadow-panel);
+    display: flex; gap: 0; flex-wrap: nowrap; justify-content: center; padding: 3px;
+    background: rgba(24,24,24,0.72); border: 2px solid #000; border-radius: 0; box-shadow: 0 6px 16px rgba(0,0,0,0.4);
   }
   .slot {
-    width: 44px; height: 44px; border: 2px solid rgba(255,255,255,0.12);
-    border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
-    font-size: 10px; color: white; text-shadow: 1px 1px 2px black; cursor: pointer;
-    position: relative; background: rgba(255,255,255,0.045);
-    transition: transform 0.12s cubic-bezier(.34,1.6,.64,1), border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
+    position: relative; cursor: pointer; color: #fff; text-shadow: 2px 2px 0 #3f3f3f;
+    background: rgba(139,139,139,0.55); border: 2px solid; border-radius: 0;
+    border-color: rgba(40,40,40,0.95) rgba(255,255,255,0.55) rgba(255,255,255,0.55) rgba(40,40,40,0.95);
   }
-  .slot:active { transform: scale(0.90); }
-  .slot.active { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,213,74,0.2), 0 0 16px rgba(255,213,74,0.6); background: rgba(255,213,74,0.1); transform: translateY(-2px); }
-  .slot .swatch { width: 28px; height: 28px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3), inset 0 2px 3px rgba(255,255,255,0.15), 0 1px 3px rgba(0,0,0,0.45); }
-  .slot .key { position: absolute; top: 2px; left: 4px; font-size: 8px; opacity: 0.8; font-weight: 700; color: var(--text-dim); }
-  .slot .cnt { position: absolute; bottom: -2px; right: 3px; font-size: 10px; font-weight: 800; color: var(--gold); }
-  .slot.empty .swatch { opacity: 0.25; }
-  .slot.empty { border-color: rgba(255,255,255,0.05); }
+  .slot:active { filter: brightness(0.85); }
+  .slot.pad { cursor: default; opacity: 0.55; }
+  .slot.active { z-index: 2; box-shadow: 0 0 0 2px #000, 0 0 0 5px #fff, 0 0 0 7px #000; background: rgba(190,190,190,0.6); }
+  .slot .ico { width: 32px; height: 32px; image-rendering: pixelated; pointer-events: none; -webkit-user-drag: none; filter: drop-shadow(1px 2px 0 rgba(0,0,0,0.35)); }
+  .slot .key { position: absolute; top: 0px; left: 3px; font-size: 9px; opacity: 0.85; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 #000; }
+  .slot .cnt { position: absolute; bottom: -1px; right: 3px; font-size: 13px; font-weight: 800; color: #fff; }
+  .slot.empty .ico { opacity: 0.3; }
   .slot.empty .cnt { display: none; }
 
   /* v3.2: Panel Crafting sekarang pakai grid slot kotak yang sama persis dengan Tas (.invGrid/.invItem) */
@@ -153,10 +156,14 @@
     #moreActionsBtn { padding: 5px 7px; font-size: 9.5px; }
     #secondaryActions { max-height: 38vh; }
     #saveMsg { font-size: 9.5px; }
-    #hotbarWrap { bottom: 8px; gap: 5px; }
-    #hotbar, #craftPanel { padding: 5px; gap: 5px; }
-    .slot { width: 34px; height: 34px; }
-    .slot .swatch { width: 22px; height: 22px; }
+    #hotbarWrap { bottom: 8px; gap: 4px; }
+    #craftPanel { padding: 5px; gap: 5px; }
+    #hotbar { padding: 2px; }
+    .slot { width: 36px; height: 36px; }
+    .slot .ico { width: 26px; height: 26px; }
+    .slot .cnt { font-size: 11px; }
+    .slot .key { font-size: 8px; }
+    #hotbarName { font-size: 11px; }
     .invGrid { grid-template-columns: repeat(auto-fill, 40px); gap: 5px; }
     .invItem { width: 40px; height: 40px; }
     .invItem .ico .svgicon { width: 20px; height: 20px; }
@@ -908,6 +915,7 @@
 
 <div id="hotbarWrap" style="display:none;">
   <div id="craftPanel" class="invGrid"></div>
+  <div id="hotbarNav"><button id="hbPrev" type="button" aria-label="Halaman sebelumnya">&lsaquo;</button><span id="hotbarName"></span><span id="hotbarPage"></span><button id="hbNext" type="button" aria-label="Halaman berikutnya">&rsaquo;</button></div>
   <div id="hotbar"></div>
 </div>
 
@@ -1724,13 +1732,150 @@
     refreshHotbarUI();
     showToast('Diambil: ' + BLOCK_TYPES[looked].name);
   }
+
+  // ================= IKON BLOK ALA MINECRAFT =================
+  // Ikon dibuat sekali pakai canvas: kubus isometrik (atas/kiri/kanan) dengan tekstur pixel 16x16,
+  // item non-blok (ember, joran, tulang, dll) digambar sebagai sprite pixel datar.
+  const ICON_CACHE = {};
+  const HB_SIZE = 9;
+  function hexToRgb(h) { return [(h >> 16) & 255, (h >> 8) & 255, h & 255]; }
+  function hashStr(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function makeRng(seed) { let s = (seed >>> 0) || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+  const ORE_COL = { coal_ore: [26,26,26], iron_ore: [216,185,138], gold_ore: [240,210,74], diamond_ore: [111,240,232], lapis_ore: [47,86,201] };
+  const SPRITE_TYPES = new Set(['torch','ladder','door','door_open','bed','bucket','water_bucket','lava_bucket','boat','fishing_rod','bone','wheat_seeds','carrot_seeds','wheat','carrot','lapis_lazuli']);
+
+  function makeTile(type, face) {
+    const c = document.createElement('canvas'); c.width = c.height = 16;
+    const g = c.getContext('2d');
+    const img = g.createImageData(16, 16), d = img.data;
+    const rand = makeRng(hashStr(type + face) + 7);
+    const base = hexToRgb(BLOCK_TYPES[type].color);
+    const cl = v => v < 0 ? 0 : v > 255 ? 255 : v;
+    const put = (x, y, col, a) => { if (x < 0 || y < 0 || x > 15 || y > 15) return; const i = (y * 16 + x) * 4; d[i] = cl(col[0]); d[i+1] = cl(col[1]); d[i+2] = cl(col[2]); d[i+3] = a === undefined ? 255 : a; };
+    const nz = (col, amt) => { const n = (rand() - 0.5) * amt; return [col[0] + n, col[1] + n, col[2] + n]; };
+    const GRASS = [95, 184, 58], DIRT = [138, 90, 43], STONE = [128, 128, 128];
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+      let col, a = 255;
+      switch (type) {
+        case 'grass':
+          if (face === 'top') col = nz(GRASS, 44);
+          else col = (y < 4 || (y === 4 && rand() < 0.5)) ? nz(GRASS, 44) : nz(DIRT, 36);
+          break;
+        case 'stone': case 'furnace': case 'coal_ore': case 'iron_ore': case 'gold_ore': case 'diamond_ore': case 'lapis_ore':
+          col = nz(STONE, 40); break;
+        case 'wood':
+          if (face === 'top') { const r = Math.floor(Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5))); col = (r % 3 === 0) ? [140, 105, 60] : nz([176, 138, 84], 14); }
+          else col = (x % 4 === 0) ? nz([70, 46, 24], 12) : nz(base, 20);
+          break;
+        case 'leaves':
+          col = rand() < 0.25 ? [30, 86, 30] : nz(base, 50); break;
+        case 'brick':
+          if (y % 4 === 3) col = [190, 180, 170];
+          else if (x % 8 === (((y >> 2) % 2) ? 4 : 0)) col = [190, 180, 170];
+          else col = nz(base, 30);
+          break;
+        case 'glass':
+          if (x === 0 || y === 0 || x === 15 || y === 15) { col = [225, 247, 250]; a = 210; }
+          else if ((x + y) % 8 === 1 && x > 1 && y > 1 && x < 14 && y < 14) { col = [255, 255, 255]; a = 170; }
+          else { col = base; a = 70; }
+          break;
+        case 'snow': col = nz([245, 248, 250], 14); break;
+        case 'workbench': case 'chest':
+          if (type === 'workbench' && face === 'top' && (x === 5 || x === 10 || y === 5 || y === 10)) col = [70, 44, 20];
+          else col = (y % 4 === 3) ? nz([80, 54, 26], 10) : nz(base, 24);
+          break;
+        case 'enchant_table':
+          col = rand() < 0.1 ? [90, 200, 220] : nz(face === 'top' ? [30, 20, 50] : [58, 45, 110], 20); break;
+        case 'obsidian':
+          col = rand() < 0.06 ? [78, 44, 110] : nz([28, 21, 38], 22); break;
+        default:
+          col = nz(base, type === 'sand' ? 26 : 34);
+      }
+      put(x, y, col, a);
+    }
+    // detail tambahan
+    if (ORE_COL[type]) {
+      const oc = ORE_COL[type];
+      for (let k = 0; k < 7; k++) { const ox = 1 + Math.floor(rand() * 13), oy = 1 + Math.floor(rand() * 13); [[0,0],[1,0],[0,1],[1,1]].forEach(([dx, dy]) => { if (rand() < 0.85) put(ox + dx, oy + dy, nz(oc, 18)); }); }
+    }
+    if (type === 'furnace' && face === 'side') { for (let y = 6; y <= 12; y++) for (let x = 4; x <= 11; x++) put(x, y, y === 6 ? [90, 90, 90] : [36, 36, 36]); for (let x = 6; x <= 9; x++) put(x, 11, [240, 140, 40]); }
+    if (type === 'chest' && face === 'side') { for (let y = 6; y <= 8; y++) for (let x = 7; x <= 8; x++) put(x, y, [230, 200, 80]); }
+    g.putImageData(img, 0, 0);
+    return c;
+  }
+  function shadeTile(tile, alpha) {
+    const c = document.createElement('canvas'); c.width = c.height = 16;
+    const g = c.getContext('2d'); g.drawImage(tile, 0, 0);
+    g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(0,0,0,' + alpha + ')'; g.fillRect(0, 0, 16, 16);
+    return c;
+  }
+  function makeCubeIcon(type) {
+    const top = makeTile(type, 'top'), side = makeTile(type, 'side');
+    const left = shadeTile(side, 0.22), right = shadeTile(side, 0.42);
+    const c = document.createElement('canvas'); c.width = c.height = 32;
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+    const face = (tile, a, b, cc, d, e, f) => { g.save(); g.setTransform(a, b, cc, d, e, f); g.drawImage(tile, 0, 0); g.restore(); };
+    face(left, 14/16, 7/16, 0, 14/16, 2, 9);
+    face(right, 14/16, -7/16, 0, 14/16, 16, 16);
+    face(top, 14/16, -7/16, 14/16, 7/16, 2, 9);
+    return c;
+  }
+  function px(g, col, x, y, w, h) { g.fillStyle = col; g.fillRect(x, y, w || 1, h || 1); }
+  function makeSpriteIcon(type) {
+    const s = document.createElement('canvas'); s.width = s.height = 16;
+    const g = s.getContext('2d');
+    const col = '#' + BLOCK_TYPES[type].color.toString(16).padStart(6, '0');
+    switch (type) {
+      case 'torch': px(g, '#8a5a2b', 7, 6, 2, 9); px(g, '#5b3b20', 7, 12, 1, 3); px(g, '#ffdd66', 6, 2, 4, 4); px(g, '#ff9a1a', 7, 1, 2, 2); px(g, '#fff2b0', 7, 3, 2, 2); break;
+      case 'ladder': px(g, '#a9752f', 3, 1, 2, 14); px(g, '#a9752f', 11, 1, 2, 14); for (let y = 3; y < 15; y += 4) px(g, '#c78f3f', 5, y, 6, 2); break;
+      case 'door': case 'door_open': px(g, '#4a2f18', 4, 1, 8, 14); px(g, '#7a5230', 5, 2, 6, 12); px(g, '#946439', 5, 2, 6, 5); px(g, '#946439', 5, 9, 6, 5); px(g, '#e6c84a', 10, 8, 1, 1); break;
+      case 'bed': px(g, '#5b3b20', 2, 11, 2, 3); px(g, '#5b3b20', 12, 11, 2, 3); px(g, '#c9a067', 2, 8, 12, 3); px(g, '#b03030', 5, 5, 9, 4); px(g, '#8f2222', 5, 8, 9, 1); px(g, '#f2f2f2', 2, 5, 3, 4); break;
+      case 'bucket': case 'water_bucket': case 'lava_bucket':
+        for (let y = 3; y <= 12; y++) { const o = Math.floor((y - 3) / 3); px(g, '#b9bec2', 3 + o, y, 10 - o * 2, 1); px(g, '#8a8f93', 3 + o, y, 1, 1); px(g, '#8a8f93', 12 - o, y, 1, 1); }
+        px(g, type === 'bucket' ? '#5a5f63' : col, 4, 3, 8, 2); break;
+      case 'boat': px(g, '#6b4423', 2, 9, 12, 1); px(g, '#9c6b3a', 3, 10, 10, 2); px(g, '#7a5230', 4, 12, 8, 1); px(g, '#c9a067', 2, 7, 1, 3); px(g, '#c9a067', 13, 7, 1, 3); break;
+      case 'fishing_rod': for (let i = 0; i < 11; i++) px(g, '#6b4423', 2 + i, 13 - i, 2, 1); for (let y = 3; y < 12; y++) px(g, '#e8e8e8', 13, y, 1, 1); px(g, '#d33', 12, 12, 2, 2); break;
+      case 'bone': for (let i = 0; i < 9; i++) px(g, '#e8e0c8', 4 + i, 11 - i, 2, 2); px(g, '#f4eedc', 2, 11, 3, 3); px(g, '#f4eedc', 11, 2, 3, 3); break;
+      case 'wheat_seeds': case 'carrot_seeds': [[4,9],[8,5],[10,10],[6,12],[11,6],[5,6]].forEach(([x, y]) => px(g, col, x, y, 2, 2)); px(g, 'rgba(0,0,0,0.25)', 4, 10, 2, 1); break;
+      case 'wheat': for (const x of [4, 8, 12]) { px(g, '#7aa03a', x, 6, 1, 9); px(g, col, x - 1, 1, 3, 2); px(g, col, x - 1, 3, 3, 2); px(g, col, x, 5, 1, 1); } break;
+      case 'carrot': for (let i = 0; i < 9; i++) { const w = Math.max(1, 3 - Math.floor(i / 3)); px(g, col, 5 + i, 3 + i, w, w); } px(g, '#3f9b2f', 3, 1, 3, 2); px(g, '#3f9b2f', 2, 3, 2, 2); px(g, '#3f9b2f', 5, 1, 2, 2); break;
+      case 'lapis_lazuli': for (let y = 2; y <= 13; y++) { const w = y <= 7 ? (y - 2) * 2 + 2 : (13 - y) * 2 + 2; px(g, col, 8 - w / 2, y, w, 1); } px(g, '#6d8ff0', 6, 5, 2, 2); px(g, '#1d3a94', 9, 9, 2, 2); break;
+      default: px(g, col, 3, 3, 10, 10);
+    }
+    const c = document.createElement('canvas'); c.width = c.height = 32;
+    const g2 = c.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(s, 0, 0, 32, 32);
+    return c;
+  }
+  function getBlockIcon(type) {
+    if (!ICON_CACHE[type]) {
+      let url = '';
+      try { url = (SPRITE_TYPES.has(type) ? makeSpriteIcon(type) : makeCubeIcon(type)).toDataURL(); } catch (e) { url = ''; }
+      ICON_CACHE[type] = url;
+    }
+    return ICON_CACHE[type];
+  }
+  const hotbarNameEl = document.getElementById('hotbarName');
+  const hotbarPageEl = document.getElementById('hotbarPage');
+  function hotbarPages() { return Math.ceil(HOTBAR.length / HB_SIZE); }
+  function hotbarChangePage(dir) {
+    const pages = hotbarPages();
+    const page = Math.floor(selectedIndex / HB_SIZE);
+    selectedIndex = ((page + dir + pages) % pages) * HB_SIZE;
+    refreshHotbarUI();
+  }
+  document.getElementById('hbPrev').addEventListener('click', () => hotbarChangePage(-1));
+  document.getElementById('hbNext').addEventListener('click', () => hotbarChangePage(1));
   function refreshHotbarUI() {
     hotbarEl.innerHTML = '';
-    HOTBAR.forEach((type, i) => {
+    const page = Math.floor(selectedIndex / HB_SIZE);
+    for (let n = 0; n < HB_SIZE; n++) {
+      const i = page * HB_SIZE + n;
+      if (i >= HOTBAR.length) { const pad = document.createElement('div'); pad.className = 'slot pad'; hotbarEl.appendChild(pad); continue; }
+      const type = HOTBAR[i];
       const cnt = inventory[type] || 0;
       const slot = document.createElement('div');
       slot.className = 'slot' + (i === selectedIndex ? ' active' : '') + (cnt === 0 ? ' empty' : '');
-      slot.innerHTML = `<span class="key">${i + 1}</span><div class="swatch" style="background:#${BLOCK_TYPES[type].color.toString(16).padStart(6,'0')}"></div><span class="cnt">${cnt}</span>`;
+      slot.innerHTML = `<span class="key">${n + 1}</span><img class="ico" draggable="false" alt="" src="${getBlockIcon(type)}"><span class="cnt">${cnt}</span>`;
       slot.title = BLOCK_TYPES[type].name;
       let holdTimer = null, picked = false;
       const startHold = () => {
@@ -1744,7 +1889,9 @@
       slot.addEventListener('pointercancel', endHold);
       slot.addEventListener('click', () => { if (picked) { picked = false; return; } selectedIndex = i; refreshHotbarUI(); });
       hotbarEl.appendChild(slot);
-    });
+    }
+    hotbarNameEl.textContent = BLOCK_TYPES[HOTBAR[selectedIndex]].name;
+    hotbarPageEl.textContent = (page + 1) + '/' + hotbarPages();
     const bf = bestFood();
     const foodTotal = FOOD_ORDER.reduce((s, f) => s + (inventory[f] || 0), 0);
     document.getElementById('foodCount').textContent = foodTotal;
@@ -2239,7 +2386,7 @@
     keysDown[e.code] = true;
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') player.sprinting = true;
     const num = parseInt(e.key);
-    if (num >= 1 && num <= HOTBAR.length) { selectedIndex = num - 1; refreshHotbarUI(); }
+    if (num >= 1 && num <= HB_SIZE) { const idx = Math.floor(selectedIndex / HB_SIZE) * HB_SIZE + num - 1; if (idx < HOTBAR.length) { selectedIndex = idx; refreshHotbarUI(); } }
   });
   document.addEventListener('keyup', (e) => {
     keysDown[e.code] = false;
