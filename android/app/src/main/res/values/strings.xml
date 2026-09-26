@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BlockWorld</string>
+    <string name="title_activity_main">BlockWorld</string>
+    <string name="package_name">com.ahmadstore.blockworld</string>
+    <string name="custom_url_scheme">com.ahmadstore.blockworld</string>
+</resources>

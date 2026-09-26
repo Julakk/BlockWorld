@@ -1,79 +1,57 @@
-name: Build Android APK
-
-permissions:
-  contents: write
+name: Build APK
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'index.html'
-      - 'manifest.json'
-      - 'android-twa/twa-manifest.json'
-  workflow_dispatch: {}
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Install dependencies
+        run: npm install
 
-      - name: Install Bubblewrap CLI
-        run: npm i -g @bubblewrap/cli
+      - name: Add Android platform if missing
+        run: test -d android || npx cap add android
 
-      - name: Pre-write Bubblewrap config (skip interactive first-run wizard)
-        run: |
-          mkdir -p ~/.bubblewrap
-          cat > ~/.bubblewrap/config.json << CONFIGEOF
-          {"jdkPath":"$JAVA_HOME","androidSdkPath":"$ANDROID_HOME"}
-          CONFIGEOF
-          cat ~/.bubblewrap/config.json
+      - name: Sync Capacitor Android
+        run: npx cap sync android
 
-      - name: Restore keystore from secret
-        run: |
-          mkdir -p android-twa
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android-twa/android.keystore
-          echo "Keystore restored."
+      - name: Grant execute permission to gradlew
+        run: chmod +x android/gradlew
 
-      - name: Generate Android project from twa-manifest.json
-        working-directory: android-twa
-        run: bubblewrap update --skipVersionUpgrade
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
 
-      - name: Build signed APK/AAB
-        working-directory: android-twa
-        env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: bubblewrap build --skipPwaValidation
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blockworld-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Rename output
-        working-directory: android-twa
-        run: |
-          cp app-release-signed.apk BlockWorld.apk
-          cp app-release-bundle.aab BlockWorld.aab || true
-
-      - name: Create release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: BlockWorld Build ${{ github.run_number }}
-          files: |
-            android-twa/BlockWorld.apk
-            android-twa/BlockWorld.aab
+          name: Build ${{ github.run_number }}
+          files: android/app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
