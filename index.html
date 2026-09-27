@@ -291,12 +291,15 @@
   }
   #patchNotesLink:hover { opacity: 0.8; }
 
+  /* Nomor versi kecil, gaya kebanyakan game (nggak nutupin layar kayak pil gede sebelumnya),
+     ditaruh di jalur atas-tengah yang emang kosong (bukan di pojok, biar gak numpuk joystick/tombol). */
   #versionBadge {
-    position: fixed; bottom: 8px; right: 10px; z-index: 21;
-    color: rgba(255,255,255,0.55); font-size: 11px; padding: 3px 6px; cursor: pointer; text-shadow: 1px 1px 2px black;
-    font-weight: 600; letter-spacing: 0.3px; transition: color 0.15s ease;
+    position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 21;
+    color: rgba(255,255,255,0.5); font-size: 10.5px; padding: 2px 8px; cursor: pointer;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8); font-weight: 600; letter-spacing: 0.4px;
+    transition: color 0.15s ease;
   }
-  #versionBadge:hover { color: rgba(255,255,255,0.9); }
+  #versionBadge:hover { color: rgba(255,255,255,0.85); }
 
   /* ================= MODALS ================= */
   .modalOverlay {
@@ -985,7 +988,6 @@
     <button class="smallBtn icoRow" id="sleepBtn"><svg class="svgicon"><use href="#ic-moon"/></svg> Tidur</button>
     <button class="smallBtn icoRow" id="shootBtn"><svg class="svgicon"><use href="#ic-pickaxe"/></svg> Panah</button>
     <button class="smallBtn icoRow" id="boatBtn"><svg class="svgicon"><use href="#ic-boat"/></svg> Naik Perahu</button>
-    <button class="smallBtn icoRow" id="escapeSurfaceBtn"><svg class="svgicon"><use href="#ic-ladder"/></svg> Naik ke Permukaan</button>
   </div>
   <span id="saveMsg"></span>
 </div>
@@ -1352,14 +1354,72 @@ end
   }
 
   // Tekstur noise pixel kecil buat mob (dikali warna material, jadi tetap bisa di-tint pas jinak)
-  const mobTex = (() => {
-    const c = document.createElement('canvas'); c.width = c.height = 8;
-    const g = c.getContext('2d'); const r = makeRng(99);
-    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { const v = 196 + Math.floor(r() * 60); g.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; g.fillRect(x, y, 1, 1); }
-    const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
-    return t;
-  })();
-  function mobMat(color) { return new THREE.MeshLambertMaterial({ color, map: mobTex }); }
+  // Tekstur pixel per jenis mob (mirip gaya skin Minecraft: pola bercak/garis/bulu, bukan warna polos).
+  // 'part' bedain body/head/leg biar tiap bagian bisa punya corak beda (misal kepala ayam merah, badan putih).
+  const mobTileCache = {};
+  function mobTile(kind, part) {
+    const key = kind + '|' + part;
+    if (mobTileCache[key]) return mobTileCache[key];
+    const c = document.createElement('canvas'); c.width = c.height = 16;
+    const g = c.getContext('2d');
+    const img = g.createImageData(16, 16), d = img.data;
+    const rand = makeRng(hashStr(key) + 31);
+    const cl = v => v < 0 ? 0 : v > 255 ? 255 : v;
+    const put = (x, y, col) => { const i = (y * 16 + x) * 4; d[i] = cl(col[0]); d[i + 1] = cl(col[1]); d[i + 2] = cl(col[2]); d[i + 3] = 255; };
+    const nz = (col, amt) => { const n = (rand() - 0.5) * amt; return [col[0] + n, col[1] + n, col[2] + n]; };
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+      let col;
+      switch (kind) {
+        case 'chicken':
+          col = part === 'head' ? nz([214, 40, 40], 20) : (rand() < 0.12 ? nz([222, 222, 222], 10) : nz([255, 255, 255], 12));
+          break;
+        case 'zombie':
+          if (part === 'head') col = (y > 10) ? nz([70, 60, 90], 16) : nz([70, 130, 66], 16); // mulut gelap di dagu
+          else col = ((y + x) % 5 === 0) ? nz([54, 96, 70], 18) : nz([66, 128, 66], 16); // corak baju robek
+          break;
+        case 'cow':
+          if (part === 'head') col = rand() < 0.14 ? nz([255, 210, 220], 12) : nz([250, 248, 244], 10);
+          else { const blot = (Math.floor(x / 4) + Math.floor(y / 4)) % 2 === 0; col = blot ? nz([92, 60, 34], 20) : nz([248, 246, 240], 12); }
+          break;
+        case 'pig':
+          col = rand() < 0.08 ? nz([210, 130, 148], 12) : nz([236, 166, 182], 14);
+          break;
+        case 'skeleton':
+          col = part === 'head' ? nz([232, 232, 214], 10) : ((y % 3 === 2) ? nz([132, 130, 116], 18) : nz([220, 220, 202], 12)); // garis rusuk
+          break;
+        case 'sheep':
+          col = part === 'head' ? nz([70, 68, 66], 14) : (rand() < 0.5 ? nz([244, 244, 244], 8) : nz([228, 228, 224], 10));
+          break;
+        case 'wolf':
+          col = ((x + y) % 5 < 2) ? nz([150, 140, 120], 16) : nz([186, 178, 162], 14);
+          break;
+        case 'spider':
+          col = part === 'leg' ? nz([26, 18, 18], 12) : (rand() < 0.1 ? nz([64, 22, 22], 10) : nz([26, 18, 18], 14));
+          break;
+        case 'creeper': {
+          const base = part === 'head' ? [78, 194, 90] : [72, 182, 82];
+          col = ((Math.sin(x * 1.3) + Math.cos(y * 1.7)) > 0.55) ? nz([42, 112, 50], 10) : nz(base, 14);
+          break;
+        }
+        case 'enderman':
+          col = nz([17, 15, 24], 10);
+          break;
+        default:
+          col = [200, 200, 200];
+      }
+      put(x, y, col);
+    }
+    g.putImageData(img, 0, 0);
+    return (mobTileCache[key] = c);
+  }
+  const mobSkinCache = {};
+  function mobSkin(kind, part) {
+    const key = kind + '|' + part;
+    if (mobSkinCache[key]) return mobSkinCache[key];
+    const t = new THREE.CanvasTexture(mobTile(kind, part));
+    t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
+    return (mobSkinCache[key] = new THREE.MeshLambertMaterial({ map: t }));
+  }
 
   const boxGeo = new THREE.BoxGeometry(1, 1, 1);
   // Bentuk non-kubus: obor jadi batang tipis, ranjang setengah tinggi
@@ -2961,167 +3021,93 @@ end
 
   function makeChickenMesh() {
     const g = new THREE.Group();
-    const legH = 0.18;
-    const legMat = mobMat(0xdd9a33);
-    for (const sx of [-0.1, 0.1]) {
-      const leg = new THREE.Mesh(boxGeo, legMat);
-      leg.scale.set(0.05, legH, 0.05);
-      leg.position.set(sx, legH / 2, 0.05);
-      g.add(leg);
-    }
-    const body = new THREE.Mesh(boxGeo, mobMat(0xffffff));
+    const body = new THREE.Mesh(boxGeo, mobSkin('chicken', 'body'));
     body.scale.set(0.55, 0.5, 0.7);
-    body.position.y = legH + 0.25;
-    const head = new THREE.Mesh(boxGeo, mobMat(0xdd3333));
+    const head = new THREE.Mesh(boxGeo, mobSkin('chicken', 'head'));
     head.scale.set(0.25, 0.25, 0.25);
-    head.position.set(0, legH + 0.3, 0.35);
+    head.position.set(0, 0.3, 0.35);
     g.add(body); g.add(head);
     return g;
   }
   function makeZombieMesh() {
     const g = new THREE.Group();
-    const legH = 0.5;
-    const legMat = mobMat(0x2a3a6e);
-    for (const sx of [-0.13, 0.13]) {
-      const leg = new THREE.Mesh(boxGeo, legMat);
-      leg.scale.set(0.2, legH, 0.2);
-      leg.position.set(sx, legH / 2, 0);
-      g.add(leg);
-    }
-    const armMat = mobMat(0x2e5c2e);
-    for (const sx of [-0.35, 0.35]) {
-      const arm = new THREE.Mesh(boxGeo, armMat);
-      arm.scale.set(0.16, 0.75, 0.16);
-      arm.position.set(sx, legH + 0.42, 0);
-      g.add(arm);
-    }
-    const body = new THREE.Mesh(boxGeo, mobMat(0x3f7d3f));
+    const body = new THREE.Mesh(boxGeo, mobSkin('zombie', 'body'));
     body.scale.set(0.5, 1.2, 0.35);
-    body.position.y = legH + 0.5;
-    const head = new THREE.Mesh(boxGeo, mobMat(0x2e5c2e));
+    body.position.y = 0.1;
+    const head = new THREE.Mesh(boxGeo, mobSkin('zombie', 'head'));
     head.scale.set(0.4, 0.4, 0.4);
-    head.position.y = legH + 1.25;
+    head.position.y = 0.85;
     g.add(body); g.add(head);
     return g;
   }
   function makeCowMesh() {
     const g = new THREE.Group();
-    const legH = 0.3;
-    const legMat = mobMat(0xffffff);
-    for (const sx of [-0.22, 0.22]) for (const sz of [-0.3, 0.3]) {
-      const leg = new THREE.Mesh(boxGeo, legMat);
-      leg.scale.set(0.12, legH, 0.12);
-      leg.position.set(sx, legH / 2, sz);
-      g.add(leg);
-    }
-    const body = new THREE.Mesh(boxGeo, mobMat(0x5a3c25));
+    const body = new THREE.Mesh(boxGeo, mobSkin('cow', 'body'));
     body.scale.set(0.6, 0.55, 0.9);
-    body.position.y = legH;
-    const head = new THREE.Mesh(boxGeo, mobMat(0xffffff));
+    const head = new THREE.Mesh(boxGeo, mobSkin('cow', 'head'));
     head.scale.set(0.3, 0.3, 0.3);
-    head.position.set(0, legH + 0.25, 0.5);
+    head.position.set(0, 0.25, 0.5);
     g.add(body); g.add(head);
     return g;
   }
   function makePigMesh() {
     const g = new THREE.Group();
-    const legH = 0.25;
-    const legMat = mobMat(0xe8a0b0);
-    for (const sx of [-0.18, 0.18]) for (const sz of [-0.25, 0.25]) {
-      const leg = new THREE.Mesh(boxGeo, legMat);
-      leg.scale.set(0.1, legH, 0.1);
-      leg.position.set(sx, legH / 2, sz);
-      g.add(leg);
-    }
-    const body = new THREE.Mesh(boxGeo, mobMat(0xe8a0b0));
+    const body = new THREE.Mesh(boxGeo, mobSkin('pig', 'body'));
     body.scale.set(0.5, 0.45, 0.75);
-    body.position.y = legH;
-    const head = new THREE.Mesh(boxGeo, mobMat(0xf0b5c2));
+    const head = new THREE.Mesh(boxGeo, mobSkin('pig', 'head'));
     head.scale.set(0.28, 0.28, 0.28);
-    head.position.set(0, legH + 0.2, 0.42);
+    head.position.set(0, 0.2, 0.42);
     g.add(body); g.add(head);
     return g;
   }
   function makeSkeletonMesh() {
     const g = new THREE.Group();
-    const legH = 0.5;
-    const legMat = mobMat(0xc8c8b8);
-    for (const sx of [-0.11, 0.11]) {
-      const leg = new THREE.Mesh(boxGeo, legMat);
-      leg.scale.set(0.15, legH, 0.15);
-      leg.position.set(sx, legH / 2, 0);
-      g.add(leg);
-    }
-    const armMat = mobMat(0xd8d8c8);
-    for (const sx of [-0.3, 0.3]) {
-      const arm = new THREE.Mesh(boxGeo, armMat);
-      arm.scale.set(0.12, 0.7, 0.12);
-      arm.position.set(sx, legH + 0.42, 0);
-      g.add(arm);
-    }
-    const body = new THREE.Mesh(boxGeo, mobMat(0xd8d8c8));
+    const body = new THREE.Mesh(boxGeo, mobSkin('skeleton', 'body'));
     body.scale.set(0.45, 1.15, 0.3);
-    body.position.y = legH + 0.5;
-    const head = new THREE.Mesh(boxGeo, mobMat(0xe8e8d8));
+    body.position.y = 0.1;
+    const head = new THREE.Mesh(boxGeo, mobSkin('skeleton', 'head'));
     head.scale.set(0.35, 0.35, 0.35);
-    head.position.y = legH + 1.25;
+    head.position.y = 0.85;
     g.add(body); g.add(head);
     return g;
   }
   function makeSheepMesh() {
     const g = new THREE.Group();
-    const legH = 0.28;
-    const legMat = mobMat(0x555555);
-    for (const sx of [-0.2, 0.2]) for (const sz of [-0.28, 0.28]) {
-      const leg = new THREE.Mesh(boxGeo, legMat);
-      leg.scale.set(0.11, legH, 0.11);
-      leg.position.set(sx, legH / 2, sz);
-      g.add(leg);
-    }
-    const body = new THREE.Mesh(boxGeo, mobMat(0xf2f2f2));
+    const body = new THREE.Mesh(boxGeo, mobSkin('sheep', 'body'));
     body.scale.set(0.6, 0.55, 0.85);
-    body.position.y = legH;
-    const head = new THREE.Mesh(boxGeo, mobMat(0x555555));
+    const head = new THREE.Mesh(boxGeo, mobSkin('sheep', 'head'));
     head.scale.set(0.28, 0.28, 0.28);
-    head.position.set(0, legH + 0.25, 0.48);
+    head.position.set(0, 0.25, 0.48);
     g.add(body); g.add(head);
     return g;
   }
   function makeWolfMesh() {
     const g = new THREE.Group();
-    const legH = 0.22;
-    const legMat = mobMat(0xa89f8e);
-    for (const sx of [-0.15, 0.15]) for (const sz of [-0.25, 0.25]) {
-      const leg = new THREE.Mesh(boxGeo, legMat);
-      leg.scale.set(0.09, legH, 0.09);
-      leg.position.set(sx, legH / 2, sz);
-      g.add(leg);
-    }
-    const body = new THREE.Mesh(boxGeo, mobMat(0xb8b0a0));
+    const body = new THREE.Mesh(boxGeo, mobSkin('wolf', 'body'));
     body.scale.set(0.4, 0.42, 0.8);
-    body.position.y = legH + 0.2;
-    const head = new THREE.Mesh(boxGeo, mobMat(0xa89f8e));
+    body.position.y = 0.2;
+    const head = new THREE.Mesh(boxGeo, mobSkin('wolf', 'head'));
     head.scale.set(0.32, 0.3, 0.32);
-    head.position.set(0, legH + 0.32, 0.48);
-    const tail = new THREE.Mesh(boxGeo, mobMat(0xa89f8e));
+    head.position.set(0, 0.32, 0.48);
+    const tail = new THREE.Mesh(boxGeo, mobSkin('wolf', 'body'));
     tail.scale.set(0.12, 0.12, 0.3);
-    tail.position.set(0, legH + 0.32, -0.5);
+    tail.position.set(0, 0.32, -0.5);
     g.add(body); g.add(head); g.add(tail);
     return g;
   }
   function makeSpiderMesh() {
     const g = new THREE.Group();
-    const body = new THREE.Mesh(boxGeo, mobMat(0x241a1a));
+    const body = new THREE.Mesh(boxGeo, mobSkin('spider', 'body'));
     body.scale.set(0.7, 0.35, 0.9);
     body.position.y = 0.25;
-    const head = new THREE.Mesh(boxGeo, mobMat(0x1a1212));
+    const head = new THREE.Mesh(boxGeo, mobSkin('spider', 'body'));
     head.scale.set(0.35, 0.3, 0.35);
     head.position.set(0, 0.28, 0.55);
     const eyeMat = new THREE.MeshBasicMaterial({ color: 0xdd2222 });
     const eyeGeo = new THREE.BoxGeometry(0.08, 0.08, 0.04);
     const eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(0.08, 0.3, 0.72);
     const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(-0.08, 0.3, 0.72);
-    const legMat = mobMat(0x1e1616);
+    const legMat = mobSkin('spider', 'leg');
     for (let i = 0; i < 4; i++) {
       const leg = new THREE.Mesh(boxGeo, legMat);
       leg.scale.set(0.7, 0.06, 0.06);
@@ -3134,31 +3120,23 @@ end
   }
   function makeCreeperMesh() {
     const g = new THREE.Group();
-    const legH = 0.2;
-    const legMat = mobMat(0x3fae4a);
-    for (const sx of [-0.16, 0.16]) for (const sz of [-0.16, 0.16]) {
-      const leg = new THREE.Mesh(boxGeo, legMat);
-      leg.scale.set(0.18, legH, 0.18);
-      leg.position.set(sx, legH / 2, sz);
-      g.add(leg);
-    }
-    const body = new THREE.Mesh(boxGeo, mobMat(0x3fae4a));
-    body.scale.set(0.5, 1.15, 0.5); body.position.y = legH + 0.5;
-    const head = new THREE.Mesh(boxGeo, mobMat(0x4fc25a));
-    head.scale.set(0.42, 0.42, 0.42); head.position.y = legH + 1.3;
+    const body = new THREE.Mesh(boxGeo, mobSkin('creeper', 'body'));
+    body.scale.set(0.5, 1.15, 0.5); body.position.y = 0.05;
+    const head = new THREE.Mesh(boxGeo, mobSkin('creeper', 'head'));
+    head.scale.set(0.42, 0.42, 0.42); head.position.y = 0.85;
     const faceMat = new THREE.MeshBasicMaterial({ color: 0x14200f });
     const eyeGeo = new THREE.BoxGeometry(0.09, 0.09, 0.03);
-    const eyeL = new THREE.Mesh(eyeGeo, faceMat); eyeL.position.set(0.09, legH + 1.35, 0.22);
-    const eyeR = new THREE.Mesh(eyeGeo, faceMat); eyeR.position.set(-0.09, legH + 1.35, 0.22);
-    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.03), faceMat); mouth.position.set(0, legH + 1.21, 0.22);
+    const eyeL = new THREE.Mesh(eyeGeo, faceMat); eyeL.position.set(0.09, 0.9, 0.22);
+    const eyeR = new THREE.Mesh(eyeGeo, faceMat); eyeR.position.set(-0.09, 0.9, 0.22);
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.03), faceMat); mouth.position.set(0, 0.76, 0.22);
     g.add(body); g.add(head); g.add(eyeL); g.add(eyeR); g.add(mouth);
     return g;
   }
   function makeEndermanMesh() {
     const g = new THREE.Group();
-    const body = new THREE.Mesh(boxGeo, mobMat(0x0d0d10));
+    const body = new THREE.Mesh(boxGeo, mobSkin('enderman', 'body'));
     body.scale.set(0.32, 1.7, 0.32); body.position.y = 0.45;
-    const head = new THREE.Mesh(boxGeo, mobMat(0x151518));
+    const head = new THREE.Mesh(boxGeo, mobSkin('enderman', 'head'));
     head.scale.set(0.38, 0.38, 0.38); head.position.y = 1.5;
     const eyeMat = new THREE.MeshBasicMaterial({ color: 0xc060ff });
     const eyeGeo = new THREE.BoxGeometry(0.09, 0.05, 0.03);
@@ -4131,21 +4109,6 @@ end
     document.getElementById('deathScreen').style.display = 'none';
   }
   document.getElementById('respawnBtn').addEventListener('click', doRespawn);
-
-  // v3.6: tombol darurat buat kejadian kejeblos di dalam gua/lubang galian sendiri
-  // dan gak nemu jalan naik lagi ke permukaan. Nembak lurus ke atas dari posisi
-  // sekarang (bukan ground level statis), jadi tetap aman dipakai walau lagi
-  // di gunung tinggi atau di bawah laut.
-  function escapeToSurface() {
-    if (playerDead) return;
-    const gx = Math.round(player.pos.x), gz = Math.round(player.pos.z);
-    const surfaceY = findGroundY(gx, gz, groundHeightAt(gx, gz) + 40);
-    player.pos.set(gx + 0.5, surfaceY + 1, gz + 0.5);
-    player.velY = 0;
-    showToast(svgIcon('ladder') + ' Naik ke permukaan!');
-    setSecondaryOpen(false);
-  }
-  document.getElementById('escapeSurfaceBtn').addEventListener('click', escapeToSurface);
 
   // ================= INIT WORLD (after load attempt) =================
   // ================= LOADING SCREEN LOGIC =================
