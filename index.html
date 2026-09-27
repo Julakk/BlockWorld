@@ -51,10 +51,10 @@
   .iconBtn:active { background: rgba(255,255,255,0.12); }
 
   /* ================= JOYSTICK & KAMERA ================= */
-  #joystickZone { position: fixed; bottom: 22px; left: 18px; width: 118px; height: 118px; z-index: 12; display: none; }
+  #joystickZone { position: fixed; bottom: 22px; left: 18px; width: 118px; height: 118px; z-index: 12; display: none; touch-action: none; }
   #joystickBase { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.16), rgba(255,255,255,0.06)); border: 2px solid rgba(255,255,255,0.32); }
   #joystickThumb { position: absolute; width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #cfe9f2); left: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 3px 10px rgba(0,0,0,0.4); }
-  #camDragZone { position: fixed; top: 0; right: 0; width: 55%; height: 100%; z-index: 8; }
+  #camDragZone { position: fixed; top: 0; right: 0; width: 55%; height: 100%; z-index: 8; touch-action: none; }
 
   /* ================= TOMBOL PANCING ================= */
   #fishActionWrap { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 15; display: none; flex-direction: column; align-items: center; gap: 10px; }
@@ -845,7 +845,7 @@
     const mag = Math.hypot(joyVec.x, joyVec.y);
     if (mag > 0.08) {
       // gerak relatif arah kamera biar joystick "maju" = menjauh dari kamera
-      const forward = { x: Math.sin(camYaw), z: Math.cos(camYaw) };
+      const forward = { x: -Math.sin(camYaw), z: -Math.cos(camYaw) };
       const right = { x: Math.cos(camYaw), z: -Math.sin(camYaw) };
       const mx = (forward.x * -joyVec.y + right.x * joyVec.x);
       const mz = (forward.z * -joyVec.y + right.z * joyVec.x);
