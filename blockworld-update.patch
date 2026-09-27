@@ -1,0 +1,452 @@
+diff --git a/index.html b/index.html
+index 288d863..a7f62ac 100644
+--- a/index.html
++++ b/index.html
+@@ -292,16 +292,11 @@
+   #patchNotesLink:hover { opacity: 0.8; }
+ 
+   #versionBadge {
+-    position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 21;
+-    background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+-    border: 1px solid var(--panel-border); border-radius: 999px;
+-    color: #fff; font-size: 11px; padding: 6px 14px; cursor: pointer; text-shadow: 1px 1px 2px black;
+-    display: flex; align-items: center; gap: 7px; box-shadow: var(--shadow-panel); transition: border-color 0.15s ease, background 0.15s ease;
+-    font-weight: 600; letter-spacing: 0.2px;
++    position: fixed; bottom: 8px; right: 10px; z-index: 21;
++    color: rgba(255,255,255,0.55); font-size: 11px; padding: 3px 6px; cursor: pointer; text-shadow: 1px 1px 2px black;
++    font-weight: 600; letter-spacing: 0.3px; transition: color 0.15s ease;
+   }
+-  #versionBadge:hover { border-color: var(--panel-border-strong); background: rgba(255,255,255,0.08); }
+-  #versionBadge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 6px var(--danger); animation: dotBlink 1.4s infinite; }
+-  @keyframes dotBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
++  #versionBadge:hover { color: rgba(255,255,255,0.9); }
+ 
+   /* ================= MODALS ================= */
+   .modalOverlay {
+@@ -502,7 +497,7 @@
+ </defs>
+ </svg>
+ 
+-<div id="versionBadge"><span class="dot"></span> BlockWorld v3.5 — Lihat Update</div>
++<div id="versionBadge">v3.5</div>
+ 
+ <div id="hint">
+   <div class="badgeIcon"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></div>
+@@ -2965,77 +2960,151 @@ end
+ 
+   function makeChickenMesh() {
+     const g = new THREE.Group();
++    const legH = 0.18;
++    const legMat = mobMat(0xdd9a33);
++    for (const sx of [-0.1, 0.1]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.05, legH, 0.05);
++      leg.position.set(sx, legH / 2, 0.05);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0xffffff));
+     body.scale.set(0.55, 0.5, 0.7);
++    body.position.y = legH + 0.25;
+     const head = new THREE.Mesh(boxGeo, mobMat(0xdd3333));
+     head.scale.set(0.25, 0.25, 0.25);
+-    head.position.set(0, 0.3, 0.35);
++    head.position.set(0, legH + 0.3, 0.35);
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makeZombieMesh() {
+     const g = new THREE.Group();
++    const legH = 0.5;
++    const legMat = mobMat(0x2a3a6e);
++    for (const sx of [-0.13, 0.13]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.2, legH, 0.2);
++      leg.position.set(sx, legH / 2, 0);
++      g.add(leg);
++    }
++    const armMat = mobMat(0x2e5c2e);
++    for (const sx of [-0.35, 0.35]) {
++      const arm = new THREE.Mesh(boxGeo, armMat);
++      arm.scale.set(0.16, 0.75, 0.16);
++      arm.position.set(sx, legH + 0.42, 0);
++      g.add(arm);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0x3f7d3f));
+     body.scale.set(0.5, 1.2, 0.35);
+-    body.position.y = 0.1;
++    body.position.y = legH + 0.5;
+     const head = new THREE.Mesh(boxGeo, mobMat(0x2e5c2e));
+     head.scale.set(0.4, 0.4, 0.4);
+-    head.position.y = 0.85;
++    head.position.y = legH + 1.25;
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makeCowMesh() {
+     const g = new THREE.Group();
++    const legH = 0.3;
++    const legMat = mobMat(0xffffff);
++    for (const sx of [-0.22, 0.22]) for (const sz of [-0.3, 0.3]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.12, legH, 0.12);
++      leg.position.set(sx, legH / 2, sz);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0x5a3c25));
+     body.scale.set(0.6, 0.55, 0.9);
++    body.position.y = legH;
+     const head = new THREE.Mesh(boxGeo, mobMat(0xffffff));
+     head.scale.set(0.3, 0.3, 0.3);
+-    head.position.set(0, 0.25, 0.5);
++    head.position.set(0, legH + 0.25, 0.5);
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makePigMesh() {
+     const g = new THREE.Group();
++    const legH = 0.25;
++    const legMat = mobMat(0xe8a0b0);
++    for (const sx of [-0.18, 0.18]) for (const sz of [-0.25, 0.25]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.1, legH, 0.1);
++      leg.position.set(sx, legH / 2, sz);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0xe8a0b0));
+     body.scale.set(0.5, 0.45, 0.75);
++    body.position.y = legH;
+     const head = new THREE.Mesh(boxGeo, mobMat(0xf0b5c2));
+     head.scale.set(0.28, 0.28, 0.28);
+-    head.position.set(0, 0.2, 0.42);
++    head.position.set(0, legH + 0.2, 0.42);
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makeSkeletonMesh() {
+     const g = new THREE.Group();
++    const legH = 0.5;
++    const legMat = mobMat(0xc8c8b8);
++    for (const sx of [-0.11, 0.11]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.15, legH, 0.15);
++      leg.position.set(sx, legH / 2, 0);
++      g.add(leg);
++    }
++    const armMat = mobMat(0xd8d8c8);
++    for (const sx of [-0.3, 0.3]) {
++      const arm = new THREE.Mesh(boxGeo, armMat);
++      arm.scale.set(0.12, 0.7, 0.12);
++      arm.position.set(sx, legH + 0.42, 0);
++      g.add(arm);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0xd8d8c8));
+     body.scale.set(0.45, 1.15, 0.3);
+-    body.position.y = 0.1;
++    body.position.y = legH + 0.5;
+     const head = new THREE.Mesh(boxGeo, mobMat(0xe8e8d8));
+     head.scale.set(0.35, 0.35, 0.35);
+-    head.position.y = 0.85;
++    head.position.y = legH + 1.25;
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makeSheepMesh() {
+     const g = new THREE.Group();
++    const legH = 0.28;
++    const legMat = mobMat(0x555555);
++    for (const sx of [-0.2, 0.2]) for (const sz of [-0.28, 0.28]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.11, legH, 0.11);
++      leg.position.set(sx, legH / 2, sz);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0xf2f2f2));
+     body.scale.set(0.6, 0.55, 0.85);
++    body.position.y = legH;
+     const head = new THREE.Mesh(boxGeo, mobMat(0x555555));
+     head.scale.set(0.28, 0.28, 0.28);
+-    head.position.set(0, 0.25, 0.48);
++    head.position.set(0, legH + 0.25, 0.48);
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makeWolfMesh() {
+     const g = new THREE.Group();
++    const legH = 0.22;
++    const legMat = mobMat(0xa89f8e);
++    for (const sx of [-0.15, 0.15]) for (const sz of [-0.25, 0.25]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.09, legH, 0.09);
++      leg.position.set(sx, legH / 2, sz);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0xb8b0a0));
+     body.scale.set(0.4, 0.42, 0.8);
+-    body.position.y = 0.2;
++    body.position.y = legH + 0.2;
+     const head = new THREE.Mesh(boxGeo, mobMat(0xa89f8e));
+     head.scale.set(0.32, 0.3, 0.32);
+-    head.position.set(0, 0.32, 0.48);
++    head.position.set(0, legH + 0.32, 0.48);
+     const tail = new THREE.Mesh(boxGeo, mobMat(0xa89f8e));
+     tail.scale.set(0.12, 0.12, 0.3);
+-    tail.position.set(0, 0.32, -0.5);
++    tail.position.set(0, legH + 0.32, -0.5);
+     g.add(body); g.add(head); g.add(tail);
+     return g;
+   }
+@@ -3064,15 +3133,23 @@ end
+   }
+   function makeCreeperMesh() {
+     const g = new THREE.Group();
++    const legH = 0.2;
++    const legMat = mobMat(0x3fae4a);
++    for (const sx of [-0.16, 0.16]) for (const sz of [-0.16, 0.16]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.18, legH, 0.18);
++      leg.position.set(sx, legH / 2, sz);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0x3fae4a));
+-    body.scale.set(0.5, 1.15, 0.5); body.position.y = 0.05;
++    body.scale.set(0.5, 1.15, 0.5); body.position.y = legH + 0.5;
+     const head = new THREE.Mesh(boxGeo, mobMat(0x4fc25a));
+-    head.scale.set(0.42, 0.42, 0.42); head.position.y = 0.85;
++    head.scale.set(0.42, 0.42, 0.42); head.position.y = legH + 1.3;
+     const faceMat = new THREE.MeshBasicMaterial({ color: 0x14200f });
+     const eyeGeo = new THREE.BoxGeometry(0.09, 0.09, 0.03);
+-    const eyeL = new THREE.Mesh(eyeGeo, faceMat); eyeL.position.set(0.09, 0.9, 0.22);
+-    const eyeR = new THREE.Mesh(eyeGeo, faceMat); eyeR.position.set(-0.09, 0.9, 0.22);
+-    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.03), faceMat); mouth.position.set(0, 0.76, 0.22);
++    const eyeL = new THREE.Mesh(eyeGeo, faceMat); eyeL.position.set(0.09, legH + 1.35, 0.22);
++    const eyeR = new THREE.Mesh(eyeGeo, faceMat); eyeR.position.set(-0.09, legH + 1.35, 0.22);
++    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.03), faceMat); mouth.position.set(0, legH + 1.21, 0.22);
+     g.add(body); g.add(head); g.add(eyeL); g.add(eyeR); g.add(mouth);
+     return g;
+   }
+diff --git a/www/index.html b/www/index.html
+index 288d863..a7f62ac 100644
+--- a/www/index.html
++++ b/www/index.html
+@@ -292,16 +292,11 @@
+   #patchNotesLink:hover { opacity: 0.8; }
+ 
+   #versionBadge {
+-    position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 21;
+-    background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+-    border: 1px solid var(--panel-border); border-radius: 999px;
+-    color: #fff; font-size: 11px; padding: 6px 14px; cursor: pointer; text-shadow: 1px 1px 2px black;
+-    display: flex; align-items: center; gap: 7px; box-shadow: var(--shadow-panel); transition: border-color 0.15s ease, background 0.15s ease;
+-    font-weight: 600; letter-spacing: 0.2px;
++    position: fixed; bottom: 8px; right: 10px; z-index: 21;
++    color: rgba(255,255,255,0.55); font-size: 11px; padding: 3px 6px; cursor: pointer; text-shadow: 1px 1px 2px black;
++    font-weight: 600; letter-spacing: 0.3px; transition: color 0.15s ease;
+   }
+-  #versionBadge:hover { border-color: var(--panel-border-strong); background: rgba(255,255,255,0.08); }
+-  #versionBadge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 6px var(--danger); animation: dotBlink 1.4s infinite; }
+-  @keyframes dotBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
++  #versionBadge:hover { color: rgba(255,255,255,0.9); }
+ 
+   /* ================= MODALS ================= */
+   .modalOverlay {
+@@ -502,7 +497,7 @@
+ </defs>
+ </svg>
+ 
+-<div id="versionBadge"><span class="dot"></span> BlockWorld v3.5 — Lihat Update</div>
++<div id="versionBadge">v3.5</div>
+ 
+ <div id="hint">
+   <div class="badgeIcon"><svg class="svgicon"><use href="#ic-pickaxe"/></svg></div>
+@@ -2965,77 +2960,151 @@ end
+ 
+   function makeChickenMesh() {
+     const g = new THREE.Group();
++    const legH = 0.18;
++    const legMat = mobMat(0xdd9a33);
++    for (const sx of [-0.1, 0.1]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.05, legH, 0.05);
++      leg.position.set(sx, legH / 2, 0.05);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0xffffff));
+     body.scale.set(0.55, 0.5, 0.7);
++    body.position.y = legH + 0.25;
+     const head = new THREE.Mesh(boxGeo, mobMat(0xdd3333));
+     head.scale.set(0.25, 0.25, 0.25);
+-    head.position.set(0, 0.3, 0.35);
++    head.position.set(0, legH + 0.3, 0.35);
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makeZombieMesh() {
+     const g = new THREE.Group();
++    const legH = 0.5;
++    const legMat = mobMat(0x2a3a6e);
++    for (const sx of [-0.13, 0.13]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.2, legH, 0.2);
++      leg.position.set(sx, legH / 2, 0);
++      g.add(leg);
++    }
++    const armMat = mobMat(0x2e5c2e);
++    for (const sx of [-0.35, 0.35]) {
++      const arm = new THREE.Mesh(boxGeo, armMat);
++      arm.scale.set(0.16, 0.75, 0.16);
++      arm.position.set(sx, legH + 0.42, 0);
++      g.add(arm);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0x3f7d3f));
+     body.scale.set(0.5, 1.2, 0.35);
+-    body.position.y = 0.1;
++    body.position.y = legH + 0.5;
+     const head = new THREE.Mesh(boxGeo, mobMat(0x2e5c2e));
+     head.scale.set(0.4, 0.4, 0.4);
+-    head.position.y = 0.85;
++    head.position.y = legH + 1.25;
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makeCowMesh() {
+     const g = new THREE.Group();
++    const legH = 0.3;
++    const legMat = mobMat(0xffffff);
++    for (const sx of [-0.22, 0.22]) for (const sz of [-0.3, 0.3]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.12, legH, 0.12);
++      leg.position.set(sx, legH / 2, sz);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0x5a3c25));
+     body.scale.set(0.6, 0.55, 0.9);
++    body.position.y = legH;
+     const head = new THREE.Mesh(boxGeo, mobMat(0xffffff));
+     head.scale.set(0.3, 0.3, 0.3);
+-    head.position.set(0, 0.25, 0.5);
++    head.position.set(0, legH + 0.25, 0.5);
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makePigMesh() {
+     const g = new THREE.Group();
++    const legH = 0.25;
++    const legMat = mobMat(0xe8a0b0);
++    for (const sx of [-0.18, 0.18]) for (const sz of [-0.25, 0.25]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.1, legH, 0.1);
++      leg.position.set(sx, legH / 2, sz);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0xe8a0b0));
+     body.scale.set(0.5, 0.45, 0.75);
++    body.position.y = legH;
+     const head = new THREE.Mesh(boxGeo, mobMat(0xf0b5c2));
+     head.scale.set(0.28, 0.28, 0.28);
+-    head.position.set(0, 0.2, 0.42);
++    head.position.set(0, legH + 0.2, 0.42);
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makeSkeletonMesh() {
+     const g = new THREE.Group();
++    const legH = 0.5;
++    const legMat = mobMat(0xc8c8b8);
++    for (const sx of [-0.11, 0.11]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.15, legH, 0.15);
++      leg.position.set(sx, legH / 2, 0);
++      g.add(leg);
++    }
++    const armMat = mobMat(0xd8d8c8);
++    for (const sx of [-0.3, 0.3]) {
++      const arm = new THREE.Mesh(boxGeo, armMat);
++      arm.scale.set(0.12, 0.7, 0.12);
++      arm.position.set(sx, legH + 0.42, 0);
++      g.add(arm);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0xd8d8c8));
+     body.scale.set(0.45, 1.15, 0.3);
+-    body.position.y = 0.1;
++    body.position.y = legH + 0.5;
+     const head = new THREE.Mesh(boxGeo, mobMat(0xe8e8d8));
+     head.scale.set(0.35, 0.35, 0.35);
+-    head.position.y = 0.85;
++    head.position.y = legH + 1.25;
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makeSheepMesh() {
+     const g = new THREE.Group();
++    const legH = 0.28;
++    const legMat = mobMat(0x555555);
++    for (const sx of [-0.2, 0.2]) for (const sz of [-0.28, 0.28]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.11, legH, 0.11);
++      leg.position.set(sx, legH / 2, sz);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0xf2f2f2));
+     body.scale.set(0.6, 0.55, 0.85);
++    body.position.y = legH;
+     const head = new THREE.Mesh(boxGeo, mobMat(0x555555));
+     head.scale.set(0.28, 0.28, 0.28);
+-    head.position.set(0, 0.25, 0.48);
++    head.position.set(0, legH + 0.25, 0.48);
+     g.add(body); g.add(head);
+     return g;
+   }
+   function makeWolfMesh() {
+     const g = new THREE.Group();
++    const legH = 0.22;
++    const legMat = mobMat(0xa89f8e);
++    for (const sx of [-0.15, 0.15]) for (const sz of [-0.25, 0.25]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.09, legH, 0.09);
++      leg.position.set(sx, legH / 2, sz);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0xb8b0a0));
+     body.scale.set(0.4, 0.42, 0.8);
+-    body.position.y = 0.2;
++    body.position.y = legH + 0.2;
+     const head = new THREE.Mesh(boxGeo, mobMat(0xa89f8e));
+     head.scale.set(0.32, 0.3, 0.32);
+-    head.position.set(0, 0.32, 0.48);
++    head.position.set(0, legH + 0.32, 0.48);
+     const tail = new THREE.Mesh(boxGeo, mobMat(0xa89f8e));
+     tail.scale.set(0.12, 0.12, 0.3);
+-    tail.position.set(0, 0.32, -0.5);
++    tail.position.set(0, legH + 0.32, -0.5);
+     g.add(body); g.add(head); g.add(tail);
+     return g;
+   }
+@@ -3064,15 +3133,23 @@ end
+   }
+   function makeCreeperMesh() {
+     const g = new THREE.Group();
++    const legH = 0.2;
++    const legMat = mobMat(0x3fae4a);
++    for (const sx of [-0.16, 0.16]) for (const sz of [-0.16, 0.16]) {
++      const leg = new THREE.Mesh(boxGeo, legMat);
++      leg.scale.set(0.18, legH, 0.18);
++      leg.position.set(sx, legH / 2, sz);
++      g.add(leg);
++    }
+     const body = new THREE.Mesh(boxGeo, mobMat(0x3fae4a));
+-    body.scale.set(0.5, 1.15, 0.5); body.position.y = 0.05;
++    body.scale.set(0.5, 1.15, 0.5); body.position.y = legH + 0.5;
+     const head = new THREE.Mesh(boxGeo, mobMat(0x4fc25a));
+-    head.scale.set(0.42, 0.42, 0.42); head.position.y = 0.85;
++    head.scale.set(0.42, 0.42, 0.42); head.position.y = legH + 1.3;
+     const faceMat = new THREE.MeshBasicMaterial({ color: 0x14200f });
+     const eyeGeo = new THREE.BoxGeometry(0.09, 0.09, 0.03);
+-    const eyeL = new THREE.Mesh(eyeGeo, faceMat); eyeL.position.set(0.09, 0.9, 0.22);
+-    const eyeR = new THREE.Mesh(eyeGeo, faceMat); eyeR.position.set(-0.09, 0.9, 0.22);
+-    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.03), faceMat); mouth.position.set(0, 0.76, 0.22);
++    const eyeL = new THREE.Mesh(eyeGeo, faceMat); eyeL.position.set(0.09, legH + 1.35, 0.22);
++    const eyeR = new THREE.Mesh(eyeGeo, faceMat); eyeR.position.set(-0.09, legH + 1.35, 0.22);
++    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.03), faceMat); mouth.position.set(0, legH + 1.21, 0.22);
+     g.add(body); g.add(head); g.add(eyeL); g.add(eyeR); g.add(mouth);
+     return g;
+   }
