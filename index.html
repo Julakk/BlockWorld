@@ -1054,6 +1054,25 @@ BW.onUpdate = function(_, hp, lapar) -- argumen pertama (_) diisi otomatis oleh 
 end
 </script>
 <script>
+// ================= PENGAMAN LOADING SCREEN (paling awal, di luar kode game) =================
+(function () {
+  function showBootError(msg) {
+    const el = document.getElementById('loadingLabel');
+    if (el) { el.textContent = 'Error: ' + msg; el.style.color = '#ff8a7a'; }
+  }
+  window.addEventListener('error', (e) => showBootError((e.error && e.error.message) || e.message || 'gagal jalan'));
+  window.addEventListener('unhandledrejection', (e) => showBootError((e.reason && e.reason.message) || String(e.reason)));
+  setTimeout(() => {
+    const scr = document.getElementById('loadingScreen');
+    if (scr && scr.style.display !== 'none' && !scr.classList.contains('hidden')) {
+      console.warn('Loading screen dipaksa ditutup (watchdog 12 detik)');
+      scr.classList.add('hidden');
+      setTimeout(() => { scr.style.display = 'none'; }, 500);
+    }
+  }, 12000);
+})();
+</script>
+<script>
 (function() {
   // ================= MOBILE DETECTION (must run first) =================
   const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
@@ -4138,8 +4157,8 @@ end
     setLoadingProgress(75, 'Membangun dunia...');
   }
   async function boot() {
-    try { await preloadTextures(); } catch (e) { console.error('Preload tekstur gagal:', e); }
-    try { await init(); } catch (e) { console.error('Init dunia gagal:', e); }
+    try { await preloadTextures(); } catch (e) { console.error('Preload tekstur gagal:', e); loadingLabelEl.textContent = 'Error tekstur: ' + e.message; }
+    try { await init(); } catch (e) { console.error('Init dunia gagal:', e); loadingLabelEl.textContent = 'Error dunia: ' + e.message; }
     setLoadingProgress(100, 'Selesai!');
     loadingScreenEl.classList.add('hidden');
     setTimeout(() => { loadingScreenEl.style.display = 'none'; }, 500);
