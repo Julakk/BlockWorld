@@ -35,36 +35,41 @@
   #loadingLabel { font-size: 12px; color: var(--text-dim); letter-spacing: 0.3px; min-height: 16px; text-align: center; padding: 0 20px; }
 
   /* ================= HUD (gaya Fish It) ================= */
-  #versionBadge { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 21; color: rgba(255,255,255,0.45); font-size: 10px; padding: 2px 8px; font-weight: 600; letter-spacing: 0.5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
-  #hud { position: fixed; top: 14px; left: 12px; z-index: 10; display: none; flex-direction: column; gap: 8px; }
+  #versionBadge { position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 21; color: rgba(255,255,255,0.45); font-size: 10px; padding: 2px 8px; font-weight: 600; letter-spacing: 0.5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+  #hud { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); left: 12px; z-index: 10; display: none; flex-direction: column; gap: 8px; }
   .hudPanel {
+    position: relative;
     background: linear-gradient(160deg, #1d5068, #0c2836);
     border: 3px solid rgba(255,255,255,0.92);
-    border-radius: 20px; padding: 9px 15px 12px 12px;
+    border-radius: 20px; padding: 9px 15px 12px 20px;
     box-shadow: 0 6px 0 rgba(0,0,0,0.32), 0 12px 22px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
     min-width: 172px;
   }
-  #coinsRow { display: flex; align-items: center; gap: 9px; }
+  #coinsRow { display: flex; align-items: center; gap: 10px; }
   .coinBadge {
-    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    margin-left: -30px; flex-shrink: 0;
+    width: 40px; height: 40px; border-radius: 50%;
     background: radial-gradient(circle at 35% 28%, #ffe27a, #e0982a);
-    border: 2.5px solid #fff; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 3px 0 rgba(120,70,0,0.4), 0 4px 8px rgba(0,0,0,0.35);
+    border: 3px solid #fff; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 0 rgba(120,70,0,0.45), 0 6px 12px rgba(0,0,0,0.4);
+    position: relative; z-index: 1;
   }
   #coinsVal { font-size: 21px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,0.4), 1px 1px 1px rgba(0,0,0,0.3); letter-spacing: 0.2px; }
-  #levelRow { display: flex; align-items: center; gap: 8px; margin-top: 9px; font-size: 10.5px; font-weight: 800; color: #a9dbe6; letter-spacing: 0.6px; text-transform: uppercase; }
+  #levelRow { display: flex; align-items: center; gap: 9px; margin-top: 10px; font-size: 10.5px; font-weight: 800; color: #a9dbe6; letter-spacing: 0.6px; text-transform: uppercase; }
   #levelVal {
-    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    margin-left: -30px; flex-shrink: 0;
+    width: 32px; height: 32px; border-radius: 50%;
     background: radial-gradient(circle at 35% 28%, #8ef2ff, #1f8fae);
-    border: 2.5px solid #fff; display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 900; color: #04303c; box-shadow: 0 2px 0 rgba(0,60,70,0.4), 0 3px 6px rgba(0,0,0,0.35);
+    border: 3px solid #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 900; color: #04303c; box-shadow: 0 3px 0 rgba(0,60,70,0.45), 0 5px 10px rgba(0,0,0,0.4);
+    position: relative; z-index: 1;
   }
   #xpTrack { width: 100%; height: 11px; border-radius: 999px; background: rgba(0,0,0,0.45); border: 2px solid rgba(255,255,255,0.55); overflow: hidden; margin-top: 7px; box-shadow: inset 0 2px 3px rgba(0,0,0,0.5); }
   #xpFill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), #7fe8ff); box-shadow: 0 0 8px rgba(55,209,200,0.7); transition: width 0.3s ease; }
   #rodRow { font-size: 11.5px; color: #bfe8f0; margin-top: 9px; padding-top: 8px; border-top: 2px dashed rgba(255,255,255,0.22); font-weight: 600; }
   #rodRow b { color: #fff; font-weight: 800; }
 
-  #topRightBW { position: fixed; top: 14px; right: 10px; z-index: 10; display: none; flex-direction: column; align-items: center; gap: 12px; }
+  #topRightBW { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); right: 10px; z-index: 10; display: none; flex-direction: column; align-items: center; gap: 12px; }
   #fpsFish { font-size: 10px; color: rgba(255,255,255,0.4); text-shadow: 1px 1px 2px black; margin-bottom: 0; }
   .iconBtn { width: 58px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
   .iconCircle {
@@ -95,9 +100,11 @@
     width: 104px; height: 104px; border-radius: 50%; border: 4px solid #fff;
     background: radial-gradient(circle at 35% 26%, #5cebe0, #0f8fa8); color: #04303c; font-weight: 900; font-size: 13px; letter-spacing: 0.3px;
     box-shadow: 0 8px 0 rgba(0,55,65,0.55), 0 14px 26px rgba(0,0,0,0.45), 0 0 0 6px rgba(55,209,200,0.16); cursor: pointer;
-    display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.15;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; line-height: 1.15; gap: 3px;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
+  #fishBtn .ico { width: 20px; height: 20px; }
+  #fishBtnLabel { display: block; }
   #fishBtn.strike { background: radial-gradient(circle at 35% 26%, #ffe27a, #e08a20); color: #4a2600; box-shadow: 0 8px 0 rgba(120,70,0,0.55), 0 14px 26px rgba(0,0,0,0.45), 0 0 0 6px rgba(255,207,77,0.3); animation: strikePulse 0.5s infinite; }
   @keyframes strikePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
   #fishBtn:active { transform: translateY(5px); box-shadow: 0 3px 0 rgba(0,55,65,0.55), 0 6px 14px rgba(0,0,0,0.4); }
@@ -217,7 +224,7 @@
 
 <div id="fishActionWrap">
   <div id="fishHint" style="display:none;"></div>
-  <div id="fishBtn">PANCING</div>
+  <div id="fishBtn"><svg class="ico"><use href="#ico-rod"/></svg><span id="fishBtnLabel">PANCING</span></div>
 </div>
 
 <div id="powerWrap">
@@ -659,8 +666,9 @@
   const reelProgressFill = document.getElementById('reelProgressFill');
   const reelTapHint = document.getElementById('reelTapHint');
 
+  const fishBtnLabel = document.getElementById('fishBtnLabel');
   function setFishBtnLabel(text, strikeMode) {
-    fishBtn.textContent = text;
+    fishBtnLabel.textContent = text;
     fishBtn.classList.toggle('strike', !!strikeMode);
   }
 
