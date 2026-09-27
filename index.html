@@ -557,7 +557,7 @@
     if (e.pointerId !== camDragId) return;
     const dx = e.clientX - camLastX, dy = e.clientY - camLastY;
     camLastX = e.clientX; camLastY = e.clientY;
-    camYaw -= dx * 0.006; camPitch -= dy * 0.004;
+    camYaw -= dx * 0.006; camPitch += dy * 0.004;
   });
   window.addEventListener('pointerup', (e) => { if (e.pointerId === camDragId) camDragId = null; });
 
