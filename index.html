@@ -34,33 +34,50 @@
   #loadingBarFill { height: 100%; width: 4%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--gold)); box-shadow: 0 0 12px rgba(55,209,200,0.6); transition: width 0.25s ease-out; }
   #loadingLabel { font-size: 12px; color: var(--text-dim); letter-spacing: 0.3px; min-height: 16px; text-align: center; padding: 0 20px; }
 
-  /* ================= HUD ================= */
+  /* ================= HUD (gaya Fish It) ================= */
   #versionBadge { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 21; color: rgba(255,255,255,0.45); font-size: 10px; padding: 2px 8px; font-weight: 600; letter-spacing: 0.5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
-  #hud { position: fixed; top: 14px; left: 12px; z-index: 10; display: none; flex-direction: column; gap: 6px; }
+  #hud { position: fixed; top: 14px; left: 12px; z-index: 10; display: none; flex-direction: column; gap: 8px; }
   .hudPanel {
-    background: linear-gradient(160deg, rgba(14,32,44,0.82), rgba(8,18,26,0.72));
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--panel-border); border-radius: var(--radius-md); padding: 10px 14px 11px;
-    box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255,255,255,0.06); min-width: 168px;
+    background: linear-gradient(160deg, #1d5068, #0c2836);
+    border: 3px solid rgba(255,255,255,0.92);
+    border-radius: 20px; padding: 9px 15px 12px 12px;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.32), 0 12px 22px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+    min-width: 172px;
   }
-  #coinsRow { display: flex; align-items: center; gap: 7px; font-size: 18px; font-weight: 800; background: linear-gradient(90deg, var(--gold), var(--gold2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5)); }
-  #levelRow { font-size: 11px; color: var(--text-dim); margin-top: 5px; font-weight: 600; letter-spacing: 0.2px; }
-  #levelRow span#levelVal { color: #fff; font-weight: 800; }
-  #xpTrack { width: 150px; height: 7px; border-radius: 999px; background: rgba(255,255,255,0.12); overflow: hidden; margin-top: 4px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); }
+  #coinsRow { display: flex; align-items: center; gap: 9px; }
+  .coinBadge {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 35% 28%, #ffe27a, #e0982a);
+    border: 2.5px solid #fff; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 0 rgba(120,70,0,0.4), 0 4px 8px rgba(0,0,0,0.35);
+  }
+  #coinsVal { font-size: 21px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,0.4), 1px 1px 1px rgba(0,0,0,0.3); letter-spacing: 0.2px; }
+  #levelRow { display: flex; align-items: center; gap: 8px; margin-top: 9px; font-size: 10.5px; font-weight: 800; color: #a9dbe6; letter-spacing: 0.6px; text-transform: uppercase; }
+  #levelVal {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 35% 28%, #8ef2ff, #1f8fae);
+    border: 2.5px solid #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 900; color: #04303c; box-shadow: 0 2px 0 rgba(0,60,70,0.4), 0 3px 6px rgba(0,0,0,0.35);
+  }
+  #xpTrack { width: 100%; height: 11px; border-radius: 999px; background: rgba(0,0,0,0.45); border: 2px solid rgba(255,255,255,0.55); overflow: hidden; margin-top: 7px; box-shadow: inset 0 2px 3px rgba(0,0,0,0.5); }
   #xpFill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), #7fe8ff); box-shadow: 0 0 8px rgba(55,209,200,0.7); transition: width 0.3s ease; }
-  #rodRow { font-size: 11px; color: var(--text-dim); margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); }
-  #rodRow b { color: #fff; font-weight: 700; }
+  #rodRow { font-size: 11.5px; color: #bfe8f0; margin-top: 9px; padding-top: 8px; border-top: 2px dashed rgba(255,255,255,0.22); font-weight: 600; }
+  #rodRow b { color: #fff; font-weight: 800; }
 
-  #topRightBW { position: fixed; top: 14px; right: 10px; z-index: 10; display: none; flex-direction: column; align-items: flex-end; gap: 8px; }
-  #fpsFish { font-size: 10px; color: rgba(255,255,255,0.4); text-shadow: 1px 1px 2px black; margin-bottom: 2px; }
-  .iconBtn {
-    background: linear-gradient(160deg, rgba(14,32,44,0.82), rgba(8,18,26,0.72));
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--panel-border); border-radius: 999px; color: #fff; padding: 10px 18px; font-size: 13px; font-weight: 700;
-    cursor: pointer; box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255,255,255,0.06); display: flex; align-items: center; gap: 7px;
-    transition: transform 0.12s ease, background 0.12s ease;
+  #topRightBW { position: fixed; top: 14px; right: 10px; z-index: 10; display: none; flex-direction: column; align-items: center; gap: 12px; }
+  #fpsFish { font-size: 10px; color: rgba(255,255,255,0.4); text-shadow: 1px 1px 2px black; margin-bottom: 0; }
+  .iconBtn { width: 58px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+  .iconCircle {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(160deg, #2fb8d1, #196c81);
+    border: 3px solid #fff; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.35), 0 8px 16px rgba(0,0,0,0.4);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-  .iconBtn:active { background: rgba(255,255,255,0.14); transform: scale(0.95); }
+  #btnShop .iconCircle { background: linear-gradient(160deg, #ffcf4d, #e0982a); color: #4a2600; }
+  .iconBtn:active .iconCircle { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,0.35), 0 3px 8px rgba(0,0,0,0.4); }
+  .iconLabel { font-size: 10px; font-weight: 800; color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.7); letter-spacing: 0.3px; }
 
   /* ================= CUSTOM ICONS (ganti emoji biar konsisten semua device) ================= */
   .ico { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -72,35 +89,35 @@
   #joystickThumb { position: absolute; width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #cfe9f2); left: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 3px 10px rgba(0,0,0,0.4), 0 0 0 3px rgba(55,209,200,0.25); }
   #camDragZone { position: fixed; top: 0; right: 0; width: 55%; height: 100%; z-index: 8; touch-action: none; }
 
-  /* ================= TOMBOL PANCING ================= */
-  #fishActionWrap { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 15; display: none; flex-direction: column; align-items: center; gap: 10px; }
+  /* ================= TOMBOL PANCING (gaya cast button Fish It) ================= */
+  #fishActionWrap { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 15; display: none; flex-direction: column; align-items: center; gap: 12px; }
   #fishBtn {
-    width: 100px; height: 100px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.55);
-    background: radial-gradient(circle at 35% 30%, #4de0d6, #157e9c); color: #fff; font-weight: 800; font-size: 13px; letter-spacing: 0.3px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.45), 0 0 0 6px rgba(55,209,200,0.12); cursor: pointer;
-    display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2;
-    transition: transform 0.15s ease;
+    width: 104px; height: 104px; border-radius: 50%; border: 4px solid #fff;
+    background: radial-gradient(circle at 35% 26%, #5cebe0, #0f8fa8); color: #04303c; font-weight: 900; font-size: 13px; letter-spacing: 0.3px;
+    box-shadow: 0 8px 0 rgba(0,55,65,0.55), 0 14px 26px rgba(0,0,0,0.45), 0 0 0 6px rgba(55,209,200,0.16); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.15;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-  #fishBtn.strike { background: radial-gradient(circle at 35% 30%, #ffe27a, #e08a20); box-shadow: 0 10px 24px rgba(0,0,0,0.45), 0 0 0 6px rgba(255,207,77,0.25); animation: strikePulse 0.5s infinite; }
-  @keyframes strikePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.13); } }
-  #fishBtn:active { filter: brightness(0.9); transform: scale(0.94); }
-  #fishHint { font-size: 12px; font-weight: 600; color: #fff; text-shadow: 1px 1px 3px black; background: rgba(6,16,25,0.6); border: 1px solid rgba(255,255,255,0.15); padding: 5px 12px; border-radius: 999px; }
+  #fishBtn.strike { background: radial-gradient(circle at 35% 26%, #ffe27a, #e08a20); color: #4a2600; box-shadow: 0 8px 0 rgba(120,70,0,0.55), 0 14px 26px rgba(0,0,0,0.45), 0 0 0 6px rgba(255,207,77,0.3); animation: strikePulse 0.5s infinite; }
+  @keyframes strikePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  #fishBtn:active { transform: translateY(5px); box-shadow: 0 3px 0 rgba(0,55,65,0.55), 0 6px 14px rgba(0,0,0,0.4); }
+  #fishHint { font-size: 12.5px; font-weight: 800; color: #fff; text-shadow: 1px 1px 3px black; background: linear-gradient(160deg, rgba(20,44,58,0.85), rgba(8,20,28,0.8)); border: 2px solid rgba(255,255,255,0.55); padding: 6px 14px; border-radius: 999px; }
 
   /* ================= POWER BAR CASTING ================= */
-  #powerWrap { position: fixed; bottom: 146px; left: 50%; transform: translateX(-50%); z-index: 16; width: min(80vw, 320px); display: none; }
-  #powerTrack { position: relative; height: 24px; border-radius: 999px; background: rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.28); overflow: hidden; box-shadow: 0 6px 16px rgba(0,0,0,0.35), inset 0 2px 4px rgba(0,0,0,0.4); }
+  #powerWrap { position: fixed; bottom: 148px; left: 50%; transform: translateX(-50%); z-index: 16; width: min(80vw, 320px); display: none; }
+  #powerTrack { position: relative; height: 26px; border-radius: 999px; background: rgba(0,0,0,0.5); border: 3px solid #fff; overflow: hidden; box-shadow: 0 5px 0 rgba(0,0,0,0.35), inset 0 2px 4px rgba(0,0,0,0.4); }
   #powerFill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--ok), var(--gold), var(--danger)); }
-  #powerMarker { position: absolute; top: -5px; width: 4px; height: 34px; border-radius: 2px; background: #fff; box-shadow: 0 0 8px #fff; left: 0%; }
+  #powerMarker { position: absolute; top: -6px; width: 5px; height: 38px; border-radius: 3px; background: #fff; box-shadow: 0 0 8px #fff; left: 0%; }
 
   /* ================= REELING MINIGAME ================= */
-  #reelWrap { position: fixed; bottom: 146px; left: 50%; transform: translateX(-50%); z-index: 16; width: min(84vw, 340px); display: none; flex-direction: column; align-items: center; gap: 9px; }
-  #reelTrack { position: relative; width: 100%; height: 36px; border-radius: 999px; background: rgba(0,0,0,0.55); border: 2px solid rgba(255,255,255,0.28); overflow: hidden; box-shadow: 0 6px 16px rgba(0,0,0,0.35), inset 0 2px 4px rgba(0,0,0,0.4); }
+  #reelWrap { position: fixed; bottom: 148px; left: 50%; transform: translateX(-50%); z-index: 16; width: min(84vw, 340px); display: none; flex-direction: column; align-items: center; gap: 10px; }
+  #reelTrack { position: relative; width: 100%; height: 38px; border-radius: 999px; background: rgba(0,0,0,0.55); border: 3px solid #fff; overflow: hidden; box-shadow: 0 5px 0 rgba(0,0,0,0.35), inset 0 2px 4px rgba(0,0,0,0.4); }
   #reelZone { position: absolute; top: 0; bottom: 0; left: 0; width: 0%; background: linear-gradient(90deg, var(--ok), var(--gold), var(--danger)); transition: background 0.1s; box-shadow: 0 0 14px rgba(255,207,77,0.4); }
   #reelIndicator { display: none; }
   #reelProgressTrack { display: none; }
   #reelProgressFill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--gold)); }
-  #reelTapHint { font-size: 14px; font-weight: 800; color: #fff; text-shadow: 1px 1px 3px black; }
-  #reelLabel { font-size: 12px; font-weight: 600; color: #fff; text-shadow: 1px 1px 3px black; background: rgba(6,16,25,0.55); padding: 4px 12px; border-radius: 999px; }
+  #reelTapHint { font-size: 14px; font-weight: 900; color: #fff; text-shadow: 1px 1px 3px black; }
+  #reelLabel { font-size: 12.5px; font-weight: 800; color: #fff; text-shadow: 1px 1px 3px black; background: linear-gradient(160deg, rgba(20,44,58,0.85), rgba(8,20,28,0.8)); border: 2px solid rgba(255,255,255,0.55); padding: 5px 14px; border-radius: 999px; }
 
   /* ================= TOAST ================= */
   #toastWrap { position: fixed; top: 92px; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; flex-direction: column; align-items: center; gap: 7px; pointer-events: none; }
@@ -170,17 +187,29 @@
 
 <div id="hud">
   <div class="hudPanel">
-    <div id="coinsRow"><svg class="ico" style="width:18px;height:18px;color:var(--gold);"><use href="#ico-coin"/></svg> <span id="coinsVal">0</span></div>
-    <div id="levelRow"><svg class="ico ico-star" style="width:13px;height:13px;color:var(--gold);"><use href="#ico-star"/></svg> Level <span id="levelVal">1</span></div>
+    <div id="coinsRow">
+      <div class="coinBadge"><svg class="ico" style="width:16px;height:16px;color:#7a4a00;"><use href="#ico-coin"/></svg></div>
+      <span id="coinsVal">0</span>
+    </div>
+    <div id="levelRow">
+      <div id="levelVal">1</div>
+      <span>Level</span>
+    </div>
     <div id="xpTrack"><div id="xpFill"></div></div>
-    <div id="rodRow"><svg class="ico" style="width:13px;height:13px;color:var(--text-dim);"><use href="#ico-rod"/></svg> Joran: <b id="rodVal">Bambu</b></div>
+    <div id="rodRow"><svg class="ico" style="width:13px;height:13px;color:#bfe8f0;"><use href="#ico-rod"/></svg> Joran: <b id="rodVal">Bambu</b></div>
   </div>
 </div>
 
 <div id="topRightBW">
   <div id="fpsFish">-- FPS</div>
-  <div class="iconBtn" id="btnInventory"><svg class="ico"><use href="#ico-backpack"/></svg> Tas</div>
-  <div class="iconBtn" id="btnShop"><svg class="ico"><use href="#ico-cart"/></svg> Toko</div>
+  <div class="iconBtn" id="btnInventory">
+    <div class="iconCircle"><svg class="ico" style="width:23px;height:23px;"><use href="#ico-backpack"/></svg></div>
+    <span class="iconLabel">Tas</span>
+  </div>
+  <div class="iconBtn" id="btnShop">
+    <div class="iconCircle"><svg class="ico" style="width:23px;height:23px;"><use href="#ico-cart"/></svg></div>
+    <span class="iconLabel">Toko</span>
+  </div>
 </div>
 
 <div id="camDragZone"></div>
