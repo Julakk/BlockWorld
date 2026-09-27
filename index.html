@@ -1088,10 +1088,10 @@ end
   const DAY_COLOR = new THREE.Color(0x87CEEB);
   const NIGHT_COLOR = new THREE.Color(0x0a1330);
   // Warna puncak langit (lebih gelap/pekat) & cakrawala (lebih terang/pucat) buat gradasi auto horizon
-  const DAY_ZENITH = new THREE.Color(0x2f7fd8);
-  const NIGHT_ZENITH = new THREE.Color(0x040814);
-  const DAY_HORIZON = new THREE.Color(0xbfe6f5);
-  const NIGHT_HORIZON = new THREE.Color(0x141d3d);
+  const DAY_ZENITH = new THREE.Color(0x1a5fc4);
+  const NIGHT_ZENITH = new THREE.Color(0x020509);
+  const DAY_HORIZON = new THREE.Color(0xd8f2ff);
+  const NIGHT_HORIZON = new THREE.Color(0x1c2a52);
   const DAWN_HORIZON = new THREE.Color(0xff9a5c); // jingga pas matahari terbit/terbenam
   scene.fog = new THREE.Fog(0x87CEEB, isMobile ? 22 : 38, isMobile ? 50 : 85);
 
@@ -1117,7 +1117,7 @@ end
       topColor: { value: new THREE.Color(0x4a90d9) },
       bottomColor: { value: new THREE.Color(0x87CEEB) },
       offset: { value: 18 },
-      exponent: { value: 0.62 },
+      exponent: { value: 0.42 },
     },
     vertexShader: `
       varying vec3 vWorldPosition;
@@ -3476,12 +3476,12 @@ end
     const dawnGlow = Math.max(0, 1 - Math.abs(brightness - 0.35) / 0.35);
     if (isRaining) c.lerp(new THREE.Color(0x55697a), 0.4);
     scene.background = c;
-    scene.fog.color = c;
     const zenith = new THREE.Color().lerpColors(NIGHT_ZENITH, DAY_ZENITH, brightness).lerp(DAWN_HORIZON, dawnGlow * 0.2);
     const horizon = new THREE.Color().lerpColors(NIGHT_HORIZON, DAY_HORIZON, brightness).lerp(DAWN_HORIZON, dawnGlow * 0.85);
     if (isRaining) { zenith.lerp(new THREE.Color(0x55697a), 0.5); horizon.lerp(new THREE.Color(0x55697a), 0.5); }
     skyMat.uniforms.topColor.value.copy(zenith);
     skyMat.uniforms.bottomColor.value.copy(horizon);
+    scene.fog.color = horizon;
     skyDome.position.copy(camera.position); // kubah langit selalu ngikutin kamera biar keliatan "tak berhingga"
     hemiLight.intensity = (0.25 + 0.55 * brightness) * (isRaining ? 0.75 : 1);
     sunLight.intensity = (0.10 + 0.95 * brightness) * (isRaining ? 0.7 : 1);
