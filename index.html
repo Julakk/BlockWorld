@@ -97,7 +97,7 @@
   #camDragZone { position: fixed; top: 0; right: 0; width: 55%; height: 100%; z-index: 8; touch-action: none; }
 
   /* ================= TOMBOL PANCING (gaya cast button Fish It) ================= */
-  #fishActionWrap { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 15; display: none; flex-direction: column; align-items: center; gap: 12px; }
+  #fishActionWrap { position: fixed; bottom: 26px; right: 30px; z-index: 15; display: none; flex-direction: column; align-items: flex-end; gap: 12px; }
   #fishBtn {
     width: 104px; height: 104px; border-radius: 50%; border: 4px solid #fff;
     background: radial-gradient(circle at 35% 26%, #5cebe0, #0f8fa8); color: #04303c; font-weight: 900; font-size: 13px; letter-spacing: 0.3px;
@@ -198,6 +198,36 @@
   .tabBar { display: flex; gap: 7px; padding: 0 16px 10px; }
   .tabBtn { flex: 1; background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.22); color: var(--text-dim); padding: 9px; border-radius: 14px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.12s ease; }
   .tabBtn.active { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #052730; border-color: #fff; box-shadow: 0 4px 0 rgba(0,80,90,0.4), 0 6px 12px rgba(0,0,0,0.3); }
+
+  /* ================= HUD EXTRA (pill, badge, reveal) ================= */
+  #hud .hudPanel { align-self: flex-start; }
+  #levelRow #xpText { margin-left: auto; color: #fff; font-size: 10.5px; letter-spacing: 0; text-transform: none; font-weight: 800; }
+  #baitRow { font-size: 11.5px; color: #bfe8f0; margin-top: 5px; font-weight: 600; }
+  #baitRow b { color: #fff; font-weight: 800; }
+  .iconCircle { position: relative; }
+  .notifBadge { position: absolute; top: -7px; right: -7px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: #ff4d4d; border: 2px solid #fff; color: #fff; font-size: 11px; font-weight: 900; display: none; align-items: center; justify-content: center; box-shadow: 0 2px 0 rgba(0,0,0,0.35); }
+  .notifBadge.show { display: flex; }
+  #shopDot { background: #ffcf4d; color: #4a2600; }
+  #hudPills { display: flex; gap: 7px; margin-left: 12px; }
+  .hudPill { background: linear-gradient(160deg, #2fb8d1, #196c81); border: 2.5px solid #fff; color: #fff; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; box-shadow: 0 3px 0 rgba(0,0,0,0.35), 0 5px 10px rgba(0,0,0,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.4); transition: transform 0.1s ease, box-shadow 0.1s ease; }
+  .hudPill:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.35), 0 2px 5px rgba(0,0,0,0.3); }
+  #btnSellHud { background: linear-gradient(160deg, #ffcf4d, #e0982a); color: #4a2600; text-shadow: none; }
+  #btnAuto { display: none; }
+  #btnAuto.on { background: linear-gradient(160deg, #6df0a0, #1fa85a); color: #052a14; text-shadow: none; }
+  .rowBtns { display: flex; flex-direction: column; gap: 6px; }
+
+  /* ================= REVEAL IKAN LANGKA ================= */
+  #catchReveal { position: fixed; left: 50%; top: 34%; transform: translate(-50%, -50%); z-index: 45; display: none; pointer-events: none; }
+  #catchReveal.show { display: block; }
+  #catchRevealCard { --rc: #fff; display: flex; align-items: center; gap: 12px; padding: 12px 20px 12px 14px; border-radius: 22px; background: linear-gradient(160deg, #1d5068, #0a1e2c); border: 3px solid var(--rc); box-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 0 22px var(--rc); animation: revealPop var(--dur, 2s) cubic-bezier(.2,1.4,.4,1) forwards; }
+  #catchReveal.tier-legendary #catchRevealCard, #catchReveal.tier-mythical #catchRevealCard { padding: 16px 26px 16px 18px; box-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 0 34px var(--rc), 0 0 64px var(--rc); }
+  #catchRevealImg { width: 56px; height: 56px; border-radius: 14px; image-rendering: pixelated; background: rgba(255,255,255,0.08); }
+  #catchReveal.tier-legendary #catchRevealImg, #catchReveal.tier-mythical #catchRevealImg { width: 72px; height: 72px; }
+  #catchRevealTier { font-size: 11px; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase; color: var(--rc); }
+  #catchRevealName { font-size: 17px; font-weight: 900; color: #fff; }
+  #catchReveal.tier-mythical #catchRevealName { font-size: 20px; }
+  #catchRevealVal { font-size: 12px; font-weight: 700; color: var(--gold); }
+  @keyframes revealPop { 0% { transform: scale(0.3); opacity: 0; } 14% { transform: scale(1.12); opacity: 1; } 24% { transform: scale(1); } 82% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.96) translateY(-10px); } }
 </style>
 </head>
 <body>
@@ -236,20 +266,28 @@
     <div id="levelRow">
       <div id="levelVal">1</div>
       <span>Level</span>
+      <span id="xpText">0/40</span>
     </div>
     <div id="xpTrack"><div id="xpFill"></div></div>
     <div id="rodRow"><svg class="ico" style="width:13px;height:13px;color:#bfe8f0;"><use href="#ico-rod"/></svg> Joran: <b id="rodVal">Bambu</b></div>
+    <div id="baitRow">Umpan: <b id="baitVal">Biasa</b></div>
+  </div>
+  <div id="hudPills">
+    <button class="hudPill" id="btnSellHud">Jual Semua</button>
+    <button class="hudPill" id="btnIndex">Koleksi</button>
+    <button class="hudPill" id="btnAuto">Auto: OFF</button>
+    <button class="hudPill" id="btnSound">Suara: ON</button>
   </div>
 </div>
 
 <div id="topRightBW">
   <div id="fpsFish">-- FPS</div>
   <div class="iconBtn" id="btnInventory">
-    <div class="iconCircle"><svg class="ico" style="width:23px;height:23px;"><use href="#ico-backpack"/></svg></div>
+    <div class="iconCircle"><svg class="ico" style="width:23px;height:23px;"><use href="#ico-backpack"/></svg><span class="notifBadge" id="invBadge">0</span></div>
     <span class="iconLabel">Tas</span>
   </div>
   <div class="iconBtn" id="btnShop">
-    <div class="iconCircle"><svg class="ico" style="width:23px;height:23px;"><use href="#ico-cart"/></svg></div>
+    <div class="iconCircle"><svg class="ico" style="width:23px;height:23px;"><use href="#ico-cart"/></svg><span class="notifBadge" id="shopDot">!</span></div>
     <span class="iconLabel">Toko</span>
   </div>
 </div>
@@ -275,6 +313,17 @@
 
 <div id="toastWrap"></div>
 
+<div id="catchReveal">
+  <div id="catchRevealCard">
+    <img id="catchRevealImg" alt="">
+    <div>
+      <div id="catchRevealTier"></div>
+      <div id="catchRevealName"></div>
+      <div id="catchRevealVal"></div>
+    </div>
+  </div>
+</div>
+
 <div id="secretFxOverlay">
   <div id="secretFxBanner">
     <div id="secretFxTitle">✨ IKAN RAHASIA! ✨</div>
@@ -290,12 +339,21 @@
   </div>
 </div>
 
+<div class="modalOverlay" id="modalIndex">
+  <div class="modalBox">
+    <div class="modalHead"><h2>Koleksi Ikan</h2><button class="modalClose" data-close="modalIndex">✕</button></div>
+    <div class="modalBody" id="indexList"></div>
+    <div class="modalFoot"><span id="indexCount">0/0</span><span></span></div>
+  </div>
+</div>
+
 <div class="modalOverlay" id="modalShop">
   <div class="modalBox">
     <div class="modalHead"><h2><svg class="ico" style="width:17px;height:17px;"><use href="#ico-cart"/></svg> Toko</h2><button class="modalClose" data-close="modalShop">✕</button></div>
     <div class="tabBar">
       <button class="tabBtn active" data-tab="rod">Joran</button>
       <button class="tabBtn" data-tab="bait">Umpan</button>
+      <button class="tabBtn" data-tab="item">Item</button>
     </div>
     <div class="modalBody" id="shopList"></div>
     <div class="modalFoot"><span><svg class="ico" style="width:15px;height:15px;color:var(--gold);"><use href="#ico-coin"/></svg> <b id="shopCoins">0</b></span><span></span></div>
@@ -365,6 +423,7 @@
     { id: 'emas', name: 'Joran Emas', price: 6000, biteSpeed: 1.8, rarityBoost: 3.2, castRange: 15 },
     { id: 'legendaris', name: 'Joran Legendaris', price: 20000, biteSpeed: 2.2, rarityBoost: 4.5, castRange: 18 },
   ];
+  const AUTOFISH_PRICE = 2500;
   const BAIT_TYPES = [
     { id: 'biasa', name: 'Umpan Biasa', price: 5, rarityBoost: 1.0, stock: 999 },
     { id: 'super', name: 'Umpan Super', price: 25, rarityBoost: 1.5, stock: 0 },
@@ -403,13 +462,15 @@
   // ================= SIMPAN / MUAT (localStorage) =================
   const SAVE_KEY = 'pancingmania_save_v1';
   function defaultSave() {
-    return { coins: 20, xp: 0, level: 1, rod: 'bambu', bait: 'biasa', ownedRods: ['bambu'], baitStock: { biasa: 999 }, inventory: {} };
+    return { coins: 20, xp: 0, level: 1, rod: 'bambu', bait: 'biasa', ownedRods: ['bambu'], baitStock: { biasa: 999 }, inventory: {}, discovered: {}, autoFish: false, muted: false };
   }
   let save = defaultSave();
   function loadSave() {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
       if (raw) save = Object.assign(defaultSave(), JSON.parse(raw));
+      save.discovered = save.discovered || {};
+      for (const k in save.inventory) { const e = save.inventory[k]; if (e && e.fish) save.discovered[e.fish.id] = true; }
     } catch (e) { console.warn('Gagal muat save, mulai baru:', e); save = defaultSave(); }
   }
   let saveTimer = null;
@@ -424,7 +485,7 @@
   function addXp(amount) {
     save.xp += amount;
     let need = xpForLevel(save.level);
-    while (save.xp >= need) { save.xp -= need; save.level++; need = xpForLevel(save.level); showToast('Naik ke Level ' + save.level + '!'); }
+    while (save.xp >= need) { save.xp -= need; save.level++; need = xpForLevel(save.level); showToast('Naik ke Level ' + save.level + '!'); Sfx.levelUp(); vibe([40, 30, 40]); }
   }
   function currentRod() { return ROD_TIERS.find(r => r.id === save.rod) || ROD_TIERS[0]; }
   function currentBait() { return BAIT_TYPES.find(b => b.id === save.bait) || BAIT_TYPES[0]; }
@@ -457,6 +518,71 @@
       setTimeout(() => s.remove(), 1500);
     }
     setTimeout(() => overlay.classList.remove('show'), 1700);
+  }
+
+
+  // ================= SUARA & GETAR =================
+  const Sfx = (() => {
+    let ctx = null;
+    function ensure() {
+      if (save.muted) return null;
+      try {
+        if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; ctx = new AC(); }
+        if (ctx.state === 'suspended') ctx.resume();
+      } catch (e) { return null; }
+      return ctx;
+    }
+    function tone(freq, start, dur, type, vol, slideTo) {
+      const c = ensure(); if (!c) return;
+      const t0 = c.currentTime + start;
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, t0);
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol || 0.12, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(t0); o.stop(t0 + dur + 0.05);
+    }
+    const SCALE = [523, 587, 659, 784, 880, 1047, 1319, 1568];
+    function arp(n, step, type, vol) { for (let i = 0; i < n; i++) tone(SCALE[i % SCALE.length], i * step, 0.28, type, vol); }
+    return {
+      unlock() { ensure(); },
+      cast() { tone(700, 0, 0.25, 'sine', 0.1, 220); },
+      bite() { tone(880, 0, 0.09, 'square', 0.07); tone(1175, 0.11, 0.12, 'square', 0.07); },
+      tap() { tone(1000, 0, 0.04, 'triangle', 0.05); },
+      sell() { tone(1319, 0, 0.09, 'triangle', 0.1); tone(1760, 0.09, 0.2, 'triangle', 0.1); },
+      levelUp() { arp(4, 0.09, 'triangle', 0.1); },
+      fail() { tone(400, 0, 0.35, 'sawtooth', 0.06, 120); },
+      catchFish(rarity) {
+        const n = { common: 2, uncommon: 3, rare: 4, epic: 5, legendary: 6, mythical: 7, secret: 8 }[rarity] || 2;
+        arp(n, rarity === 'secret' ? 0.11 : 0.085, (rarity === 'common' || rarity === 'uncommon') ? 'sine' : 'triangle', 0.11);
+        if (rarity === 'mythical' || rarity === 'secret') tone(196, 0, 0.9, 'sine', 0.1);
+        if (rarity === 'secret') { for (let i = 0; i < 6; i++) tone(2000 + i * 300, 0.9 + i * 0.07, 0.25, 'sine', 0.05); }
+      },
+    };
+  })();
+  function vibe(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+  const CATCH_VIBE = { common: [25], uncommon: [35], rare: [50], epic: [60, 40, 60], legendary: [100, 50, 100, 50, 160], mythical: [150, 60, 150, 60, 260], secret: [200, 80, 200, 80, 200, 80, 450] };
+  function saveQuiet() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+
+  // ================= REVEAL IKAN LANGKA (epic ke atas, secret punya efek sendiri) =================
+  const REVEAL_SECS = { epic: 1.7, legendary: 2.4, mythical: 3.0 };
+  let revealTimer = null;
+  function showCatchReveal(c) {
+    const dur = REVEAL_SECS[c.fish.rarity]; if (!dur) return;
+    const el = document.getElementById('catchReveal'), card = document.getElementById('catchRevealCard');
+    document.getElementById('catchRevealImg').src = fishIconCanvas(c.fish, c.mutation);
+    document.getElementById('catchRevealTier').textContent = RARITY_LABEL[c.fish.rarity];
+    document.getElementById('catchRevealName').textContent = (c.mutation.name ? c.mutation.name + ' ' : '') + c.fish.name;
+    document.getElementById('catchRevealVal').textContent = c.value + ' koin';
+    card.style.setProperty('--rc', RARITY_COLOR[c.fish.rarity]);
+    card.style.setProperty('--dur', dur + 's');
+    el.className = ''; void el.offsetWidth;
+    el.className = 'show tier-' + c.fish.rarity;
+    clearTimeout(revealTimer);
+    revealTimer = setTimeout(() => { el.className = ''; }, dur * 1000 + 100);
   }
 
   // ================= GENERATOR TEKSTUR (canvas, pixel style) =================
@@ -515,7 +641,7 @@
     return t;
   }
 
-  function fishIconCanvas(fish, mutation) {
+  function fishIconCanvas(fish, mutation, silhouette) {
     const c = document.createElement('canvas'); c.width = c.height = 40;
     const g = c.getContext('2d');
     let col = RARITY_COLOR[fish.rarity];
@@ -531,6 +657,7 @@
     } else if (mutation && mutation.tint) {
       col = 'rgb(' + mutation.tint.join(',') + ')';
     }
+    if (silhouette) col = '#0d1b24';
     g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(0, 0, 40, 40);
     g.fillStyle = col;
     g.beginPath();
@@ -650,7 +777,8 @@
   const rodMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 1.1, 5), new THREE.MeshLambertMaterial({ color: 0x8a5a2b }));
   rodMesh.position.set(0.42, 1.05, 0.2); rodMesh.rotation.z = -0.5; rodMesh.rotation.x = 0.3;
   player.add(rodMesh);
-  player.position.set(0, islandHeightAt(0, 4) , 4);
+  const SPAWN_Z = ISLAND_RADIUS - 5; // muncul deket pantai, kamera default ngadep laut
+  player.position.set(0, islandHeightAt(0, SPAWN_Z), SPAWN_Z);
   scene.add(player);
 
   // ================= KAMERA ORBIT PIHAK KETIGA =================
@@ -720,6 +848,7 @@
   let strikeTimer = 0;
   let reelDanger = 0, reelExpandRate = 12, reelLastTapTime = -999;
   let currentCatch = null;
+  let castBoost = 1;
   // makin langka ikannya, makin cepet bar bahaya naik = makin susah narik
   const RARITY_REEL_RATE = { common: 9, uncommon: 12, rare: 15, epic: 19, legendary: 24, mythical: 30, secret: 44 };
 
@@ -749,6 +878,14 @@
     fishHint.style.display = 'none';
   }
 
+  function consumeBait() {
+    const id = save.bait;
+    if (id === 'biasa') return;
+    save.baitStock[id] = Math.max(0, (save.baitStock[id] || 0) - 1);
+    if (save.baitStock[id] <= 0) { save.bait = 'biasa'; showToast('Umpan habis, balik ke Umpan Biasa'); }
+    persistSave(); refreshHud();
+  }
+
   function startCharging() {
     if (!nearWater()) { showToast('Deket air dulu buat mancing!'); return; }
     fishState = 'charging'; chargeT = 0; chargeDir = 1;
@@ -759,6 +896,8 @@
   function releaseCast() {
     lockedPower = chargeT; // 0..1
     fishState = 'flying';
+    castBoost = totalBoost(); consumeBait();
+    Sfx.cast(); vibe(15);
     powerWrap.style.display = 'none';
     const rod = currentRod();
     const dist = 2.5 + lockedPower * rod.castRange;
@@ -782,13 +921,14 @@
     fishState = 'strike';
     strikeTimer = 0;
     setFishBtnLabel('STRIKE!', true);
+    Sfx.bite(); vibe([60, 40, 60]);
     fishHint.textContent = 'IKAN NYAMBER! TAP CEPET!';
     fishHint.style.display = 'block';
   }
 
   function beginReeling() {
     fishState = 'reeling';
-    currentCatch = rollFish(totalBoost());
+    currentCatch = rollFish(castBoost);
     reelExpandRate = RARITY_REEL_RATE[currentCatch.fish.rarity] || 12;
     reelDanger = 25; // buffer awal biar gak langsung kalah
     reelLastTapTime = -999;
@@ -803,6 +943,7 @@
     const now = performance.now();
     if (now - reelLastTapTime < 60) return; // cegah spam ngaco
     reelLastTapTime = now;
+    Sfx.tap();
     reelDanger = Math.max(0, reelDanger - 7);
     if (reelDanger <= 0) finishReel(true);
   }
@@ -814,6 +955,7 @@
       save.inventory[key] = save.inventory[key] || { fish: currentCatch.fish, mutation: currentCatch.mutation, count: 0 };
       save.inventory[key].count++;
       addXp(Math.round(currentCatch.value / 4) + 5);
+      save.discovered = save.discovered || {}; save.discovered[currentCatch.fish.id] = true;
       const label = currentCatch.mutation.name ? currentCatch.mutation.name + ' ' + currentCatch.fish.name : currentCatch.fish.name;
       if (currentCatch.fish.rarity === 'secret') {
         triggerSecretCatchFX(label + ' — ' + currentCatch.value + ' koin!');
@@ -821,15 +963,18 @@
       } else {
         showToast('Dapat ' + label + '! (' + currentCatch.value + ' koin kalo dijual)');
       }
+      Sfx.catchFish(currentCatch.fish.rarity); vibe(CATCH_VIBE[currentCatch.fish.rarity] || [25]);
+      showCatchReveal(currentCatch);
       persistSave();
       refreshHud();
     } else if (currentCatch) {
-      showToast('Ikannya kabur...');
+      showToast('Ikannya kabur...'); Sfx.fail(); vibe(120);
     }
     currentCatch = null;
   }
 
   fishBtn.addEventListener('pointerdown', () => {
+    Sfx.unlock();
     if (fishState === 'idle') startCharging();
     else if (fishState === 'strike') beginReeling();
     else if (fishState === 'reeling') handleReelTap();
@@ -838,6 +983,31 @@
     if (fishState === 'charging') releaseCast();
   });
   reelWrap.addEventListener('pointerdown', handleReelTap);
+
+
+  // ================= AUTO MANCING (item toko) =================
+  // Cast, strike, dan tarik otomatis. Ikan Rahasia sengaja TIDAK ditarik otomatis: harus tap manual.
+  let autoFishOn = false, autoTimer = 0, autoTapTimer = 0, autoPrevState = 'idle';
+  function updateAutoFish(dt) {
+    if (!autoFishOn || !save.autoFish) return;
+    if (document.querySelector('.modalOverlay.show')) return;
+    if (fishState !== autoPrevState) { autoPrevState = fishState; autoTimer = 0; autoTapTimer = 0; }
+    if (fishState === 'idle') {
+      if (!nearWater()) return;
+      autoTimer += dt;
+      if (autoTimer > 0.9) { autoTimer = 0; fishState = 'charging'; chargeT = 0.85; releaseCast(); }
+    } else if (fishState === 'strike') {
+      autoTimer += dt;
+      if (autoTimer > 0.35) {
+        autoTimer = 0; beginReeling();
+        if (currentCatch && currentCatch.fish.rarity === 'secret') { showToast('IKAN RAHASIA nyangkut! Tap manual!', 'secret'); vibe([100, 60, 100]); }
+      }
+    } else if (fishState === 'reeling') {
+      if (currentCatch && currentCatch.fish.rarity === 'secret') return;
+      autoTapTimer += dt;
+      if (autoTapTimer >= 0.2) { autoTapTimer = 0; handleReelTap(); }
+    }
+  }
 
   function updateFishing(dt) {
     if (fishState === 'charging') {
@@ -900,14 +1070,41 @@
     if (!entry || entry.count <= 0) return;
     const val = Math.round(entry.fish.value * entry.mutation.mult);
     save.coins += val; entry.count--;
-    showToast('+' + val + ' koin');
+    showToast('+' + val + ' koin'); Sfx.sell();
     persistSave(); renderInventory(); refreshHud();
   });
-  document.getElementById('btnSellAll').addEventListener('click', () => {
+  function sellAllFish() {
     let sum = 0;
     for (const key in save.inventory) { const e = save.inventory[key]; sum += Math.round(e.fish.value * e.mutation.mult) * e.count; e.count = 0; }
-    if (sum > 0) { save.coins += sum; showToast('Jual semua! +' + sum + ' koin'); persistSave(); }
+    if (sum > 0) { save.coins += sum; showToast('Jual semua! +' + sum + ' koin'); Sfx.sell(); vibe(30); persistSave(); }
+    else showToast('Tas kosong');
     renderInventory(); refreshHud();
+  }
+  document.getElementById('btnSellAll').addEventListener('click', sellAllFish);
+  document.getElementById('btnSellHud').addEventListener('click', sellAllFish);
+
+  // ================= UI: KOLEKSI IKAN =================
+  function renderIndex() {
+    const list = document.getElementById('indexList'); list.innerHTML = '';
+    const disc = save.discovered || {};
+    const sorted = FISH_TABLE.slice().sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
+    let got = 0;
+    for (const f of sorted) {
+      const known = !!disc[f.id]; if (known) got++;
+      const row = document.createElement('div'); row.className = 'rowItem';
+      row.innerHTML = `<img class="rowIcon" src="${fishIconCanvas(f, null, !known)}"><div class="rowInfo"><div class="rowName" style="color:${known ? RARITY_COLOR[f.rarity] : '#7f98a3'}">${known ? f.name : '???'}</div><div class="rowSub">${RARITY_LABEL[f.rarity]}${known ? ' • ' + f.value + ' koin/ekor' : ' • Belum ditemukan'}</div></div>`;
+      list.appendChild(row);
+    }
+    document.getElementById('indexCount').textContent = got + '/' + FISH_TABLE.length + ' terkumpul';
+  }
+  document.getElementById('btnIndex').addEventListener('click', () => openModal('modalIndex'));
+  document.getElementById('btnSound').addEventListener('click', () => {
+    save.muted = !save.muted; saveQuiet(); refreshHud();
+    if (!save.muted) { Sfx.unlock(); Sfx.sell(); }
+  });
+  document.getElementById('btnAuto').addEventListener('click', () => {
+    autoFishOn = !autoFishOn; refreshHud();
+    showToast(autoFishOn ? 'Auto Mancing aktif' : 'Auto Mancing mati');
   });
 
   // ================= UI: SHOP =================
@@ -927,15 +1124,23 @@
         row.innerHTML = `<div class="rowIcon" style="background:linear-gradient(135deg,#8a5a2b,#c78f3f);"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Gigitan x${rod.biteSpeed} • Langka x${rod.rarityBoost} • Jarak ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
         shopList.appendChild(row);
       }
-    } else {
+    } else if (shopTab === 'bait') {
       for (const bait of BAIT_TYPES) {
         const stock = save.baitStock[bait.id] || 0;
         const equipped = save.bait === bait.id;
         const canBuy = save.coins >= bait.price;
         const row = document.createElement('div'); row.className = 'rowItem';
-        row.innerHTML = `<div class="rowIcon" style="background:linear-gradient(135deg,#5fd15f,#2f9f4f);"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Stok: ${stock === 999 ? 'Tak terbatas' : stock} • Langka x${bait.rarityBoost}</div></div><button class="rowBtn" data-bait="${bait.id}" ${!canBuy ? 'disabled' : ''}>Beli (${bait.price})</button>`;
+        let btns;
+        if (bait.id === 'biasa') btns = `<button class="rowBtn ${equipped ? 'owned' : ''}" data-usebait="biasa" ${equipped ? 'disabled' : ''}>${equipped ? 'Dipakai' : 'Pakai'}</button>`;
+        else btns = `${stock > 0 && !equipped ? `<button class="rowBtn" data-usebait="${bait.id}">Pakai</button>` : ''}<button class="rowBtn" data-bait="${bait.id}" ${!canBuy ? 'disabled' : ''}>Beli (${bait.price})</button>`;
+        row.innerHTML = `<div class="rowIcon" style="background:linear-gradient(135deg,#5fd15f,#2f9f4f);"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Stok: ${stock === 999 ? 'Tak terbatas' : stock} • Langka x${bait.rarityBoost}</div></div><div class="rowBtns">${btns}</div>`;
         shopList.appendChild(row);
       }
+    } else {
+      const row = document.createElement('div'); row.className = 'rowItem';
+      const owned = !!save.autoFish;
+      row.innerHTML = `<div class="rowIcon" style="background:linear-gradient(135deg,#6df0a0,#1fa85a);"></div><div class="rowInfo"><div class="rowName">Auto Mancing</div><div class="rowSub">Cast, strike & tarik otomatis. Ikan Rahasia tetap harus ditarik manual!</div></div><button class="rowBtn ${owned ? 'owned' : ''}" data-item="autofish" ${owned || save.coins < AUTOFISH_PRICE ? 'disabled' : ''}>${owned ? 'Dimiliki' : AUTOFISH_PRICE + ' koin'}</button>`;
+      shopList.appendChild(row);
     }
   }
   document.querySelectorAll('.tabBtn').forEach(btn => btn.addEventListener('click', () => {
@@ -950,6 +1155,20 @@
       else if (save.coins >= rod.price) { save.coins -= rod.price; save.ownedRods.push(id); save.rod = id; showToast('Beli ' + rod.name + '!'); }
       persistSave(); renderShop(); refreshHud(); return;
     }
+    const useBtn = e.target.closest('[data-usebait]');
+    if (useBtn) {
+      const id = useBtn.dataset.usebait;
+      if ((save.baitStock[id] || 0) > 0) { save.bait = id; showToast('Pakai ' + BAIT_TYPES.find(b => b.id === id).name); persistSave(); renderShop(); refreshHud(); }
+      return;
+    }
+    const itemBtn = e.target.closest('[data-item]');
+    if (itemBtn) {
+      if (!save.autoFish && save.coins >= AUTOFISH_PRICE) {
+        save.coins -= AUTOFISH_PRICE; save.autoFish = true; Sfx.sell();
+        showToast('Auto Mancing kebuka! Tombolnya di kiri atas.'); persistSave(); renderShop(); refreshHud();
+      }
+      return;
+    }
     const baitBtn = e.target.closest('[data-bait]');
     if (baitBtn) {
       const id = baitBtn.dataset.bait; const bait = BAIT_TYPES.find(b => b.id === id);
@@ -962,7 +1181,7 @@
   });
 
   // ================= MODAL OPEN/CLOSE =================
-  function openModal(id) { document.getElementById(id).classList.add('show'); if (id === 'modalInventory') renderInventory(); if (id === 'modalShop') renderShop(); }
+  function openModal(id) { document.getElementById(id).classList.add('show'); if (id === 'modalInventory') renderInventory(); if (id === 'modalShop') renderShop(); if (id === 'modalIndex') renderIndex(); }
   function closeModal(id) { document.getElementById(id).classList.remove('show'); }
   document.getElementById('btnInventory').addEventListener('click', () => openModal('modalInventory'));
   document.getElementById('btnShop').addEventListener('click', () => openModal('modalShop'));
@@ -980,6 +1199,19 @@
     document.getElementById('levelVal').textContent = save.level;
     document.getElementById('xpFill').style.width = Math.min(100, (save.xp / xpForLevel(save.level)) * 100) + '%';
     document.getElementById('rodVal').textContent = currentRod().name;
+    document.getElementById('xpText').textContent = save.xp + '/' + xpForLevel(save.level);
+    const b = currentBait();
+    document.getElementById('baitVal').textContent = b.name.replace('Umpan ', '') + (b.id === 'biasa' ? '' : ' x' + (save.baitStock[b.id] || 0));
+    const cnt = Object.values(save.inventory).reduce((a, e) => a + e.count, 0);
+    const badge = document.getElementById('invBadge');
+    badge.textContent = cnt > 99 ? '99+' : cnt; badge.classList.toggle('show', cnt > 0);
+    const canShop = ROD_TIERS.some(r => !save.ownedRods.includes(r.id) && save.coins >= r.price) || (!save.autoFish && save.coins >= AUTOFISH_PRICE);
+    document.getElementById('shopDot').classList.toggle('show', canShop);
+    document.getElementById('btnSellHud').textContent = 'Jual Semua' + (cnt > 0 ? ' (' + cnt + ')' : '');
+    const autoBtn = document.getElementById('btnAuto');
+    autoBtn.style.display = save.autoFish ? 'inline-block' : 'none';
+    autoBtn.classList.toggle('on', autoFishOn); autoBtn.textContent = 'Auto: ' + (autoFishOn ? 'ON' : 'OFF');
+    document.getElementById('btnSound').textContent = 'Suara: ' + (save.muted ? 'OFF' : 'ON');
   }
 
   // ================= GERAK KARAKTER =================
@@ -1026,6 +1258,7 @@
 
     if (gameStarted) {
       updatePlayerMove(dt);
+      updateAutoFish(dt);
       updateFishing(dt);
       updateCamera();
       water.rotation.y += dt * 0.01;
@@ -1066,6 +1299,7 @@
   }
 
   document.getElementById('startBtn').addEventListener('click', () => {
+    Sfx.unlock();
     document.getElementById('startScreen').style.display = 'none';
     document.getElementById('hud').style.display = 'flex';
     document.getElementById('topRightBW').style.display = 'flex';
