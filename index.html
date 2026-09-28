@@ -228,6 +228,7 @@
   #catchReveal.tier-mythical #catchRevealName { font-size: 20px; }
   #catchRevealVal { font-size: 12px; font-weight: 700; color: var(--gold); }
   @keyframes revealPop { 0% { transform: scale(0.3); opacity: 0; } 14% { transform: scale(1.12); opacity: 1; } 24% { transform: scale(1); } 82% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.96) translateY(-10px); } }
+  #interactBtn { position: fixed; right: 24px; bottom: 150px; z-index: 16; display: none; font-size: 13px; padding: 10px 18px; background: linear-gradient(160deg, #ffcf4d, #e0982a); color: #4a2600; text-shadow: none; }
 </style>
 </head>
 <body>
@@ -299,6 +300,8 @@
   <div id="fishHint" style="display:none;"></div>
   <div id="fishBtn"><svg class="ico"><use href="#ico-rod"/></svg><span id="fishBtnLabel">PANCING</span></div>
 </div>
+
+<button class="hudPill" id="interactBtn"></button>
 
 <div id="powerWrap">
   <div id="powerTrack"><div id="powerFill"></div><div id="powerMarker"></div></div>
@@ -593,9 +596,10 @@
     const c = document.createElement('canvas'); c.width = 2; c.height = 256;
     const g = c.getContext('2d');
     const grad = g.createLinearGradient(0, 0, 0, 256);
-    grad.addColorStop(0, '#1a5fc4');
-    grad.addColorStop(0.55, '#7fc4ec');
-    grad.addColorStop(1, '#eaf9ff');
+    grad.addColorStop(0, '#2a5db5');
+    grad.addColorStop(0.45, '#8fb6e0');
+    grad.addColorStop(0.78, '#ffc9a0');
+    grad.addColorStop(1, '#ffe3c2');
     g.fillStyle = grad; g.fillRect(0, 0, 2, 256);
     const t = new THREE.CanvasTexture(c);
     t.needsUpdate = true;
@@ -678,14 +682,14 @@
 
   const scene = new THREE.Scene();
   scene.background = makeSkyTexture();
-  scene.fog = new THREE.Fog(0xbfe4f7, isMobile ? 40 : 70, isMobile ? 110 : 180);
+  scene.fog = new THREE.Fog(0xf3cfae, isMobile ? 40 : 70, isMobile ? 110 : 180);
 
   const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 500);
 
-  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x2a4a3a, 0.85);
+  const hemiLight = new THREE.HemisphereLight(0xfff0dd, 0x3a4a5a, 0.9);
   scene.add(hemiLight);
-  const sunLight = new THREE.DirectionalLight(0xfff6df, 0.9);
-  sunLight.position.set(40, 60, 20);
+  const sunLight = new THREE.DirectionalLight(0xffc890, 1.0);
+  sunLight.position.set(-45, 38, 30);
   scene.add(sunLight);
 
   window.addEventListener('resize', () => {
@@ -726,27 +730,38 @@
   // ================= POHON KELAPA (dekorasi) =================
   const trunkGeo = new THREE.CylinderGeometry(0.18, 0.26, 3.2, 6);
   const trunkMat = new THREE.MeshLambertMaterial({ color: 0x7a5a34 });
-  const leafGeo = new THREE.ConeGeometry(1.6, 1.1, 6);
-  const leafMat = new THREE.MeshLambertMaterial({ color: 0x3d9a4a });
+  const frondGeo = new THREE.BoxGeometry(1.9, 0.05, 0.42);
+  const frondMats = [new THREE.MeshLambertMaterial({ color: 0x3d9a4a }), new THREE.MeshLambertMaterial({ color: 0x2f8640 })];
+  const nutGeo = new THREE.SphereGeometry(0.13, 6, 6);
+  const nutMat = new THREE.MeshLambertMaterial({ color: 0x5a3b1e });
   const treeRng = makeRng(2024);
   const trees = new THREE.Group();
-  for (let i = 0; i < 14; i++) {
-    const ang = treeRng() * Math.PI * 2;
-    const rad = ISLAND_RADIUS * (0.35 + treeRng() * 0.5);
-    const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
+  function addPalm(x, z, lean) {
     const y = islandHeightAt(x, z);
     const trunk = new THREE.Mesh(trunkGeo, trunkMat);
     trunk.position.set(x, y + 1.6, z);
-    trunk.rotation.z = (treeRng() - 0.5) * 0.15;
+    trunk.rotation.z = lean;
     trees.add(trunk);
-    for (let k = 0; k < 4; k++) {
-      const leaf = new THREE.Mesh(leafGeo, leafMat);
-      const a2 = (k / 4) * Math.PI * 2;
-      leaf.position.set(x + Math.cos(a2) * 0.6, y + 3.1, z + Math.sin(a2) * 0.6);
-      leaf.rotation.x = Math.PI * 0.35; leaf.rotation.y = a2;
-      trees.add(leaf);
+    const cx = x - Math.sin(lean) * 1.6, cy = y + 3.1;
+    for (let k = 0; k < 6; k++) {
+      const a2 = (k / 6) * Math.PI * 2 + lean;
+      const f = new THREE.Mesh(frondGeo, frondMats[k % 2]);
+      f.position.set(cx + Math.cos(a2) * 0.8, cy - 0.12, z + Math.sin(a2) * 0.8);
+      f.rotation.y = -a2; f.rotation.z = -0.42;
+      trees.add(f);
     }
+    for (let k = 0; k < 2; k++) { const n = new THREE.Mesh(nutGeo, nutMat); n.position.set(cx + (k ? 0.14 : -0.14), cy - 0.2, z + 0.1); trees.add(n); }
   }
+  for (let i = 0; i < 14; i++) {
+    const ang = treeRng() * Math.PI * 2;
+    const rad = ISLAND_RADIUS * (0.35 + treeRng() * 0.5);
+    const lean = (treeRng() - 0.5) * 0.15;
+    const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
+    if (x > -17 && x < 17 && z > 13 && z < 48) continue; // zona kota dermaga
+    addPalm(x, z, lean);
+  }
+  // palem tambahan buat suasana pelabuhan
+  [[-15.5, 29.5, 0.08], [15.5, 29.5, -0.08], [-16, 21, 0.06], [16, 22, -0.06], [-5.5, 15.5, 0.05], [6, 15, -0.05]].forEach(t => addPalm(t[0], t[1], t[2]));
   scene.add(trees);
 
   // rumah/gudang kecil dekat spawn (dekorasi + acuan arah)
@@ -757,6 +772,183 @@
   hutRoof.position.set(-6, islandHeightAt(-6, -6) + 2.4, -6);
   hutRoof.rotation.y = Math.PI / 4;
   scene.add(hutRoof);
+
+
+  // ================= KOTA DERMAGA (plaza, dermaga, toko, lampu) =================
+  const PLAZA = { x0: -14, x1: 14, z0: 17.5, z1: 28.5 };
+  const PIER = { z0: 28.5, z1: 47 };
+  const DECK_Y = 0.36; // di atas puncak gelombang pulau (maks ~0.25) biar rumput gak nembus papan
+  function onPlaza(x, z) { return x >= PLAZA.x0 && x <= PLAZA.x1 && z >= PLAZA.z0 && z <= PLAZA.z1; }
+  function onPierWalk(x, z) { return x >= -1.95 && x <= 1.95 && z >= 27 && z <= PIER.z1 - 0.4; }
+  const TOWN_COLLIDERS = [];
+  function inIsland(x, z) { return Math.hypot(x, z) < ISLAND_RADIUS - 0.6; }
+  function blockedByTown(x, z) { for (const c of TOWN_COLLIDERS) if (Math.hypot(x - c.x, z - c.z) < c.r) return true; return false; }
+  function walkable(x, z) { return (inIsland(x, z) || onPierWalk(x, z)) && !blockedByTown(x, z); }
+  function groundHeightAt(x, z) { return (onPlaza(x, z) || onPierWalk(x, z)) ? DECK_Y : islandHeightAt(x, z); }
+
+  function makePlankTexture(repX, repZ) {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d');
+    const rnd = makeRng(4242);
+    for (let i = 0; i < 8; i++) {
+      const v = 108 + Math.floor(rnd() * 34);
+      g.fillStyle = 'rgb(' + v + ',' + Math.floor(v * 0.72) + ',' + Math.floor(v * 0.45) + ')';
+      g.fillRect(0, i * 16, 128, 16);
+      g.fillStyle = 'rgba(40,22,10,0.55)'; g.fillRect(0, i * 16, 128, 2);
+      for (let k = 0; k < 10; k++) { g.fillStyle = 'rgba(40,22,10,0.16)'; g.fillRect(Math.floor(rnd() * 128), i * 16 + 3 + Math.floor(rnd() * 10), 10 + Math.floor(rnd() * 22), 1); }
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repX, repZ);
+    t.magFilter = THREE.NearestFilter;
+    return t;
+  }
+  function makeSignTexture(text, bg) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+    const g = c.getContext('2d');
+    g.fillStyle = bg; g.fillRect(0, 0, 256, 64);
+    g.strokeStyle = '#fff'; g.lineWidth = 5; g.strokeRect(4, 4, 248, 56);
+    g.fillStyle = '#fff'; g.font = 'bold 30px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(0,0,0,0.5)'; g.shadowBlur = 4;
+    g.fillText(text, 128, 34);
+    return new THREE.CanvasTexture(c);
+  }
+  function makeGlowTexture() {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255,220,140,0.95)'); grad.addColorStop(0.35, 'rgba(255,190,90,0.35)'); grad.addColorStop(1, 'rgba(255,170,60,0)');
+    g.fillStyle = grad; g.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  }
+  const town = new THREE.Group();
+  scene.add(town);
+
+  // plaza kayu
+  const plazaW = PLAZA.x1 - PLAZA.x0, plazaD = PLAZA.z1 - PLAZA.z0;
+  const plaza = new THREE.Mesh(new THREE.BoxGeometry(plazaW, 0.7, plazaD), new THREE.MeshLambertMaterial({ map: makePlankTexture(plazaW / 4, plazaD / 4) }));
+  plaza.position.set((PLAZA.x0 + PLAZA.x1) / 2, DECK_Y - 0.35, (PLAZA.z0 + PLAZA.z1) / 2);
+  town.add(plaza);
+
+  // dermaga
+  const pierLen = PIER.z1 - PIER.z0;
+  const pier = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.3, pierLen), new THREE.MeshLambertMaterial({ map: makePlankTexture(1.1, pierLen / 4) }));
+  pier.position.set(0, DECK_Y - 0.15, PIER.z0 + pierLen / 2);
+  town.add(pier);
+  const postMat = new THREE.MeshLambertMaterial({ color: 0x4a3420 });
+  const postGeo = new THREE.CylinderGeometry(0.13, 0.15, 2.2, 6);
+  const railPostGeo = new THREE.BoxGeometry(0.1, 0.95, 0.1);
+  for (let z = PIER.z0 + 1; z <= PIER.z1; z += 3) {
+    for (const sx of [-2, 2]) { const post = new THREE.Mesh(postGeo, postMat); post.position.set(sx, -0.95, z); town.add(post); }
+  }
+  for (let z = PIER.z0 + 0.5; z <= PIER.z1 - 0.1; z += 2) {
+    for (const sx of [-2.1, 2.1]) { const rp = new THREE.Mesh(railPostGeo, postMat); rp.position.set(sx, DECK_Y + 0.47, z); town.add(rp); }
+  }
+  for (const sx of [-2.1, 2.1]) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, pierLen - 0.4), postMat);
+    rail.position.set(sx, DECK_Y + 0.9, PIER.z0 + pierLen / 2 - 0.1); town.add(rail);
+  }
+
+  // lampu jalan
+  const lampPoleMat = new THREE.MeshLambertMaterial({ color: 0x2b2b33 });
+  const lampBulbMat = new THREE.MeshBasicMaterial({ color: 0xffd987 });
+  const glowMat = new THREE.SpriteMaterial({ map: makeGlowTexture(), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false });
+  function addLamp(x, z) {
+    const y = groundHeightAt(x, z);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 2.7, 6), lampPoleMat);
+    pole.position.set(x, y + 1.35, z); town.add(pole);
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.24, 4), lampPoleMat);
+    cap.position.set(x, y + 3.2, z); cap.rotation.y = Math.PI / 4; town.add(cap);
+    const bulb = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.38, 0.26), lampBulbMat);
+    bulb.position.set(x, y + 2.9, z); town.add(bulb);
+    const glow = new THREE.Sprite(glowMat); glow.scale.set(2.4, 2.4, 1); glow.position.set(x, y + 2.9, z); town.add(glow);
+  }
+  [30.5, 35, 39.5, 44].forEach(z => { addLamp(-2.1, z); addLamp(2.1, z); });
+  [[-13, 19], [13, 19], [-13, 27.5], [13, 27.5], [-4.5, 27.5], [4.5, 27.5]].forEach(l => addLamp(l[0], l[1]));
+
+  // toko
+  function makeShop(cfg) {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(4.2, 2.6, 3.2), new THREE.MeshLambertMaterial({ color: cfg.wall }));
+    body.position.y = 1.3; g.add(body);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(3.0, 1.5, 4), new THREE.MeshLambertMaterial({ color: cfg.roof }));
+    roof.position.y = 3.35; roof.rotation.y = Math.PI / 4; roof.scale.set(1.02, 1, 0.8); g.add(roof);
+    const door = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.7, 0.08), new THREE.MeshLambertMaterial({ color: 0x3a2618 }));
+    door.position.set(-0.9, 0.85, 1.62); g.add(door);
+    const win = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.9, 0.08), new THREE.MeshBasicMaterial({ color: cfg.glow }));
+    win.position.set(1.0, 1.35, 1.62); g.add(win);
+    const sill = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.12, 0.3), new THREE.MeshLambertMaterial({ color: 0x4a3420 }));
+    sill.position.set(1.0, 0.85, 1.72); g.add(sill);
+    for (let i = 0; i < 7; i++) {
+      const st = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.1, 1.3), new THREE.MeshLambertMaterial({ color: i % 2 ? 0xffffff : cfg.awning }));
+      st.position.set(-1.86 + i * 0.62, 2.28, 2.15); st.rotation.x = 0.35; g.add(st);
+    }
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.7), new THREE.MeshBasicMaterial({ map: makeSignTexture(cfg.name, cfg.signBg) }));
+    sign.position.set(0, 3.0, 1.72); g.add(sign);
+    return g;
+  }
+  const TOWN_SHOPS = [
+    { id: 'bait', name: 'TOKO UMPAN', label: 'Buka Toko Umpan', x: -9, z: 26, face: 1, wall: 0x3aa89a, roof: 0x2a6f7a, awning: 0x2fd0c0, glow: 0xffe9a8, signBg: '#1f7d72', action: () => openShopTab('bait') },
+    { id: 'rod', name: 'TOKO JORAN', label: 'Buka Toko Joran', x: 9, z: 26, face: -1, wall: 0xc4453c, roof: 0x7a2a2a, awning: 0xff6a5a, glow: 0xffe9a8, signBg: '#9c2f2a', action: () => openShopTab('rod') },
+    { id: 'sell', name: 'JUAL IKAN', label: 'Buka Tas / Jual Ikan', x: -9, z: 20.2, face: 1, wall: 0xd2b07a, roof: 0x6b4a8a, awning: 0xb07be0, glow: 0xffe9a8, signBg: '#6b4a8a', action: () => openModal('modalInventory') },
+  ];
+  for (const sh of TOWN_SHOPS) {
+    const m = makeShop(sh);
+    m.position.set(sh.x, DECK_Y, sh.z);
+    m.rotation.y = sh.face * Math.PI / 2;
+    town.add(m);
+    TOWN_COLLIDERS.push({ x: sh.x, z: sh.z, r: 2.5 });
+  }
+
+  // barel, peti, pelampung
+  const barrelMat = new THREE.MeshLambertMaterial({ color: 0x8a5a2b });
+  const bandMat = new THREE.MeshLambertMaterial({ color: 0x3a2a1a });
+  function addBarrel(x, z) {
+    const y = groundHeightAt(x, z);
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.85, 10), barrelMat); b.position.set(x, y + 0.42, z); town.add(b);
+    for (const dy of [0.2, 0.65]) { const band = new THREE.Mesh(new THREE.CylinderGeometry(0.375, 0.375, 0.07, 10), bandMat); band.position.set(x, y + dy, z); town.add(band); }
+    TOWN_COLLIDERS.push({ x, z, r: 0.5 });
+  }
+  const crateMat = new THREE.MeshLambertMaterial({ color: 0xa87a44 });
+  function addCrate(x, z, rot) {
+    const y = groundHeightAt(x, z);
+    const c = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.75, 0.75), crateMat); c.position.set(x, y + 0.37, z); c.rotation.y = rot; town.add(c);
+    TOWN_COLLIDERS.push({ x, z, r: 0.55 });
+  }
+  addBarrel(-5.6, 27.4); addBarrel(-6.3, 26.8); addBarrel(6.4, 27.3); addBarrel(12.2, 21.5);
+  addCrate(-12.3, 27.2, 0.3); addCrate(6.9, 19.5, 0.6); addCrate(7.7, 20.2, -0.2); addCrate(-12.6, 18.4, 0.1);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.09, 8, 14), new THREE.MeshLambertMaterial({ color: 0xe8432f }));
+  ring.position.set(-2.16, DECK_Y + 0.55, 36.5); ring.rotation.y = Math.PI / 2; town.add(ring);
+
+  // perahu kecil di samping dermaga
+  const boatMesh = new THREE.Group();
+  const hull = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.55, 4.2), new THREE.MeshLambertMaterial({ color: 0x8a4a2b })); boatMesh.add(hull);
+  const hullTop = new THREE.Mesh(new THREE.BoxGeometry(1.84, 0.12, 4.24), new THREE.MeshLambertMaterial({ color: 0xf2efe6 })); hullTop.position.y = 0.3; boatMesh.add(hullTop);
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.75, 1.1), new THREE.MeshLambertMaterial({ color: 0xf2efe6 })); cabin.position.set(0, 0.7, -0.7); boatMesh.add(cabin);
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2, 5), postMat); mast.position.set(0, 1.4, 0.6); boatMesh.add(mast);
+  boatMesh.position.set(6.2, -0.2, 38); boatMesh.rotation.y = 0.35;
+  town.add(boatMesh);
+  function updateTownAnim(t) {
+    boatMesh.position.y = -0.2 + Math.sin(t * 1.3) * 0.05;
+    boatMesh.rotation.z = Math.sin(t * 1.1) * 0.04;
+  }
+
+  // tombol interaksi toko (muncul kalau dekat toko)
+  let interactTarget = null;
+  function updateInteract() {
+    const btn = document.getElementById('interactBtn');
+    let best = null, bd = 99;
+    if (gameStarted && fishState === 'idle' && !document.querySelector('.modalOverlay.show')) {
+      for (const sh of TOWN_SHOPS) {
+        const d = Math.hypot(player.position.x - sh.x, player.position.z - sh.z);
+        if (d < 4.9 && d < bd) { bd = d; best = sh; }
+      }
+    }
+    if (best !== interactTarget) {
+      interactTarget = best;
+      btn.style.display = best ? 'block' : 'none';
+      if (best) btn.textContent = best.label;
+    }
+  }
 
   // ================= KARAKTER PEMAIN =================
   const player = new THREE.Group();
@@ -777,8 +969,8 @@
   const rodMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 1.1, 5), new THREE.MeshLambertMaterial({ color: 0x8a5a2b }));
   rodMesh.position.set(0.42, 1.05, 0.2); rodMesh.rotation.z = -0.5; rodMesh.rotation.x = 0.3;
   player.add(rodMesh);
-  const SPAWN_Z = ISLAND_RADIUS - 5; // muncul deket pantai, kamera default ngadep laut
-  player.position.set(0, islandHeightAt(0, SPAWN_Z), SPAWN_Z);
+  const SPAWN_Z = 21.5; // muncul di plaza, dermaga lurus di depan, laut di ujungnya
+  player.position.set(0, groundHeightAt(0, SPAWN_Z), SPAWN_Z);
   scene.add(player);
 
   // ================= KAMERA ORBIT PIHAK KETIGA =================
@@ -837,7 +1029,10 @@
   function distToWaterEdge(pos) {
     return ISLAND_RADIUS - Math.sqrt(pos.x * pos.x + pos.z * pos.z);
   }
-  function nearWater() { return distToWaterEdge(player.position) < 6 && distToWaterEdge(player.position) > -2; }
+  function nearWater() {
+    const d = distToWaterEdge(player.position);
+    return (d < 6 && d > -2) || (onPierWalk(player.position.x, player.position.z) && player.position.z > 30);
+  }
 
   // ================= STATE MACHINE MANCING =================
   // idle -> charging (nahan tombol, isi power) -> flying (bobber melesat) -> waiting (nunggu gigitan)
@@ -1187,6 +1382,13 @@
   document.getElementById('btnShop').addEventListener('click', () => openModal('modalShop'));
   document.querySelectorAll('.modalClose').forEach(btn => btn.addEventListener('click', () => closeModal(btn.dataset.close)));
 
+  function openShopTab(tab) {
+    shopTab = tab;
+    document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    openModal('modalShop');
+  }
+  document.getElementById('interactBtn').addEventListener('click', () => { Sfx.unlock(); if (interactTarget) interactTarget.action(); });
+
   let prevCoinsShown = null, prevLevelShown = null;
   function pulseEl(el) { if (!el) return; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
   function refreshHud() {
@@ -1229,19 +1431,23 @@
       const nx = mx / len, nz = mz / len;
       const nextX = player.position.x + nx * MOVE_SPEED * dt * Math.min(1, mag);
       const nextZ = player.position.z + nz * MOVE_SPEED * dt * Math.min(1, mag);
-      const distFromCenter = Math.hypot(nextX, nextZ);
-      if (distFromCenter < ISLAND_RADIUS - 0.6) {
-        player.position.x = nextX; player.position.z = nextZ;
+      let mvX = player.position.x, mvZ = player.position.z, moved = false;
+      if (walkable(nextX, nextZ)) { mvX = nextX; mvZ = nextZ; moved = true; }
+      else if (walkable(nextX, mvZ)) { mvX = nextX; moved = true; }
+      else if (walkable(mvX, nextZ)) { mvZ = nextZ; moved = true; }
+      if (moved) {
+        player.position.x = mvX; player.position.z = mvZ;
         player.rotation.y = Math.atan2(nx, nz);
         walkT += dt * 8;
         legL.rotation.x = Math.sin(walkT) * 0.5; legR.rotation.x = -Math.sin(walkT) * 0.5;
         armL.rotation.x = -Math.sin(walkT) * 0.4; armR.rotation.x = Math.sin(walkT) * 0.4;
         if (fishState !== 'idle' && fishState !== 'charging') resetFishing();
       }
-      player.position.y = islandHeightAt(player.position.x, player.position.z);
     } else {
       legL.rotation.x *= 0.8; legR.rotation.x *= 0.8; armL.rotation.x *= 0.8; armR.rotation.x *= 0.8;
     }
+    // tinggi lantai halus pas naik/turun dek (jalan terus, diam pun tetap disinkronkan)
+    player.position.y += (groundHeightAt(player.position.x, player.position.z) - player.position.y) * Math.min(1, dt * 16);
   }
 
   // ================= LOOP UTAMA =================
@@ -1262,6 +1468,8 @@
       updateFishing(dt);
       updateCamera();
       water.rotation.y += dt * 0.01;
+      updateTownAnim(now / 1000);
+      updateInteract();
     }
     renderer.render(scene, camera);
   }
