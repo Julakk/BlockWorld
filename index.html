@@ -607,18 +607,19 @@
   }
 
   function makeIslandTexture() {
-    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const SZ = 256, HALF = SZ / 2;
+    const c = document.createElement('canvas'); c.width = c.height = SZ;
     const g = c.getContext('2d');
-    const img = g.createImageData(128, 128), d = img.data;
+    const img = g.createImageData(SZ, SZ), d = img.data;
     const rand = makeRng(777);
-    for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++) {
-      const cx = x - 64, cy = y - 64;
-      const dist = Math.sqrt(cx * cx + cy * cy) / 64;
+    for (let y = 0; y < SZ; y++) for (let x = 0; x < SZ; x++) {
+      const cx = x - HALF, cy = y - HALF;
+      const dist = Math.sqrt(cx * cx + cy * cy) / HALF;
       let col;
       if (dist > 0.82) col = [232, 214, 168]; // pasir
       else col = [86, 172, 78]; // rumput
       const n = (rand() - 0.5) * 18;
-      const i = (y * 128 + x) * 4;
+      const i = (y * SZ + x) * 4;
       d[i] = col[0] + n; d[i + 1] = col[1] + n; d[i + 2] = col[2] + n; d[i + 3] = 255;
     }
     g.putImageData(img, 0, 0);
@@ -628,15 +629,16 @@
   }
 
   function makeWaterTexture() {
-    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const SZ = 128;
+    const c = document.createElement('canvas'); c.width = c.height = SZ;
     const g = c.getContext('2d');
-    const img = g.createImageData(64, 64), d = img.data;
+    const img = g.createImageData(SZ, SZ), d = img.data;
     const rand = makeRng(555);
-    for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
-      const wave = Math.sin(x * 0.5) * 6 + Math.cos(y * 0.4) * 6;
+    for (let y = 0; y < SZ; y++) for (let x = 0; x < SZ; x++) {
+      const wave = Math.sin(x * 0.25) * 6 + Math.cos(y * 0.2) * 6; // frekuensi dihalvekan biar pola gelombang sama, cuma lebih halus
       const n = (rand() - 0.5) * 8;
       const base = [40, 120, 168];
-      const i = (y * 64 + x) * 4;
+      const i = (y * SZ + x) * 4;
       d[i] = base[0] + wave * 0.3 + n; d[i + 1] = base[1] + wave * 0.5 + n; d[i + 2] = base[2] + wave + n; d[i + 3] = 210;
     }
     g.putImageData(img, 0, 0);
@@ -646,38 +648,38 @@
   }
 
   function fishIconCanvas(fish, mutation, silhouette) {
-    const c = document.createElement('canvas'); c.width = c.height = 40;
+    const c = document.createElement('canvas'); c.width = c.height = 80; // 2x resolusi biar tajam pas dizoom di kartu reveal
     const g = c.getContext('2d');
     let col = RARITY_COLOR[fish.rarity];
     if (fish.rarity === 'secret') {
-      const gsec = g.createLinearGradient(0, 0, 40, 40);
+      const gsec = g.createLinearGradient(0, 0, 80, 80);
       gsec.addColorStop(0, '#fff6c9'); gsec.addColorStop(0.5, '#ffd54f'); gsec.addColorStop(1, '#ff5ad1');
       col = gsec;
     }
     if (mutation && mutation.tint === 'rainbow') {
-      const grad = g.createLinearGradient(0, 0, 40, 40);
+      const grad = g.createLinearGradient(0, 0, 80, 80);
       grad.addColorStop(0, '#ff5a5a'); grad.addColorStop(0.5, '#5affd0'); grad.addColorStop(1, '#c05aff');
       col = grad;
     } else if (mutation && mutation.tint) {
       col = 'rgb(' + mutation.tint.join(',') + ')';
     }
     if (silhouette) col = '#0d1b24';
-    g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(0, 0, 40, 40);
+    g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(0, 0, 80, 80);
     g.fillStyle = col;
     g.beginPath();
-    g.ellipse(18, 20, 13, 8, 0, 0, Math.PI * 2); g.fill();
+    g.ellipse(36, 40, 26, 16, 0, 0, Math.PI * 2); g.fill();
     g.beginPath();
-    g.moveTo(30, 20); g.lineTo(38, 12); g.lineTo(38, 28); g.closePath(); g.fill();
+    g.moveTo(60, 40); g.lineTo(76, 24); g.lineTo(76, 56); g.closePath(); g.fill();
     g.fillStyle = 'rgba(0,0,0,0.55)';
-    g.beginPath(); g.arc(10, 18, 1.6, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(20, 36, 3.2, 0, Math.PI * 2); g.fill();
     return c.toDataURL();
   }
 
   // ================= SETUP THREE.JS =================
   const canvas = document.createElement('canvas');
   document.body.appendChild(canvas);
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 2 : 2.5));
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   const scene = new THREE.Scene();
@@ -728,11 +730,11 @@
   scene.add(water);
 
   // ================= POHON KELAPA (dekorasi) =================
-  const trunkGeo = new THREE.CylinderGeometry(0.18, 0.26, 3.2, 6);
+  const trunkGeo = new THREE.CylinderGeometry(0.18, 0.26, 3.2, 10);
   const trunkMat = new THREE.MeshLambertMaterial({ color: 0x7a5a34 });
   const frondGeo = new THREE.BoxGeometry(1.9, 0.05, 0.42);
   const frondMats = [new THREE.MeshLambertMaterial({ color: 0x3d9a4a }), new THREE.MeshLambertMaterial({ color: 0x2f8640 })];
-  const nutGeo = new THREE.SphereGeometry(0.13, 6, 6);
+  const nutGeo = new THREE.SphereGeometry(0.13, 10, 8);
   const nutMat = new THREE.MeshLambertMaterial({ color: 0x5a3b1e });
   const treeRng = makeRng(2024);
   const trees = new THREE.Group();
@@ -787,37 +789,38 @@
   function groundHeightAt(x, z) { return (onPlaza(x, z) || onPierWalk(x, z)) ? DECK_Y : islandHeightAt(x, z); }
 
   function makePlankTexture(repX, repZ) {
-    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const SZ = 256, ROWH = 32;
+    const c = document.createElement('canvas'); c.width = c.height = SZ;
     const g = c.getContext('2d');
     const rnd = makeRng(4242);
     for (let i = 0; i < 8; i++) {
       const v = 108 + Math.floor(rnd() * 34);
       g.fillStyle = 'rgb(' + v + ',' + Math.floor(v * 0.72) + ',' + Math.floor(v * 0.45) + ')';
-      g.fillRect(0, i * 16, 128, 16);
-      g.fillStyle = 'rgba(40,22,10,0.55)'; g.fillRect(0, i * 16, 128, 2);
-      for (let k = 0; k < 10; k++) { g.fillStyle = 'rgba(40,22,10,0.16)'; g.fillRect(Math.floor(rnd() * 128), i * 16 + 3 + Math.floor(rnd() * 10), 10 + Math.floor(rnd() * 22), 1); }
+      g.fillRect(0, i * ROWH, SZ, ROWH);
+      g.fillStyle = 'rgba(40,22,10,0.55)'; g.fillRect(0, i * ROWH, SZ, 4);
+      for (let k = 0; k < 20; k++) { g.fillStyle = 'rgba(40,22,10,0.16)'; g.fillRect(Math.floor(rnd() * SZ), i * ROWH + 6 + Math.floor(rnd() * 20), 20 + Math.floor(rnd() * 44), 2); }
     }
     const t = new THREE.CanvasTexture(c);
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repX, repZ);
-    t.magFilter = THREE.NearestFilter;
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
     return t;
   }
   function makeSignTexture(text, bg) {
-    const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+    const c = document.createElement('canvas'); c.width = 384; c.height = 96;
     const g = c.getContext('2d');
-    g.fillStyle = bg; g.fillRect(0, 0, 256, 64);
-    g.strokeStyle = '#fff'; g.lineWidth = 5; g.strokeRect(4, 4, 248, 56);
-    g.fillStyle = '#fff'; g.font = 'bold 30px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.shadowColor = 'rgba(0,0,0,0.5)'; g.shadowBlur = 4;
-    g.fillText(text, 128, 34);
+    g.fillStyle = bg; g.fillRect(0, 0, 384, 96);
+    g.strokeStyle = '#fff'; g.lineWidth = 7; g.strokeRect(6, 6, 372, 84);
+    g.fillStyle = '#fff'; g.font = 'bold 45px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(0,0,0,0.5)'; g.shadowBlur = 6;
+    g.fillText(text, 192, 51);
     return new THREE.CanvasTexture(c);
   }
   function makeGlowTexture() {
-    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const c = document.createElement('canvas'); c.width = c.height = 96;
     const g = c.getContext('2d');
-    const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    const grad = g.createRadialGradient(48, 48, 0, 48, 48, 48);
     grad.addColorStop(0, 'rgba(255,220,140,0.95)'); grad.addColorStop(0.35, 'rgba(255,190,90,0.35)'); grad.addColorStop(1, 'rgba(255,170,60,0)');
-    g.fillStyle = grad; g.fillRect(0, 0, 64, 64);
+    g.fillStyle = grad; g.fillRect(0, 0, 96, 96);
     return new THREE.CanvasTexture(c);
   }
   const town = new THREE.Group();
@@ -835,7 +838,7 @@
   pier.position.set(0, DECK_Y - 0.15, PIER.z0 + pierLen / 2);
   town.add(pier);
   const postMat = new THREE.MeshLambertMaterial({ color: 0x4a3420 });
-  const postGeo = new THREE.CylinderGeometry(0.13, 0.15, 2.2, 6);
+  const postGeo = new THREE.CylinderGeometry(0.13, 0.15, 2.2, 10);
   const railPostGeo = new THREE.BoxGeometry(0.1, 0.95, 0.1);
   for (let z = PIER.z0 + 1; z <= PIER.z1; z += 3) {
     for (const sx of [-2, 2]) { const post = new THREE.Mesh(postGeo, postMat); post.position.set(sx, -0.95, z); town.add(post); }
@@ -854,7 +857,7 @@
   const glowMat = new THREE.SpriteMaterial({ map: makeGlowTexture(), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false });
   function addLamp(x, z) {
     const y = groundHeightAt(x, z);
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 2.7, 6), lampPoleMat);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 2.7, 10), lampPoleMat);
     pole.position.set(x, y + 1.35, z); town.add(pole);
     const cap = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.24, 4), lampPoleMat);
     cap.position.set(x, y + 3.2, z); cap.rotation.y = Math.PI / 4; town.add(cap);
@@ -916,7 +919,7 @@
   }
   addBarrel(5.6, 27.4); addBarrel(6.3, 26.8); addBarrel(-6.4, 27.3); addBarrel(-12.2, 21.5);
   addCrate(12.3, 27.2, 0.3); addCrate(-6.9, 19.5, 0.6); addCrate(-7.7, 20.2, -0.2); addCrate(12.6, 18.4, 0.1);
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.09, 8, 14), new THREE.MeshLambertMaterial({ color: 0xe8432f }));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.09, 10, 20), new THREE.MeshLambertMaterial({ color: 0xe8432f }));
   ring.position.set(2.16, DECK_Y + 0.55, 36.5); ring.rotation.y = Math.PI / 2; town.add(ring);
 
   // perahu kecil di samping dermaga
@@ -1019,7 +1022,7 @@
   window.addEventListener('pointerup', (e) => { if (e.pointerId === camDragId) camDragId = null; });
 
   // ================= BOBBER (pelampung kail) =================
-  const bobber = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshLambertMaterial({ color: 0xe04a3a }));
+  const bobber = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), new THREE.MeshLambertMaterial({ color: 0xe04a3a }));
   bobber.visible = false;
   scene.add(bobber);
   let bobberTarget = new THREE.Vector3();
