@@ -277,7 +277,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v1.5</div>
+<div id="versionBadge">v1.6</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -1189,16 +1189,22 @@
 
   // ================= MISI HARIAN =================
   const Quest = (() => {
-    function today() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+    function dstr(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+    function today() { return dstr(new Date()); }
+    function yesterday() { return dstr(new Date(Date.now() - 86400000)); }
     function ensure() {
       let q = save.quests;
-      if (!q || q.day !== today() || !q.list) {
+      if (!q || q.v !== 2 || q.day !== today() || !q.list) {
         const lv = save.level || 1;
-        const sellGoal = 100 + 25 * lv;
-        q = save.quests = { day: today(), list: [
-          { id: 'catch', t: 'Tangkap 8 ikan', n: 0, goal: 8, coins: 30 + 10 * lv, xp: 20 + 5 * lv, done: false },
-          { id: 'rare', t: 'Tangkap 1 ikan Langka atau lebih', n: 0, goal: 1, coins: 60 + 20 * lv, xp: 40 + 10 * lv, done: false },
-          { id: 'sell', t: 'Jual ikan senilai ' + sellGoal + ' koin', n: 0, goal: sellGoal, coins: 40 + 15 * lv, xp: 25 + 5 * lv, done: false }
+        const st = save.questStreak;
+        if (!st || !st.day) save.questStreak = { day: today(), n: 1 };
+        else if (st.day !== today()) save.questStreak = { day: today(), n: st.day === yesterday() ? st.n + 1 : 1 };
+        const cg = 12 + 2 * lv, rg = 1 + Math.floor(lv / 5), sg = 250 + 60 * lv;
+        q = save.quests = { v: 2, day: today(), bonus: false, list: [
+          { id: 'catch', t: 'Tangkap ' + cg + ' ikan', n: 0, goal: cg, coins: 60 + 15 * lv, xp: 30 + 8 * lv, done: false },
+          { id: 'rare', t: 'Tangkap ' + rg + ' ikan Langka atau lebih', n: 0, goal: rg, coins: 100 + 25 * lv, xp: 50 + 10 * lv, done: false },
+          { id: 'mut', t: 'Tangkap 1 ikan mutasi (Emas/Pelangi)', n: 0, goal: 1, coins: 120 + 30 * lv, xp: 60 + 12 * lv, done: false },
+          { id: 'sell', t: 'Jual ikan senilai ' + sg + ' koin', n: 0, goal: sg, coins: 70 + 20 * lv, xp: 35 + 8 * lv, done: false }
         ] };
       }
       return q;
@@ -1210,24 +1216,32 @@
         if (type === 'catch') {
           if (m.id === 'catch') m.n++;
           else if (m.id === 'rare' && RARITY_ORDER.indexOf(v.fish.rarity) >= 2) m.n++;
+          else if (m.id === 'mut' && v.mutation && v.mutation.id !== 'normal') m.n++;
         } else if (type === 'sell' && m.id === 'sell') m.n += v;
         if (m.n >= m.goal) {
           m.n = m.goal; m.done = true; save.coins += m.coins; addXp(m.xp);
           showToast('Misi selesai! +' + m.coins + ' koin'); Sfx.sell(); hit = true;
         }
       });
+      if (!q.bonus && q.list.every(m => m.done)) {
+        q.bonus = true;
+        const n = save.questStreak.n, b = 50 * Math.min(n, 7);
+        save.coins += b; hit = true;
+        showToast('Semua misi beres! Bonus streak ' + n + ' hari: +' + b + ' koin');
+      }
       persistSave(); if (hit) refreshHud();
     }
     const ov = document.createElement('div');
     ov.className = 'modalOverlay'; ov.id = 'modalQuest';
-    ov.innerHTML = '<div class="modalBox"><div class="modalHead"><h2>Misi Harian</h2><button class="modalClose" id="qClose">✕</button></div><div class="modalBody" id="qList"></div><div class="modalFoot"><span>Reset tiap ganti hari</span><span></span></div></div>';
+    ov.innerHTML = '<div class="modalBox"><div class="modalHead"><h2>Misi Harian</h2><button class="modalClose" id="qClose">✕</button></div><div class="modalBody" id="qList"></div><div class="modalFoot"><span id="qFoot"></span><span></span></div></div>';
     document.body.appendChild(ov);
     ov.querySelector('#qClose').onclick = () => ov.classList.remove('show');
     function render() {
-      const q = ensure();
+      const q = ensure(), n = save.questStreak.n;
       document.getElementById('qList').innerHTML = q.list.map(m =>
         '<div class="rowItem"><div class="rowInfo"><div class="rowName">' + m.t + '</div><div class="rowSub">' + m.n + '/' + m.goal + ' • Hadiah ' + m.coins + ' koin + ' + m.xp + ' XP</div></div><button class="rowBtn' + (m.done ? ' owned' : '') + '" disabled>' + (m.done ? 'Selesai' : 'Berjalan') + '</button></div>'
       ).join('');
+      document.getElementById('qFoot').textContent = 'Streak ' + n + ' hari • Bonus ' + (q.bonus ? 'sudah diambil' : '+' + (50 * Math.min(n, 7)) + ' koin');
     }
     const pills = document.getElementById('hudPills');
     if (pills) {
