@@ -4,6 +4,8 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 
 ## 2026-09-30
 
+- **v2.1 - Judul bagian pertama**: Perubahan satu. Perubahan dua.
+- **v2.1 - Judul bagian kedua**: Perubahan tiga.
 - **v2.0 - Mekanik mancing ala Fish It**: luck meter saat lempar dengan zona Good, Amazing, dan Perfect yang ngasih bonus Luck. Ikan sekarang punya berat dan tiap rod punya batas berat, jadi ikan yang kelewat berat bikin tali putus.
 - **Bait permanen**: bait dibeli sekali dan nggak habis per lempar. Luck rod dan bait sekarang dijumlah (bukan dikali), sesuai Fish It.
 - **Rod & Bait disamain dengan Fish It**: rod jadi Starter, Carbon, Damascus, Lucky, Chrome, dan Astral. Bait jadi Starter, Midnight, Nature, Chroma, dan Dark Matter. Tab dan toko diganti ke istilah Rod/Bait, ikon berwarna sesuai rarity.

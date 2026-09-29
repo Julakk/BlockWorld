@@ -306,7 +306,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v2.0</div>
+<div id="versionBadge">v2.1</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -2356,27 +2356,14 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v2.0', DATE = '30 Sep 2026', KEY = 'pm_seen_ver';
+  var VER = 'v2.1', DATE = '30 Sep 2026', KEY = 'pm_seen_ver';
   var LOG = [
-    ['Mekanik mancing', [
-      'Luck meter saat lempar: lepas di zona Good, Amazing, atau Perfect buat bonus Luck.',
-      'Ikan sekarang punya berat, dan tiap rod punya batas berat. Ikan yang kelewat berat bikin tali putus.',
-      'Bait jadi permanen: dibeli sekali dan nggak habis per lempar.',
-      'Luck rod dan bait sekarang dijumlah, bukan dikali.',
-      'Minigame reel: bar ngisi tiap tap, ada counter tap dan bar tegangan tali.',
-      'Auto Mancing disesuaikan: lemparnya mentok di GOOD, Ikan Rahasia tetap harus manual.'
+    ["Judul bagian pertama", [
+      "Perubahan satu",
+      "Perubahan dua"
     ]],
-    ['Rod & Bait ala Fish It', [
-      'Rod: Starter, Carbon, Damascus, Lucky, Chrome, Astral.',
-      'Bait: Starter, Midnight, Nature, Chroma, Dark Matter.',
-      'Warna rarity ala Fish It di HUD dan Toko. Tab Joran/Umpan jadi Rod/Bait.'
-    ]],
-    ['HUD', [
-      'Bar lempar dengan zona warna dan garis penanda.',
-      'Baris stat Luck, Speed, dan Weight di bawah chip rod & bait.',
-      'Popup hasil tangkapan buat semua rarity, lengkap dengan berat dan tag Mutasi.',
-      'Tas jadi grid kartu dengan border warna rarity dan berat terberat.',
-      'Menu Info Update ini, muncul otomatis sekali tiap ada versi baru.'
+    ["Judul bagian kedua", [
+      "Perubahan tiga"
     ]]
   ];
   function lsGet() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
