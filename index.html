@@ -277,7 +277,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v1.6</div>
+<div id="versionBadge">v1.7</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -1012,6 +1012,239 @@
   player.position.set(0, groundHeightAt(0, SPAWN_Z), SPAWN_Z);
   scene.add(player);
 
+  // ================= HD GRAFIS + KARAKTER + WAKTU/CUACA (v1.7) =================
+  (function () {
+    const std = (c, r) => new THREE.MeshStandardMaterial({ color: c, roughness: r === undefined ? 0.75 : r, metalness: 0 });
+    const skin = std(0xf0c299, 0.6), shirt = std(0x4ac0e0, 0.8), pants = std(0x33485f, 0.85),
+          shoe = std(0x2b2118, 0.7), hair = std(0x3a2a1a, 0.9), straw = std(0xf2e4b8, 0.9),
+          band = std(0xd8483a, 0.8), dark = std(0x222a30, 0.5), wood = std(0x8a5a2b, 0.7), grip = std(0x4a3420, 0.9);
+    const add = (parent, geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  
+    body.geometry = new THREE.CylinderGeometry(0.25, 0.22, 0.65, 20); body.material = shirt; body.scale.set(1, 1, 0.66);
+    const belt = add(player, new THREE.TorusGeometry(0.235, 0.025, 8, 24), dark, 0, 0.7, 0); belt.rotation.x = Math.PI / 2; belt.scale.y = 0.66;
+  
+    head.geometry = new THREE.SphereGeometry(0.2, 24, 18); head.material = skin; head.scale.y = 1.05;
+    add(player, new THREE.CylinderGeometry(0.075, 0.085, 0.12, 12), skin, 0, 1.31, 0);
+    add(player, new THREE.SphereGeometry(0.212, 24, 16), hair, 0, 1.515, -0.045);
+    add(player, new THREE.SphereGeometry(0.024, 10, 8), dark, -0.075, 1.5, 0.181);
+    add(player, new THREE.SphereGeometry(0.024, 10, 8), dark, 0.075, 1.5, 0.181);
+    add(player, new THREE.SphereGeometry(0.028, 10, 8), skin, 0, 1.465, 0.195);
+    add(player, new THREE.CylinderGeometry(0.3, 0.3, 0.03, 28), straw, 0, 1.655, 0);
+    add(player, new THREE.CylinderGeometry(0.165, 0.19, 0.14, 28), straw, 0, 1.72, 0);
+    add(player, new THREE.CylinderGeometry(0.192, 0.192, 0.045, 28), band, 0, 1.675, 0);
+  
+    function buildArm(arm, sx) {
+      arm.geometry = new THREE.CylinderGeometry(0.08, 0.07, 0.27, 12).translate(0, -0.135, 0);
+      arm.material = shirt; arm.position.set(sx * 0.32, 1.22, 0);
+      add(arm, new THREE.SphereGeometry(0.085, 12, 10), shirt, 0, 0, 0);
+      add(arm, new THREE.CylinderGeometry(0.06, 0.05, 0.27, 12), skin, 0, -0.4, 0);
+      add(arm, new THREE.SphereGeometry(0.065, 12, 10), skin, 0, -0.56, 0);
+    }
+    buildArm(armL, -1); buildArm(armR, 1);
+  
+    function buildLeg(leg, sx) {
+      leg.geometry = new THREE.CylinderGeometry(0.105, 0.09, 0.54, 12).translate(0, -0.27, 0);
+      leg.material = pants; leg.position.set(sx * 0.13, 0.62, 0);
+      const s = add(leg, new THREE.SphereGeometry(0.1, 12, 10), shoe, 0, -0.56, 0.05); s.scale.set(1, 0.62, 1.55);
+    }
+    buildLeg(legL, -1); buildLeg(legR, 1);
+  
+    rodMesh.geometry = new THREE.CylinderGeometry(0.014, 0.03, 1.1, 10); rodMesh.material = wood;
+    add(rodMesh, new THREE.CylinderGeometry(0.038, 0.038, 0.24, 10), grip, 0, -0.4, 0);
+    const reel = add(rodMesh, new THREE.CylinderGeometry(0.055, 0.055, 0.06, 14), dark, 0.05, -0.2, 0); reel.rotation.z = Math.PI / 2;
+  })();
+  
+  const PMHD = (function () {
+    let hd = true;
+    try { hd = localStorage.getItem('pm_hd') !== '0'; } catch (e) {}
+    const maxAniso = renderer.capabilities.getMaxAnisotropy();
+    const islandTex = islandMat.map;
+    scene.traverse(o => { if (o.isMesh && o !== water) { o.castShadow = true; o.receiveShadow = true; } });
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    sunLight.shadow.mapSize.set(2048, 2048);
+    const sc = sunLight.shadow.camera; sc.left = -28; sc.right = 28; sc.top = 28; sc.bottom = -28; sc.near = 1; sc.far = 160;
+    sunLight.shadow.bias = -0.0004; sunLight.shadow.normalBias = 0.03;
+    scene.add(sunLight.target);
+  
+    const btn = document.createElement('button');
+    btn.className = 'hudPill';
+    const pills = document.getElementById('hudPills');
+    if (pills) pills.appendChild(btn);
+  
+    function apply(on) {
+      hd = on;
+      const dpr = window.devicePixelRatio || 1;
+      renderer.setPixelRatio(on ? Math.min(dpr, 2.5) : Math.min(dpr, isMobile ? 2 : 2.5));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = on;
+      sunLight.castShadow = on;
+      islandTex.magFilter = on ? THREE.LinearFilter : THREE.NearestFilter;
+      islandTex.minFilter = on ? THREE.LinearMipmapLinearFilter : THREE.NearestFilter;
+      islandTex.needsUpdate = true;
+      scene.traverse(o => {
+        const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+        ms.forEach(m => { if (m.map) m.map.anisotropy = on ? maxAniso : 1; m.needsUpdate = true; });
+      });
+      btn.textContent = 'Grafis: ' + (on ? 'HD' : 'Normal');
+    }
+    btn.onclick = () => {
+      apply(!hd);
+      try { localStorage.setItem('pm_hd', hd ? '1' : '0'); } catch (e) {}
+      showToast('Grafis ' + (hd ? 'HD' : 'Normal'));
+    };
+    apply(hd);
+  
+    let acc = 0, frames = 0, elapsed = 0, done = false;
+    return {
+      isHD: () => hd,
+      tick(dt) {
+        if (!hd || done || dt > 1) return;
+        elapsed += dt; if (elapsed < 10) return;
+        acc += dt; frames++;
+        if (acc >= 5) {
+          if (frames / acc < 30) {
+            done = true; apply(false);
+            try { localStorage.setItem('pm_hd', '0'); } catch (e) {}
+            showToast('FPS drop, grafis diturunin ke Normal (bisa balik lewat tombol Grafis)');
+          }
+          acc = 0; frames = 0;
+        }
+      }
+    };
+  })();
+  
+  const PMEnv = (function () {
+    const CYCLE = 600;
+    const RAW = [
+      { t: 0.00, top: '#2a5db5', mid: '#9dc3e6', hor: '#ffcf9e', fog: '#f3cfae', sun: '#ffc890', hs: '#fff0dd', hg: '#3a4a5a', si: 1.0, hi: 0.9 },
+      { t: 0.15, top: '#3b3a7a', mid: '#c9738a', hor: '#ff9a5a', fog: '#c98a7a', sun: '#ff8a5a', hs: '#ffc4a0', hg: '#2a3040', si: 0.6, hi: 0.6 },
+      { t: 0.30, top: '#050a1e', mid: '#0b1836', hor: '#1a2a4a', fog: '#0b1830', sun: '#5a70c0', hs: '#5a6aa8', hg: '#141a28', si: 0.28, hi: 0.4 },
+      { t: 0.58, top: '#03060f', mid: '#08122a', hor: '#121e3a', fog: '#08122a', sun: '#4a60b0', hs: '#4a5a98', hg: '#0e121c', si: 0.22, hi: 0.34 },
+      { t: 0.72, top: '#24386a', mid: '#9a86a8', hor: '#ffb890', fog: '#d8a890', sun: '#ffb078', hs: '#ffd8c0', hg: '#2a3444', si: 0.6, hi: 0.6 },
+      { t: 0.85, top: '#1e6fd6', mid: '#8ec8f2', hor: '#d8ecff', fog: '#cfe6f5', sun: '#fff4e0', hs: '#ffffff', hg: '#5a6a7a', si: 1.15, hi: 1.0 },
+      { t: 1.00, top: '#2a5db5', mid: '#9dc3e6', hor: '#ffcf9e', fog: '#f3cfae', sun: '#ffc890', hs: '#fff0dd', hg: '#3a4a5a', si: 1.0, hi: 0.9 }
+    ];
+    const KEYS = ['top', 'mid', 'hor', 'fog', 'sun', 'hs', 'hg'];
+    const K = RAW.map(r => { const o = { t: r.t, si: r.si, hi: r.hi }; KEYS.forEach(k => { o[k] = new THREE.Color(r[k]); }); return o; });
+    const cur = {}; KEYS.forEach(k => { cur[k] = new THREE.Color(); });
+    let si = 1, hi = 0.9;
+  
+    function sample(t) {
+      let i = 0; while (i < K.length - 2 && t > K[i + 1].t) i++;
+      const a = K[i], b = K[i + 1]; let f = (t - a.t) / (b.t - a.t); f = f * f * (3 - 2 * f);
+      KEYS.forEach(k => { cur[k].copy(a[k]).lerp(b[k], f); });
+      si = a.si + (b.si - a.si) * f; hi = a.hi + (b.hi - a.hi) * f;
+    }
+    function wet(c, r) {
+      const l = c.r * 0.3 + c.g * 0.59 + c.b * 0.11;
+      c.r += (l - c.r) * 0.6 * r; c.g += (l - c.g) * 0.6 * r; c.b += (l - c.b) * 0.6 * r;
+      c.multiplyScalar(1 - 0.28 * r);
+    }
+  
+    const skyC = document.createElement('canvas'); skyC.width = 2; skyC.height = 256;
+    const skyG = skyC.getContext('2d');
+    const skyTex = new THREE.CanvasTexture(skyC);
+    scene.background = skyTex;
+    function drawSky() {
+      const g = skyG.createLinearGradient(0, 0, 0, 256);
+      g.addColorStop(0, '#' + cur.top.getHexString());
+      g.addColorStop(0.18, '#' + cur.mid.getHexString());
+      g.addColorStop(0.3, '#' + cur.hor.getHexString());
+      g.addColorStop(1, '#' + cur.hor.getHexString());
+      skyG.fillStyle = g; skyG.fillRect(0, 0, 2, 256);
+      skyTex.needsUpdate = true;
+    }
+  
+    const NS = 260, sp = new Float32Array(NS * 3);
+    for (let i = 0; i < NS; i++) {
+      const az = Math.random() * Math.PI * 2, el = 0.08 + Math.random() * 1.3, r = 400;
+      sp[i * 3] = Math.cos(el) * Math.cos(az) * r; sp[i * 3 + 1] = Math.sin(el) * r; sp[i * 3 + 2] = Math.cos(el) * Math.sin(az) * r;
+    }
+    const starGeo = new THREE.BufferGeometry(); starGeo.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1.8, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false, fog: false });
+    const stars = new THREE.Points(starGeo, starMat); stars.frustumCulled = false; stars.visible = false; scene.add(stars);
+  
+    const NR = isMobile ? 450 : 800;
+    const rp = new Float32Array(NR * 6), off = new Float32Array(NR * 3);
+    for (let i = 0; i < NR; i++) { off[i * 3] = (Math.random() - 0.5) * 30; off[i * 3 + 1] = Math.random() * 24 - 12; off[i * 3 + 2] = (Math.random() - 0.5) * 30; }
+    const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rp, 3));
+    const rainMat = new THREE.LineBasicMaterial({ color: 0xbcd0ea, transparent: true, opacity: 0, fog: false, depthWrite: false });
+    const rain = new THREE.LineSegments(rainGeo, rainMat); rain.frustumCulled = false; rain.visible = false; scene.add(rain);
+    function updateRain(dt, lvl) {
+      rain.visible = lvl > 0.02; if (!rain.visible) return;
+      rainMat.opacity = 0.55 * lvl;
+      const cp = camera.position;
+      for (let i = 0; i < NR; i++) {
+        let y = off[i * 3 + 1] - 22 * dt; if (y < -12) y += 24; off[i * 3 + 1] = y;
+        const x = cp.x + off[i * 3], yy = cp.y + y, z = cp.z + off[i * 3 + 2], j = i * 6;
+        rp[j] = x; rp[j + 1] = yy; rp[j + 2] = z; rp[j + 3] = x - 0.04; rp[j + 4] = yy - 0.55; rp[j + 5] = z;
+      }
+      rainGeo.attributes.position.needsUpdate = true;
+    }
+  
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'position:fixed;top:calc(74px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:9;font-size:10px;font-weight:700;color:rgba(255,255,255,0.8);text-shadow:1px 1px 2px rgba(0,0,0,0.8);pointer-events:none;white-space:nowrap;';
+    document.body.appendChild(lbl);
+  
+    let last = performance.now(), tDay = 0, rainLevel = 0, rainTarget = 0, skyAcc = 9, lblAcc = 9;
+    let nextWx = last / 1000 + 80 + Math.random() * 60;
+    const fogNear = scene.fog.near, fogFar = scene.fog.far;
+    const SUNOFF = new THREE.Vector3(-45, 38, 30);
+  
+    function phaseName(t) { return t < 0.08 ? 'Sore' : t < 0.22 ? 'Senja' : t < 0.66 ? 'Malam' : t < 0.8 ? 'Subuh' : t < 0.96 ? 'Siang' : 'Sore'; }
+    function boost() {
+      const p = phaseName(tDay);
+      let m = p === 'Malam' ? 1.15 : (p === 'Senja' || p === 'Subuh') ? 1.08 : 1;
+      if (rainLevel > 0.5) m *= 1.25;
+      return m;
+    }
+  
+    function update() {
+      const now = performance.now(), raw = (now - last) / 1000; last = now;
+      const dt = Math.min(0.1, raw);
+      PMHD.tick(raw);
+      tDay = (tDay + dt / CYCLE) % 1;
+  
+      const ns = now / 1000;
+      if (ns >= nextWx) {
+        if (rainTarget === 0) { rainTarget = 1; nextWx = ns + 45 + Math.random() * 55; showToast('Hujan turun! Ikan langka lebih gampang nyangkut'); }
+        else { rainTarget = 0; nextWx = ns + 100 + Math.random() * 80; showToast('Hujan reda'); }
+      }
+      rainLevel += (rainTarget - rainLevel) * Math.min(1, dt * 0.6);
+  
+      sample(tDay);
+      ['top', 'mid', 'hor', 'fog', 'sun', 'hs'].forEach(k => wet(cur[k], rainLevel));
+      sunLight.color.copy(cur.sun); sunLight.intensity = si * (1 - 0.45 * rainLevel);
+      hemiLight.color.copy(cur.hs); hemiLight.groundColor.copy(cur.hg); hemiLight.intensity = hi * (1 - 0.2 * rainLevel);
+      scene.fog.color.copy(cur.fog);
+      scene.fog.near = fogNear * (1 - 0.4 * rainLevel); scene.fog.far = fogFar * (1 - 0.35 * rainLevel);
+  
+      const night = Math.max(0, Math.min(1, (0.75 - hi) / 0.4));
+      glowMat.opacity = 0.35 + 0.65 * night;
+      starMat.opacity = night * (1 - rainLevel); stars.visible = starMat.opacity > 0.02;
+      stars.position.copy(camera.position);
+  
+      skyAcc += dt; if (skyAcc > 0.4) { skyAcc = 0; drawSky(); }
+      if (renderer.shadowMap.enabled) {
+        sunLight.target.position.copy(player.position);
+        sunLight.position.copy(player.position).add(SUNOFF);
+      }
+      updateRain(dt, rainLevel);
+  
+      lblAcc += dt;
+      if (lblAcc > 1) {
+        lblAcc = 0;
+        const m = boost(), pct = Math.round((m - 1) * 100);
+        lbl.textContent = phaseName(tDay) + (rainLevel > 0.5 ? ' • Hujan' : '') + (pct > 0 ? ' • Ikan langka +' + pct + '%' : '');
+      }
+    }
+  
+    const _render = renderer.render.bind(renderer);
+    renderer.render = function (s, c) { update(); _render(s, c); };
+    return { boost: boost };
+  })();
+  
+
   // ================= KAMERA ORBIT PIHAK KETIGA =================
   let camYaw = Math.PI, camPitch = 0.35;
   const CAM_DIST = 5.2;
@@ -1162,7 +1395,7 @@
 
   function beginReeling() {
     fishState = 'reeling';
-    currentCatch = rollFish(castBoost);
+    currentCatch = rollFish(castBoost * PMEnv.boost());
     reelExpandRate = RARITY_REEL_RATE[currentCatch.fish.rarity] || 12;
     reelDanger = 25; // buffer awal biar gak langsung kalah
     reelLastTapTime = -999;
