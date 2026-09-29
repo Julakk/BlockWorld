@@ -277,7 +277,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v1.4</div>
+<div id="versionBadge">v1.5</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -1187,12 +1187,64 @@
     if (reelDanger <= 0) finishReel(true);
   }
 
+  // ================= MISI HARIAN =================
+  const Quest = (() => {
+    function today() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+    function ensure() {
+      let q = save.quests;
+      if (!q || q.day !== today() || !q.list) {
+        const lv = save.level || 1;
+        const sellGoal = 100 + 25 * lv;
+        q = save.quests = { day: today(), list: [
+          { id: 'catch', t: 'Tangkap 8 ikan', n: 0, goal: 8, coins: 30 + 10 * lv, xp: 20 + 5 * lv, done: false },
+          { id: 'rare', t: 'Tangkap 1 ikan Langka atau lebih', n: 0, goal: 1, coins: 60 + 20 * lv, xp: 40 + 10 * lv, done: false },
+          { id: 'sell', t: 'Jual ikan senilai ' + sellGoal + ' koin', n: 0, goal: sellGoal, coins: 40 + 15 * lv, xp: 25 + 5 * lv, done: false }
+        ] };
+      }
+      return q;
+    }
+    function on(type, v) {
+      const q = ensure(); let hit = false;
+      q.list.forEach(m => {
+        if (m.done) return;
+        if (type === 'catch') {
+          if (m.id === 'catch') m.n++;
+          else if (m.id === 'rare' && RARITY_ORDER.indexOf(v.fish.rarity) >= 2) m.n++;
+        } else if (type === 'sell' && m.id === 'sell') m.n += v;
+        if (m.n >= m.goal) {
+          m.n = m.goal; m.done = true; save.coins += m.coins; addXp(m.xp);
+          showToast('Misi selesai! +' + m.coins + ' koin'); Sfx.sell(); hit = true;
+        }
+      });
+      persistSave(); if (hit) refreshHud();
+    }
+    const ov = document.createElement('div');
+    ov.className = 'modalOverlay'; ov.id = 'modalQuest';
+    ov.innerHTML = '<div class="modalBox"><div class="modalHead"><h2>Misi Harian</h2><button class="modalClose" id="qClose">✕</button></div><div class="modalBody" id="qList"></div><div class="modalFoot"><span>Reset tiap ganti hari</span><span></span></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('#qClose').onclick = () => ov.classList.remove('show');
+    function render() {
+      const q = ensure();
+      document.getElementById('qList').innerHTML = q.list.map(m =>
+        '<div class="rowItem"><div class="rowInfo"><div class="rowName">' + m.t + '</div><div class="rowSub">' + m.n + '/' + m.goal + ' • Hadiah ' + m.coins + ' koin + ' + m.xp + ' XP</div></div><button class="rowBtn' + (m.done ? ' owned' : '') + '" disabled>' + (m.done ? 'Selesai' : 'Berjalan') + '</button></div>'
+      ).join('');
+    }
+    const pills = document.getElementById('hudPills');
+    if (pills) {
+      const b = document.createElement('button');
+      b.className = 'hudPill'; b.textContent = 'Misi';
+      b.onclick = () => { render(); ov.classList.add('show'); };
+      pills.appendChild(b);
+    }
+    return { on: on };
+  })();
+
   function finishReel(success) {
     resetFishing();
     if (success && currentCatch) {
       const key = currentCatch.fish.id + '|' + currentCatch.mutation.id;
       save.inventory[key] = save.inventory[key] || { fish: currentCatch.fish, mutation: currentCatch.mutation, count: 0 };
-      save.inventory[key].count++;
+      save.inventory[key].count++; Quest.on('catch', currentCatch);
       addXp(Math.round(currentCatch.value / 4) + 5);
       save.discovered = save.discovered || {}; save.discovered[currentCatch.fish.id] = true;
       const label = currentCatch.mutation.name ? currentCatch.mutation.name + ' ' + currentCatch.fish.name : currentCatch.fish.name;
@@ -1309,14 +1361,14 @@
     const key = btn.dataset.sell; const entry = save.inventory[key];
     if (!entry || entry.count <= 0) return;
     const val = Math.round(entry.fish.value * entry.mutation.mult);
-    save.coins += val; entry.count--;
+    save.coins += val; entry.count--; Quest.on('sell', val);
     showToast('+' + val + ' koin'); Sfx.sell();
     persistSave(); renderInventory(); refreshHud();
   });
   function sellAllFish() {
     let sum = 0;
     for (const key in save.inventory) { const e = save.inventory[key]; sum += Math.round(e.fish.value * e.mutation.mult) * e.count; e.count = 0; }
-    if (sum > 0) { save.coins += sum; showToast('Jual semua! +' + sum + ' koin'); Sfx.sell(); vibe(30); persistSave(); }
+    if (sum > 0) { save.coins += sum; Quest.on('sell', sum); showToast('Jual semua! +' + sum + ' koin'); Sfx.sell(); vibe(30); persistSave(); }
     else showToast('Tas kosong');
     renderInventory(); refreshHud();
   }
