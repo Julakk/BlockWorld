@@ -2347,5 +2347,67 @@ const PMFish = (function () {
   document.addEventListener('click', function () { panel.classList.remove('show'); });
 })();
 </script>
+<style>
+#updSec { margin-bottom: 4px; }
+#updSec h3 { margin: 6px 0 4px; font-size: 12.5px; font-weight: 900; color: var(--gold); letter-spacing: 0.4px; }
+#updSec ul { margin: 0 0 6px; padding-left: 18px; }
+#updSec li { font-size: 12px; line-height: 1.45; margin-bottom: 3px; color: var(--text); }
+#updVer { font-size: 11px; color: var(--text-dim); margin-bottom: 2px; }
+</style>
+<script>
+(function () {
+  var VER = 'v2.0', DATE = '30 Sep 2026', KEY = 'pm_seen_ver';
+  var LOG = [
+    ['Mekanik mancing', [
+      'Luck meter saat lempar: lepas di zona Good, Amazing, atau Perfect buat bonus Luck.',
+      'Ikan sekarang punya berat, dan tiap rod punya batas berat. Ikan yang kelewat berat bikin tali putus.',
+      'Bait jadi permanen: dibeli sekali dan nggak habis per lempar.',
+      'Luck rod dan bait sekarang dijumlah, bukan dikali.',
+      'Minigame reel: bar ngisi tiap tap, ada counter tap dan bar tegangan tali.',
+      'Auto Mancing disesuaikan: lemparnya mentok di GOOD, Ikan Rahasia tetap harus manual.'
+    ]],
+    ['Rod & Bait ala Fish It', [
+      'Rod: Starter, Carbon, Damascus, Lucky, Chrome, Astral.',
+      'Bait: Starter, Midnight, Nature, Chroma, Dark Matter.',
+      'Warna rarity ala Fish It di HUD dan Toko. Tab Joran/Umpan jadi Rod/Bait.'
+    ]],
+    ['HUD', [
+      'Bar lempar dengan zona warna dan garis penanda.',
+      'Baris stat Luck, Speed, dan Weight di bawah chip rod & bait.',
+      'Popup hasil tangkapan buat semua rarity, lengkap dengan berat dan tag Mutasi.',
+      'Tas jadi grid kartu dengan border warna rarity dan berat terberat.',
+      'Menu Info Update ini, muncul otomatis sekali tiap ada versi baru.'
+    ]]
+  ];
+  function lsGet() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function lsSet(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+  var ov = document.createElement('div');
+  ov.className = 'modalOverlay'; ov.id = 'modalUpdate';
+  var html = '<div class="modalBox"><div class="modalHead"><h2>Info Update ' + VER + '</h2><button class="modalClose" id="updClose">✕</button></div><div class="modalBody"><div id="updVer">' + DATE + '</div><div id="updSec">';
+  LOG.forEach(function (sec) {
+    html += '<h3>' + sec[0] + '</h3><ul>';
+    sec[1].forEach(function (t) { html += '<li>' + t + '</li>'; });
+    html += '</ul>';
+  });
+  html += '</div></div><div class="modalFoot"><span>Pancing Mania ' + VER + '</span><button class="rowBtn" id="updOk">Oke</button></div></div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  function closeUpd() { ov.classList.remove('show'); lsSet(VER); var b = document.getElementById('btnUpdInfo'); if (b) b.textContent = 'Info Update'; }
+  document.getElementById('updClose').onclick = closeUpd;
+  document.getElementById('updOk').onclick = closeUpd;
+  var host = document.getElementById('menuPanel') || document.getElementById('hudPills');
+  if (host) {
+    var btn = document.createElement('button');
+    btn.className = 'hudPill'; btn.id = 'btnUpdInfo';
+    btn.textContent = lsGet() === VER ? 'Info Update' : 'Info Update (BARU)';
+    btn.onclick = function () { ov.classList.add('show'); var mp = document.getElementById('menuPanel'); if (mp) mp.classList.remove('show'); };
+    host.appendChild(btn);
+  }
+  var startBtn = document.getElementById('startBtn');
+  if (startBtn) startBtn.addEventListener('click', function () {
+    if (lsGet() !== VER) setTimeout(function () { ov.classList.add('show'); }, 700);
+  });
+})();
+</script>
 </body>
 </html>

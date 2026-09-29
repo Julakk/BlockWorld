@@ -2,6 +2,15 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-09-30
+
+- **v2.0 - Mekanik mancing ala Fish It**: luck meter saat lempar dengan zona Good, Amazing, dan Perfect yang ngasih bonus Luck. Ikan sekarang punya berat dan tiap rod punya batas berat, jadi ikan yang kelewat berat bikin tali putus.
+- **Bait permanen**: bait dibeli sekali dan nggak habis per lempar. Luck rod dan bait sekarang dijumlah (bukan dikali), sesuai Fish It.
+- **Rod & Bait disamain dengan Fish It**: rod jadi Starter, Carbon, Damascus, Lucky, Chrome, dan Astral. Bait jadi Starter, Midnight, Nature, Chroma, dan Dark Matter. Tab dan toko diganti ke istilah Rod/Bait, ikon berwarna sesuai rarity.
+- **Minigame reel**: bar ngisi tiap tap lengkap dengan counter "(000)", ditambah bar tegangan tali yang berubah hijau, kuning, lalu merah. Auto Mancing disesuaikan: lemparnya mentok di GOOD dan Ikan Rahasia tetap harus manual.
+- **HUD**: chip rod & bait dengan border warna rarity, baris stat Luck/Speed/Weight, bar lempar dengan zona warna, dan popup hasil tangkapan untuk semua rarity (berat, harga, tag Mutasi). Tampilan Tas jadi grid kartu.
+- **Info Update**: popup daftar perubahan di dalam game. Muncul otomatis sekali tiap ada versi baru dan bisa dibuka lagi dari Menu.
+
 ## 2026-09-29
 
 - HUD kiri atas dibikin ringkas jadi satu baris (koin, level, XP mini, joran/umpan digabung), gak makan tempat lagi.
