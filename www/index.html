@@ -243,6 +243,14 @@
   #catchRevealVal { font-size: 12px; font-weight: 700; color: var(--gold); }
   @keyframes revealPop { 0% { transform: scale(0.3); opacity: 0; } 14% { transform: scale(1.12); opacity: 1; } 24% { transform: scale(1); } 82% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.96) translateY(-10px); } }
   #interactBtn { position: fixed; right: 24px; bottom: 150px; z-index: 16; display: none; font-size: 13px; padding: 10px 18px; background: linear-gradient(160deg, #ffcf4d, #e0982a); color: #4a2600; text-shadow: none; }
+
+/* ===== v1.2 rapihin layout ===== */
+#hudPills { position: fixed; top: calc(26px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); margin: 0; max-width: 90vw; flex-wrap: nowrap; justify-content: center; z-index: 11; }
+#topRightBW { gap: 8px; }
+.iconBtn { width: 52px; }
+.iconCircle { width: 46px; height: 46px; }
+#fishActionWrap { bottom: 20px; gap: 8px; }
+#fishHint { max-width: 230px; text-align: center; font-size: 12px; padding: 5px 12px; }
 </style>
 </head>
 <body>
@@ -263,7 +271,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v1.1</div>
+<div id="versionBadge">v1.2</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
