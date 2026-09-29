@@ -112,21 +112,36 @@
   #fishBtn:active { transform: translateY(5px); box-shadow: 0 3px 0 rgba(0,55,65,0.55), 0 6px 14px rgba(0,0,0,0.4); }
   #fishHint { font-size: 12.5px; font-weight: 800; color: #fff; text-shadow: 1px 1px 3px black; background: linear-gradient(160deg, rgba(20,44,58,0.85), rgba(8,20,28,0.8)); border: 2px solid rgba(255,255,255,0.55); padding: 6px 14px; border-radius: 999px; }
 
-  /* ================= POWER BAR CASTING ================= */
-  #powerWrap { position: fixed; bottom: 148px; left: 50%; transform: translateX(-50%); z-index: 16; width: min(80vw, 320px); display: none; }
-  #powerTrack { position: relative; height: 26px; border-radius: 999px; background: rgba(0,0,0,0.5); border: 3px solid #fff; overflow: hidden; box-shadow: 0 5px 0 rgba(0,0,0,0.35), inset 0 2px 4px rgba(0,0,0,0.4); }
-  #powerFill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--ok), var(--gold), var(--danger)); }
-  #powerMarker { position: absolute; top: -6px; width: 5px; height: 38px; border-radius: 3px; background: #fff; box-shadow: 0 0 8px #fff; left: 0%; }
+  /* ================= POWER BAR CASTING (gaya Fish It: hijau bergaris + ujung bulat) ================= */
+  #powerWrap { position: fixed; bottom: 148px; left: 50%; transform: translateX(-50%); z-index: 16; width: min(80vw, 320px); display: none; align-items: center; gap: 8px; }
+  #powerTrack { position: relative; flex: 1; height: 28px; border-radius: 999px; background: rgba(0,0,0,0.5); border: 3px solid #fff; overflow: hidden; box-shadow: 0 5px 0 rgba(0,0,0,0.35), inset 0 2px 4px rgba(0,0,0,0.4); }
+  #powerFill {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(180deg, #7be86b, #2f9f4f);
+    background-image: linear-gradient(180deg, #7be86b, #2f9f4f), repeating-linear-gradient(125deg, rgba(255,255,255,0.32) 0 8px, transparent 8px 16px);
+    transition: background 0.15s;
+  }
+  #powerFill.warn { background-image: linear-gradient(180deg, #ffe27a, #e0982a), repeating-linear-gradient(125deg, rgba(255,255,255,0.32) 0 8px, transparent 8px 16px); }
+  #powerFill.critical { background-image: linear-gradient(180deg, #ff8a6b, #c23a2a), repeating-linear-gradient(125deg, rgba(255,255,255,0.32) 0 8px, transparent 8px 16px); }
+  #powerMarker { position: absolute; top: -4px; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 10px solid #fff; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); left: 0%; }
+  .barEndIcon { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(160deg, #2fb8d1, #196c81); border: 2.5px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.35); }
 
-  /* ================= REELING MINIGAME ================= */
-  #reelWrap { position: fixed; bottom: 148px; left: 50%; transform: translateX(-50%); z-index: 16; width: min(84vw, 340px); display: none; flex-direction: column; align-items: center; gap: 10px; }
-  #reelTrack { position: relative; width: 100%; height: 38px; border-radius: 999px; background: rgba(0,0,0,0.55); border: 3px solid #fff; overflow: hidden; box-shadow: 0 5px 0 rgba(0,0,0,0.35), inset 0 2px 4px rgba(0,0,0,0.4); }
-  #reelZone { position: absolute; top: 0; bottom: 0; left: 0; width: 0%; background: linear-gradient(90deg, var(--ok), var(--gold), var(--danger)); transition: background 0.1s; box-shadow: 0 0 14px rgba(255,207,77,0.4); }
+  /* ================= REELING MINIGAME (gaya Fish It: "Klik Cepat!" + bar hijau bergaris) ================= */
+  #reelWrap { position: fixed; bottom: 148px; left: 50%; transform: translateX(-50%); z-index: 16; width: min(84vw, 340px); display: none; flex-direction: column; align-items: center; gap: 8px; }
+  #reelTrackRow { display: flex; align-items: center; gap: 8px; width: 100%; }
+  #reelTrack { position: relative; flex: 1; height: 32px; border-radius: 999px; background: rgba(20,10,10,0.6); border: 3px solid #fff; overflow: hidden; box-shadow: 0 5px 0 rgba(0,0,0,0.35), inset 0 2px 4px rgba(0,0,0,0.4); }
+  #reelZone {
+    position: absolute; top: 0; bottom: 0; right: 0; width: 100%; background: linear-gradient(180deg, #7be86b, #2f9f4f);
+    background-image: linear-gradient(180deg, #7be86b, #2f9f4f), repeating-linear-gradient(125deg, rgba(255,255,255,0.32) 0 8px, transparent 8px 16px);
+    transition: width 0.12s linear, background 0.15s;
+  }
+  #reelZone.warn { background-image: linear-gradient(180deg, #ffe27a, #e0982a), repeating-linear-gradient(125deg, rgba(255,255,255,0.32) 0 8px, transparent 8px 16px); }
+  #reelZone.critical { background-image: linear-gradient(180deg, #ff8a6b, #c23a2a), repeating-linear-gradient(125deg, rgba(255,255,255,0.32) 0 8px, transparent 8px 16px); }
   #reelIndicator { display: none; }
   #reelProgressTrack { display: none; }
   #reelProgressFill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--gold)); }
-  #reelTapHint { font-size: 14px; font-weight: 900; color: #fff; text-shadow: 1px 1px 3px black; }
-  #reelLabel { font-size: 12.5px; font-weight: 800; color: #fff; text-shadow: 1px 1px 3px black; background: linear-gradient(160deg, rgba(20,44,58,0.85), rgba(8,20,28,0.8)); border: 2px solid rgba(255,255,255,0.55); padding: 5px 14px; border-radius: 999px; }
+  #reelLabelRow { display: flex; align-items: center; gap: 8px; }
+  #reelLabel { font-size: 13px; font-weight: 900; color: #fff; text-shadow: 1px 1px 3px black; background: linear-gradient(160deg, rgba(20,44,58,0.85), rgba(8,20,28,0.8)); border: 2px solid rgba(255,255,255,0.55); padding: 5px 14px; border-radius: 999px; }
+  #reelTapHint { font-size: 13px; font-weight: 900; color: #04303c; background: #ffe066; border: 2px solid #fff; padding: 5px 10px; border-radius: 999px; box-shadow: 0 3px 0 rgba(120,70,0,0.35); min-width: 46px; text-align: center; }
 
   /* ================= TOAST ================= */
   #toastWrap { position: fixed; top: 92px; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; flex-direction: column; align-items: center; gap: 7px; pointer-events: none; }
@@ -304,14 +319,22 @@
 <button class="hudPill" id="interactBtn"></button>
 
 <div id="powerWrap">
+  <div class="barEndIcon">↺</div>
   <div id="powerTrack"><div id="powerFill"></div><div id="powerMarker"></div></div>
+  <div class="barEndIcon">▶</div>
 </div>
 
 <div id="reelWrap">
-  <div id="reelLabel">TAP CEPET biar ikannya gak kabur!</div>
-  <div id="reelTrack"><div id="reelZone"></div><div id="reelIndicator"></div></div>
+  <div id="reelLabelRow">
+    <div id="reelLabel">Klik Cepat!</div>
+    <div id="reelTapHint">(000)</div>
+  </div>
+  <div id="reelTrackRow">
+    <div class="barEndIcon">⏪</div>
+    <div id="reelTrack"><div id="reelZone"></div><div id="reelIndicator"></div></div>
+    <div class="barEndIcon">▶</div>
+  </div>
   <div id="reelProgressTrack"><div id="reelProgressFill"></div></div>
-  <div id="reelTapHint"></div>
 </div>
 
 <div id="toastWrap"></div>
@@ -1044,7 +1067,7 @@
   let chargeT = 0, chargeDir = 1, lockedPower = 0;
   let waitTimer = 0, waitTarget = 0;
   let strikeTimer = 0;
-  let reelDanger = 0, reelExpandRate = 12, reelLastTapTime = -999;
+  let reelDanger = 0, reelExpandRate = 12, reelLastTapTime = -999, reelTapCount = 0;
   let currentCatch = null;
   let castBoost = 1;
   // makin langka ikannya, makin cepet bar bahaya naik = makin susah narik
@@ -1130,7 +1153,10 @@
     reelExpandRate = RARITY_REEL_RATE[currentCatch.fish.rarity] || 12;
     reelDanger = 25; // buffer awal biar gak langsung kalah
     reelLastTapTime = -999;
-    reelZoneEl.style.width = reelDanger + '%';
+    reelTapCount = 0;
+    reelZoneEl.style.width = Math.max(0, 100 - reelDanger) + '%';
+    reelZoneEl.className = '';
+    reelTapHint.textContent = '(000)';
     reelWrap.style.display = 'flex';
     fishHint.style.display = 'none';
     setFishBtnLabel('TAP!', true);
@@ -1143,6 +1169,8 @@
     reelLastTapTime = now;
     Sfx.tap();
     reelDanger = Math.max(0, reelDanger - 7);
+    reelTapCount++;
+    reelTapHint.textContent = '(' + String(Math.min(999, reelTapCount)).padStart(3, '0') + ')';
     if (reelDanger <= 0) finishReel(true);
   }
 
@@ -1213,6 +1241,7 @@
       if (chargeT >= 1) { chargeT = 1; chargeDir = -1; }
       if (chargeT <= 0) { chargeT = 0; chargeDir = 1; }
       powerFill.style.width = (chargeT * 100) + '%';
+      powerFill.className = chargeT > 0.8 ? 'critical' : (chargeT > 0.55 ? 'warn' : '');
       powerMarker.style.left = (chargeT * 100) + '%';
     } else if (fishState === 'flying') {
       bobberT += dt * 1.8;
@@ -1231,8 +1260,8 @@
       if (strikeTimer > 1.3) { resetFishing(); showToast('Kelamaan, ikannya lepas.'); }
     } else if (fishState === 'reeling') {
       reelDanger = Math.min(100, reelDanger + reelExpandRate * dt);
-      reelZoneEl.style.width = reelDanger + '%';
-      reelTapHint.textContent = Math.round(100 - reelDanger) + '%';
+      reelZoneEl.style.width = Math.max(0, 100 - reelDanger) + '%';
+      reelZoneEl.className = reelDanger > 80 ? 'critical' : (reelDanger > 55 ? 'warn' : '');
       if (reelDanger >= 100) finishReel(false);
     }
     // update hint tombol pancing sesuai jarak ke air pas idle
