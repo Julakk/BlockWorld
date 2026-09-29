@@ -159,7 +159,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v1.0</div>
+<div id="versionBadge">v1.1</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -337,7 +337,7 @@
   function persistSave() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); showToast('Tersimpan!'); } catch (e) { console.warn('Gagal simpan:', e); }
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { console.warn('Gagal simpan:', e); }
     }, 600);
   }
 
