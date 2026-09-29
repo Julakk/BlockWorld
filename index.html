@@ -251,6 +251,12 @@
 .iconCircle { width: 46px; height: 46px; }
 #fishActionWrap { bottom: 20px; gap: 8px; }
 #fishHint { max-width: 230px; text-align: center; font-size: 12px; padding: 5px 12px; }
+/* ===== v1.3 safe-area kiri/kanan (notch landscape) ===== */
+#hud { left: calc(12px + env(safe-area-inset-left, 0px)); }
+#topRightBW { right: calc(10px + env(safe-area-inset-right, 0px)); }
+#joystickZone { left: calc(20px + env(safe-area-inset-left, 0px)); }
+#fishActionWrap { right: calc(30px + env(safe-area-inset-right, 0px)); }
+#interactBtn { right: calc(24px + env(safe-area-inset-right, 0px)); }
 </style>
 </head>
 <body>
@@ -271,7 +277,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v1.2</div>
+<div id="versionBadge">v1.3</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
