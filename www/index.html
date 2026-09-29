@@ -277,7 +277,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v1.3</div>
+<div id="versionBadge">v1.4</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -1565,5 +1565,53 @@
 })();
 </script>
 
+<script>
+(function () {
+  var KEY = 'pancingmania_save_v1';
+  function $(id) { return document.getElementById(id); }
+  var ov = document.createElement('div');
+  ov.className = 'modalOverlay'; ov.id = 'modalBackup';
+  ov.innerHTML = '<div class="modalBox"><div class="modalHead"><h2>Backup Save</h2><button class="modalClose" id="bkClose">✕</button></div><div class="modalBody"><textarea id="bkText" rows="6" placeholder="Kode save muncul di sini. Tempel kode lama buat Muat." style="width:100%;border-radius:12px;border:2px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.35);color:#fff;font:11px monospace;padding:8px;user-select:text;-webkit-user-select:text;resize:none;"></textarea><div style="display:flex;gap:8px;"><button class="rowBtn" id="bkCopy" style="flex:1">Salin Save</button><button class="rowBtn" id="bkLoad" style="flex:1">Muat Save</button></div><div id="bkMsg" style="font-size:11px;color:var(--text-dim);min-height:14px;"></div></div></div>';
+  document.body.appendChild(ov);
+  function msg(t) { $('bkMsg').textContent = t; }
+
+  $('bkClose').onclick = function () { ov.classList.remove('show'); };
+
+  $('bkCopy').onclick = function () {
+    var raw = localStorage.getItem(KEY);
+    if (!raw) { msg('Belum ada save.'); return; }
+    var code = 'PM1:' + btoa(unescape(encodeURIComponent(raw)));
+    var t = $('bkText'); t.value = code; t.select();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(
+        function () { msg('Tersalin! Simpen di Catatan / chat sendiri.'); },
+        function () { msg('Kode udah kepilih, salin manual.'); });
+    } else { msg('Kode udah kepilih, salin manual.'); }
+  };
+
+  $('bkLoad').onclick = function () {
+    var v = $('bkText').value.trim(), raw, o;
+    if (v.indexOf('PM1:') !== 0) { msg('Kode nggak valid.'); return; }
+    try {
+      raw = decodeURIComponent(escape(atob(v.slice(4))));
+      o = JSON.parse(raw);
+      if (!o || typeof o.coins !== 'number' || typeof o.inventory !== 'object') throw 0;
+    } catch (e) { msg('Kode rusak / nggak lengkap.'); return; }
+    if (!confirm('Timpa save sekarang dengan kode ini?')) return;
+    var orig = Storage.prototype.setItem;
+    orig.call(localStorage, KEY, raw);
+    Storage.prototype.setItem = function (k) { if (k === KEY) return; return orig.apply(this, arguments); };
+    location.reload();
+  };
+
+  var pills = $('hudPills');
+  if (pills) {
+    var b = document.createElement('button');
+    b.className = 'hudPill'; b.textContent = 'Backup';
+    b.onclick = function () { $('bkText').value = ''; msg(''); ov.classList.add('show'); };
+    pills.appendChild(b);
+  }
+})();
+</script>
 </body>
 </html>
