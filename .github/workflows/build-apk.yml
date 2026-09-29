@@ -40,6 +40,18 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x android/gradlew
 
+      - name: Restore fixed debug keystore
+        env:
+          DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$DEBUG_KEYSTORE_B64" ]; then
+            mkdir -p ~/.android
+            echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+            keytool -list -keystore ~/.android/debug.keystore -storepass android | grep -i "fingerprint" || true
+          else
+            echo "Secret DEBUG_KEYSTORE_B64 kosong, pakai debug key acak"
+          fi
+
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug
