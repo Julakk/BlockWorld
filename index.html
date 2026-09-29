@@ -1992,6 +1992,10 @@ const PMFish = (function () {
   const shopList = document.getElementById('shopList');
   const shopCoins = document.getElementById('shopCoins');
   let shopTab = 'rod';
+  function gearIconStyle(kind, id) {
+    const c = (GEAR_COLORS[kind] && GEAR_COLORS[kind][id]) || '#9fb4bd';
+    return `background:linear-gradient(135deg,${c},${c}99);border:2px solid ${c};box-shadow:0 0 8px ${c}88;`;
+  }
   function renderShop() {
     shopCoins.textContent = save.coins;
     shopList.innerHTML = '';
@@ -2002,7 +2006,7 @@ const PMFish = (function () {
         const canBuy = save.coins >= rod.price;
         const row = document.createElement('div'); row.className = 'rowItem';
         const btnLabel = equipped ? 'Terpasang' : (owned ? 'Pakai' : (rod.price + ' koin'));
-        row.innerHTML = `<div class="rowIcon" style="background:linear-gradient(135deg,#8a5a2b,#c78f3f);"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Gigitan x${rod.biteSpeed} • Langka x${rod.rarityBoost} • Jarak ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
+        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('rod', rod.id)}"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Gigitan x${rod.biteSpeed} • Luck x${rod.rarityBoost} • Jarak ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
         shopList.appendChild(row);
       }
     } else if (shopTab === 'bait') {
@@ -2014,7 +2018,7 @@ const PMFish = (function () {
         let btns;
         if (bait.id === 'biasa') btns = `<button class="rowBtn ${equipped ? 'owned' : ''}" data-usebait="biasa" ${equipped ? 'disabled' : ''}>${equipped ? 'Dipakai' : 'Pakai'}</button>`;
         else btns = `${stock > 0 && !equipped ? `<button class="rowBtn" data-usebait="${bait.id}">Pakai</button>` : ''}<button class="rowBtn" data-bait="${bait.id}" ${!canBuy ? 'disabled' : ''}>Beli (${bait.price})</button>`;
-        row.innerHTML = `<div class="rowIcon" style="background:linear-gradient(135deg,#5fd15f,#2f9f4f);"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Stok: ${stock === 999 ? 'Tak terbatas' : stock} • Langka x${bait.rarityBoost}</div></div><div class="rowBtns">${btns}</div>`;
+        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('bait', bait.id)}"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Stock: ${stock === 999 ? 'Unlimited' : stock} • Luck x${bait.rarityBoost}</div></div><div class="rowBtns">${btns}</div>`;
         shopList.appendChild(row);
       }
     } else {
