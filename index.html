@@ -69,6 +69,10 @@
   #gearRow { font-size: 9.5px; color: #bfe8f0; margin-top: 3px; font-weight: 600; white-space: nowrap; }
   #gearRow b { color: #fff; font-weight: 800; }
   #gearRow .sep { color: rgba(255,255,255,0.35); margin: 0 4px; }
+  #gearRow { display: flex; gap: 4px; align-items: center; }
+  .gearChip { --rc: #9fb4bd; display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 8px; background: rgba(0,0,0,0.38); border: 1.5px solid var(--rc); }
+  .gearChip .ico { width: 11px; height: 11px; color: var(--rc); }
+  .baitDot { width: 7px; height: 7px; border-radius: 50%; background: var(--rc); box-shadow: 0 0 5px var(--rc); }
   @keyframes badgePop { 0% { transform: scale(1); } 35% { transform: scale(1.32); } 100% { transform: scale(1); } }
   .coinBadge.pop, #levelVal.pop { animation: badgePop 0.4s ease; }
 
@@ -299,7 +303,7 @@
         </div>
       </div>
     </div>
-    <div id="gearRow"><b id="rodVal">Bambu</b><span class="sep">•</span><b id="baitVal">Biasa</b></div>
+    <div id="gearRow"><span class="gearChip" id="rodChip"><svg class="ico"><use href="#ico-rod"/></svg><b id="rodVal">Joran Bambu</b></span><span class="gearChip" id="baitChip"><span class="baitDot"></span><b id="baitVal">Topwater</b></span></div>
   </div>
   <div id="hudPills">
     <button class="hudPill" id="btnSellHud">Jual Semua</button>
@@ -391,7 +395,7 @@
     <div class="modalHead"><h2><svg class="ico" style="width:17px;height:17px;"><use href="#ico-cart"/></svg> Toko</h2><button class="modalClose" data-close="modalShop">✕</button></div>
     <div class="tabBar">
       <button class="tabBtn active" data-tab="rod">Joran</button>
-      <button class="tabBtn" data-tab="bait">Umpan</button>
+      <button class="tabBtn" data-tab="bait">Bait</button>
       <button class="tabBtn" data-tab="item">Item</button>
     </div>
     <div class="modalBody" id="shopList"></div>
@@ -464,9 +468,9 @@
   ];
   const AUTOFISH_PRICE = 2500;
   const BAIT_TYPES = [
-    { id: 'biasa', name: 'Umpan Biasa', price: 5, rarityBoost: 1.0, stock: 999 },
-    { id: 'super', name: 'Umpan Super', price: 25, rarityBoost: 1.5, stock: 0 },
-    { id: 'ajaib', name: 'Umpan Ajaib', price: 100, rarityBoost: 2.4, stock: 0 },
+    { id: 'biasa', name: 'Topwater Bait', price: 5, rarityBoost: 1.0, stock: 999 },
+    { id: 'super', name: 'Luck Bait', price: 25, rarityBoost: 1.5, stock: 0 },
+    { id: 'ajaib', name: 'Midnight Bait', price: 100, rarityBoost: 2.4, stock: 0 },
   ];
 
   // ================= PELUANG RARITAS =================
@@ -499,6 +503,10 @@
   }
 
   // ================= SIMPAN / MUAT (localStorage) =================
+  const GEAR_COLORS = {
+    rod: { bambu: '#9fb4bd', kayu: '#5fd36b', karbon: '#4aa8ff', perak: '#b56bff', emas: '#ffc233', legendaris: '#ff4d6d' },
+    bait: { biasa: '#9fb4bd', super: '#4aa8ff', ajaib: '#b56bff' }
+  };
   const SAVE_KEY = 'pancingmania_save_v1';
   function defaultSave() {
     return { coins: 20, xp: 0, level: 1, rod: 'bambu', bait: 'biasa', ownedRods: ['bambu'], baitStock: { biasa: 999 }, inventory: {}, discovered: {}, autoFish: false, muted: false };
@@ -926,7 +934,7 @@
     return g;
   }
   const TOWN_SHOPS = [
-    { id: 'bait', name: 'TOKO UMPAN', label: 'Buka Toko Umpan', x: 9, z: 26, face: -1, wall: 0x3aa89a, roof: 0x2a6f7a, awning: 0x2fd0c0, glow: 0xffe9a8, signBg: '#1f7d72', action: () => openShopTab('bait') },
+    { id: 'bait', name: 'BAIT SHOP', label: 'Buka Bait Shop', x: 9, z: 26, face: -1, wall: 0x3aa89a, roof: 0x2a6f7a, awning: 0x2fd0c0, glow: 0xffe9a8, signBg: '#1f7d72', action: () => openShopTab('bait') },
     { id: 'rod', name: 'TOKO JORAN', label: 'Buka Toko Joran', x: -9, z: 26, face: 1, wall: 0xc4453c, roof: 0x7a2a2a, awning: 0xff6a5a, glow: 0xffe9a8, signBg: '#9c2f2a', action: () => openShopTab('rod') },
     { id: 'sell', name: 'JUAL IKAN', label: 'Buka Tas / Jual Ikan', x: 9, z: 18, face: -1, wall: 0xd2b07a, roof: 0x6b4a8a, awning: 0xb07be0, glow: 0xffe9a8, signBg: '#6b4a8a', action: () => openModal('modalInventory') },
   ];
@@ -1349,7 +1357,7 @@
     const id = save.bait;
     if (id === 'biasa') return;
     save.baitStock[id] = Math.max(0, (save.baitStock[id] || 0) - 1);
-    if (save.baitStock[id] <= 0) { save.bait = 'biasa'; showToast('Umpan habis, balik ke Umpan Biasa'); }
+    if (save.baitStock[id] <= 0) { save.bait = 'biasa'; showToast('Bait habis, balik ke Topwater Bait'); }
     persistSave(); refreshHud();
   }
 
@@ -2078,10 +2086,10 @@ const PMFish = (function () {
     document.getElementById('coinsVal').textContent = save.coins;
     document.getElementById('levelVal').textContent = save.level;
     document.getElementById('xpFill').style.width = Math.min(100, (save.xp / xpForLevel(save.level)) * 100) + '%';
-    document.getElementById('rodVal').textContent = currentRod().name;
+    document.getElementById('rodVal').textContent = currentRod().name; document.getElementById('rodChip').style.setProperty('--rc', GEAR_COLORS.rod[save.rod] || '#9fb4bd');
     document.getElementById('xpText').textContent = save.xp + '/' + xpForLevel(save.level);
     const b = currentBait();
-    document.getElementById('baitVal').textContent = b.name.replace('Umpan ', '') + (b.id === 'biasa' ? '' : ' x' + (save.baitStock[b.id] || 0));
+    document.getElementById('baitVal').textContent = b.name.replace(' Bait', '') + (b.id === 'biasa' ? '' : ' x' + (save.baitStock[b.id] || 0)); document.getElementById('baitChip').style.setProperty('--rc', GEAR_COLORS.bait[b.id] || '#9fb4bd');
     const cnt = Object.values(save.inventory).reduce((a, e) => a + e.count, 0);
     const badge = document.getElementById('invBadge');
     badge.textContent = cnt > 99 ? '99+' : cnt; badge.classList.toggle('show', cnt > 0);
