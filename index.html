@@ -303,7 +303,7 @@
         </div>
       </div>
     </div>
-    <div id="gearRow"><span class="gearChip" id="rodChip"><svg class="ico"><use href="#ico-rod"/></svg><b id="rodVal">Joran Bambu</b></span><span class="gearChip" id="baitChip"><span class="baitDot"></span><b id="baitVal">Topwater</b></span></div>
+    <div id="gearRow"><span class="gearChip" id="rodChip"><svg class="ico"><use href="#ico-rod"/></svg><b id="rodVal">Starter Rod</b></span><span class="gearChip" id="baitChip"><span class="baitDot"></span><b id="baitVal">Starter</b></span></div>
   </div>
   <div id="hudPills">
     <button class="hudPill" id="btnSellHud">Jual Semua</button>
@@ -394,7 +394,7 @@
   <div class="modalBox">
     <div class="modalHead"><h2><svg class="ico" style="width:17px;height:17px;"><use href="#ico-cart"/></svg> Toko</h2><button class="modalClose" data-close="modalShop">✕</button></div>
     <div class="tabBar">
-      <button class="tabBtn active" data-tab="rod">Joran</button>
+      <button class="tabBtn active" data-tab="rod">Rod</button>
       <button class="tabBtn" data-tab="bait">Bait</button>
       <button class="tabBtn" data-tab="item">Item</button>
     </div>
@@ -459,18 +459,20 @@
 
   // ================= DATA JORAN & UMPAN =================
   const ROD_TIERS = [
-    { id: 'bambu', name: 'Joran Bambu', price: 0, biteSpeed: 1.0, rarityBoost: 1.0, castRange: 7 },
-    { id: 'kayu', name: 'Joran Kayu', price: 150, biteSpeed: 1.15, rarityBoost: 1.3, castRange: 9 },
-    { id: 'karbon', name: 'Joran Karbon', price: 600, biteSpeed: 1.3, rarityBoost: 1.7, castRange: 11 },
-    { id: 'perak', name: 'Joran Perak', price: 2000, biteSpeed: 1.5, rarityBoost: 2.3, castRange: 13 },
-    { id: 'emas', name: 'Joran Emas', price: 6000, biteSpeed: 1.8, rarityBoost: 3.2, castRange: 15 },
-    { id: 'legendaris', name: 'Joran Legendaris', price: 20000, biteSpeed: 2.2, rarityBoost: 4.5, castRange: 18 },
+    { id: 'bambu', name: 'Starter Rod', price: 0, biteSpeed: 1.0, rarityBoost: 1.0, castRange: 7 },
+    { id: 'kayu', name: 'Carbon Rod', price: 150, biteSpeed: 1.15, rarityBoost: 1.3, castRange: 9 },
+    { id: 'karbon', name: 'Damascus Rod', price: 600, biteSpeed: 1.3, rarityBoost: 1.8, castRange: 11 },
+    { id: 'perak', name: 'Lucky Rod', price: 2000, biteSpeed: 1.5, rarityBoost: 2.3, castRange: 13 },
+    { id: 'emas', name: 'Chrome Rod', price: 6000, biteSpeed: 1.8, rarityBoost: 3.29, castRange: 15 },
+    { id: 'legendaris', name: 'Astral Rod', price: 20000, biteSpeed: 2.2, rarityBoost: 4.5, castRange: 18 },
   ];
   const AUTOFISH_PRICE = 2500;
   const BAIT_TYPES = [
-    { id: 'biasa', name: 'Topwater Bait', price: 5, rarityBoost: 1.0, stock: 999 },
-    { id: 'super', name: 'Luck Bait', price: 25, rarityBoost: 1.5, stock: 0 },
-    { id: 'ajaib', name: 'Midnight Bait', price: 100, rarityBoost: 2.4, stock: 0 },
+    { id: 'biasa', name: 'Starter Bait', price: 5, rarityBoost: 1.0, stock: 999 },
+    { id: 'midnight', name: 'Midnight Bait', price: 10, rarityBoost: 1.22, stock: 0 },
+    { id: 'super', name: 'Nature Bait', price: 25, rarityBoost: 1.45, stock: 0 },
+    { id: 'chroma', name: 'Chroma Bait', price: 60, rarityBoost: 2.0, stock: 0 },
+    { id: 'ajaib', name: 'Dark Matter Bait', price: 100, rarityBoost: 2.6, stock: 0 },
   ];
 
   // ================= PELUANG RARITAS =================
@@ -504,8 +506,8 @@
 
   // ================= SIMPAN / MUAT (localStorage) =================
   const GEAR_COLORS = {
-    rod: { bambu: '#9fb4bd', kayu: '#5fd36b', karbon: '#4aa8ff', perak: '#b56bff', emas: '#ffc233', legendaris: '#ff4d6d' },
-    bait: { biasa: '#9fb4bd', super: '#4aa8ff', ajaib: '#b56bff' }
+    rod: { bambu: '#9fb4bd', kayu: '#b7c4ca', karbon: '#5fd36b', perak: '#4aa8ff', emas: '#b56bff', legendaris: '#ffc233' },
+    bait: { biasa: '#9fb4bd', midnight: '#4aa8ff', super: '#b56bff', chroma: '#ffc233', ajaib: '#ff4d6d' }
   };
   const SAVE_KEY = 'pancingmania_save_v1';
   function defaultSave() {
@@ -935,7 +937,7 @@
   }
   const TOWN_SHOPS = [
     { id: 'bait', name: 'BAIT SHOP', label: 'Buka Bait Shop', x: 9, z: 26, face: -1, wall: 0x3aa89a, roof: 0x2a6f7a, awning: 0x2fd0c0, glow: 0xffe9a8, signBg: '#1f7d72', action: () => openShopTab('bait') },
-    { id: 'rod', name: 'TOKO JORAN', label: 'Buka Toko Joran', x: -9, z: 26, face: 1, wall: 0xc4453c, roof: 0x7a2a2a, awning: 0xff6a5a, glow: 0xffe9a8, signBg: '#9c2f2a', action: () => openShopTab('rod') },
+    { id: 'rod', name: 'ROD SHOP', label: 'Buka Rod Shop', x: -9, z: 26, face: 1, wall: 0xc4453c, roof: 0x7a2a2a, awning: 0xff6a5a, glow: 0xffe9a8, signBg: '#9c2f2a', action: () => openShopTab('rod') },
     { id: 'sell', name: 'JUAL IKAN', label: 'Buka Tas / Jual Ikan', x: 9, z: 18, face: -1, wall: 0xd2b07a, roof: 0x6b4a8a, awning: 0xb07be0, glow: 0xffe9a8, signBg: '#6b4a8a', action: () => openModal('modalInventory') },
   ];
   for (const sh of TOWN_SHOPS) {
@@ -1357,7 +1359,7 @@
     const id = save.bait;
     if (id === 'biasa') return;
     save.baitStock[id] = Math.max(0, (save.baitStock[id] || 0) - 1);
-    if (save.baitStock[id] <= 0) { save.bait = 'biasa'; showToast('Bait habis, balik ke Topwater Bait'); }
+    if (save.baitStock[id] <= 0) { save.bait = 'biasa'; showToast('Bait habis, balik ke Starter Bait'); }
     persistSave(); refreshHud();
   }
 
@@ -2006,7 +2008,7 @@ const PMFish = (function () {
         const canBuy = save.coins >= rod.price;
         const row = document.createElement('div'); row.className = 'rowItem';
         const btnLabel = equipped ? 'Terpasang' : (owned ? 'Pakai' : (rod.price + ' koin'));
-        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('rod', rod.id)}"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Gigitan x${rod.biteSpeed} • Luck x${rod.rarityBoost} • Jarak ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
+        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('rod', rod.id)}"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Luck +${Math.round((rod.rarityBoost - 1) * 100)}% • Speed x${rod.biteSpeed} • Range ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
         shopList.appendChild(row);
       }
     } else if (shopTab === 'bait') {
@@ -2018,7 +2020,7 @@ const PMFish = (function () {
         let btns;
         if (bait.id === 'biasa') btns = `<button class="rowBtn ${equipped ? 'owned' : ''}" data-usebait="biasa" ${equipped ? 'disabled' : ''}>${equipped ? 'Dipakai' : 'Pakai'}</button>`;
         else btns = `${stock > 0 && !equipped ? `<button class="rowBtn" data-usebait="${bait.id}">Pakai</button>` : ''}<button class="rowBtn" data-bait="${bait.id}" ${!canBuy ? 'disabled' : ''}>Beli (${bait.price})</button>`;
-        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('bait', bait.id)}"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Stock: ${stock === 999 ? 'Unlimited' : stock} • Luck x${bait.rarityBoost}</div></div><div class="rowBtns">${btns}</div>`;
+        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('bait', bait.id)}"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Luck +${Math.round((bait.rarityBoost - 1) * 100)}% • Stock: ${stock === 999 ? 'Unlimited' : stock}</div></div><div class="rowBtns">${btns}</div>`;
         shopList.appendChild(row);
       }
     } else {
