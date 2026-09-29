@@ -277,7 +277,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v1.8</div>
+<div id="versionBadge">v1.9</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -1510,6 +1510,340 @@
     }
     currentCatch = null;
   }
+
+  // ================= MANCING REALISTIS (v1.9) =================
+const PMFish = (function () {
+  const wy = () => water.position.y;
+  const tipV = new THREE.Vector3();
+
+  // ---- joran: ruas ujung yang bisa melengkung ----
+  const tipSeg = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.014, 0.42, 8).translate(0, 0.21, 0), rodMesh.material);
+  tipSeg.position.set(0, 0.55, 0);
+  rodMesh.add(tipSeg);
+  function rodTip(out) {
+    tipSeg.updateWorldMatrix(true, false);
+    return out.set(0, 0.42, 0).applyMatrix4(tipSeg.matrixWorld);
+  }
+
+  // ---- tali ----
+  const LN = 20, linePos = new Float32Array(LN * 3);
+  const lineGeo = new THREE.BufferGeometry();
+  lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
+  const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 });
+  const line = new THREE.Line(lineGeo, lineMat);
+  line.frustumCulled = false; line.visible = false; scene.add(line);
+  function drawLine(sag, tens) {
+    rodTip(tipV);
+    const b = bobber.position;
+    for (let i = 0; i < LN; i++) {
+      const t = i / (LN - 1), j = i * 3;
+      linePos[j] = tipV.x + (b.x - tipV.x) * t;
+      linePos[j + 1] = tipV.y + (b.y - tipV.y) * t - sag * Math.sin(Math.PI * t);
+      linePos[j + 2] = tipV.z + (b.z - tipV.z) * t;
+    }
+    lineGeo.attributes.position.needsUpdate = true;
+    lineMat.color.setRGB(1, 1 - 0.7 * tens, 1 - 0.75 * tens);
+    line.visible = true;
+  }
+
+  // ---- pelampung dua warna ----
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+  cap.position.y = 0.085; bobber.add(cap);
+
+  // ---- riak air ----
+  const RN = 6, ripples = [];
+  for (let i = 0; i < RN; i++) {
+    const g = new THREE.RingGeometry(0.82, 1, 28); g.rotateX(-Math.PI / 2);
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+    m.visible = false; scene.add(m);
+    ripples.push({ m: m, t: 1, max: 1 });
+  }
+  function spawnRipple(x, z, size) {
+    let r = null;
+    for (let i = 0; i < RN; i++) if (ripples[i].t >= 1) { r = ripples[i]; break; }
+    if (!r) r = ripples[0];
+    r.t = 0; r.max = size; r.m.position.set(x, wy() + 0.04, z); r.m.visible = true;
+  }
+  function updateRipples(dt) {
+    for (let i = 0; i < RN; i++) {
+      const r = ripples[i]; if (r.t >= 1) continue;
+      r.t += dt / 1.1;
+      if (r.t >= 1) { r.m.visible = false; continue; }
+      const s = 0.12 + r.t * r.max;
+      r.m.scale.set(s, 1, s);
+      r.m.material.opacity = 0.6 * (1 - r.t);
+    }
+  }
+
+  // ---- percikan ----
+  const SPN = 44, spPos = new Float32Array(SPN * 3), spVel = new Float32Array(SPN * 3), spLife = new Float32Array(SPN);
+  for (let i = 0; i < SPN; i++) spPos[i * 3 + 1] = -50;
+  const spGeo = new THREE.BufferGeometry(); spGeo.setAttribute('position', new THREE.BufferAttribute(spPos, 3));
+  const spPts = new THREE.Points(spGeo, new THREE.PointsMaterial({ color: 0xeaf6ff, size: 0.1, transparent: true, opacity: 0.9, depthWrite: false }));
+  spPts.frustumCulled = false; scene.add(spPts);
+  let spActive = false;
+  function splash(x, z, n, pw) {
+    let c = 0;
+    for (let i = 0; i < SPN && c < n; i++) {
+      if (spLife[i] > 0) continue;
+      const a = Math.random() * Math.PI * 2, sp = (0.5 + Math.random() * 1.1) * pw, j = i * 3;
+      spLife[i] = 0.55 + Math.random() * 0.35;
+      spPos[j] = x; spPos[j + 1] = wy() + 0.05; spPos[j + 2] = z;
+      spVel[j] = Math.cos(a) * sp * 0.6; spVel[j + 1] = 2.0 + Math.random() * 1.8 * pw; spVel[j + 2] = Math.sin(a) * sp * 0.6;
+      c++;
+    }
+    spActive = true;
+  }
+  function updateSplash(dt) {
+    if (!spActive) return;
+    let any = false;
+    for (let i = 0; i < SPN; i++) {
+      if (spLife[i] <= 0) continue;
+      const j = i * 3;
+      spLife[i] -= dt;
+      if (spLife[i] <= 0) { spPos[j + 1] = -50; continue; }
+      spVel[j + 1] -= 9 * dt;
+      spPos[j] += spVel[j] * dt; spPos[j + 1] += spVel[j + 1] * dt; spPos[j + 2] += spVel[j + 2] * dt;
+      any = true;
+    }
+    spGeo.attributes.position.needsUpdate = true;
+    spActive = any;
+  }
+
+  // ---- bayangan ikan ----
+  const shGeo = new THREE.CircleGeometry(1, 20); shGeo.rotateX(-Math.PI / 2);
+  const fishShadow = new THREE.Mesh(shGeo, new THREE.MeshBasicMaterial({ color: 0x082a3c, transparent: true, opacity: 0.5, depthWrite: false }));
+  fishShadow.visible = false; scene.add(fishShadow);
+
+  const reelLabelEl = document.getElementById('reelLabel');
+
+  // ---- state ----
+  let castAng = 0, castDist = 5, flightT = 0, flightDur = 0.8, arcH = 1.5;
+  let nibbles = [], nibbleIdx = 0, nibbleAnim = 0, wobPh = 0;
+  let fDist = 0, fMax = 0, fSp = 1, fTired = 1, fPhase = 'rest', fPhaseT = 0, fPhaseDur = 1;
+  let tension = 0, lastTapT = -9, fWob = 0, fIdx = 0, warnT = 0, rippleT = 0;
+
+  function autoOk() { return fishState === 'reeling' && fPhase === 'rest' && tension < 0.85; }
+
+  function failReel(msg) {
+    resetFishing(); showToast(msg); Sfx.fail(); vibe(120); currentCatch = null;
+  }
+  function win() {
+    splash(bobber.position.x, bobber.position.z, 26, 1.4);
+    spawnRipple(bobber.position.x, bobber.position.z, 1.8);
+    finishReel(true);
+  }
+  function checkEnd() {
+    if (fishState !== 'reeling') return;
+    if (tension >= 1) failReel('Tali putus! Jangan tap terus pas ikan lari.');
+    else if (fDist >= fMax) failReel('Ikannya kabur jauh...');
+    else if (fDist <= 1.6) win();
+  }
+
+  const _resetFishing = resetFishing;
+  resetFishing = function () {
+    _resetFishing();
+    line.visible = false; fishShadow.visible = false; nibbleAnim = 0;
+  };
+
+  releaseCast = function () {
+    lockedPower = chargeT;
+    fishState = 'flying';
+    castBoost = totalBoost(); consumeBait();
+    Sfx.cast(); vibe(15);
+    powerWrap.style.display = 'none';
+    const rod = currentRod();
+    castDist = 2.5 + lockedPower * rod.castRange;
+    castAng = camYaw + Math.PI;
+    rodTip(tipV); bobberStart.copy(tipV);
+    bobberTarget.set(player.position.x + Math.sin(castAng) * castDist, wy() + 0.02, player.position.z + Math.cos(castAng) * castDist);
+    flightT = 0; flightDur = 0.55 + castDist * 0.045; arcH = 1.0 + castDist * 0.11;
+    bobber.position.copy(bobberStart); bobber.visible = true;
+    setFishBtnLabel('...', false);
+  };
+
+  beginWaiting = function () {
+    fishState = 'waiting';
+    const rod = currentRod();
+    waitTarget = (2.0 + Math.random() * 3.5) / rod.biteSpeed;
+    waitTimer = 0; nibbles = []; nibbleIdx = 0; nibbleAnim = 0; wobPh = Math.random() * 6.28;
+    if (waitTarget > 1.7) {
+      const cnt = 1 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < cnt; i++) nibbles.push(0.7 + Math.random() * (waitTarget - 1.5));
+      nibbles.sort(function (a, b) { return a - b; });
+    }
+    setFishBtnLabel('Nunggu...', false);
+  };
+
+  beginStrikeWindow = function () {
+    fishState = 'strike';
+    strikeTimer = 0;
+    setFishBtnLabel('TARIK!', true);
+    Sfx.bite(); vibe([60, 40, 60]);
+    fishHint.textContent = 'IKAN NYAMBER! TAP SEKARANG!';
+    fishHint.style.display = 'block';
+    spawnRipple(bobber.position.x, bobber.position.z, 1.1);
+    splash(bobber.position.x, bobber.position.z, 8, 0.8);
+    fishShadow.scale.set(0.15, 1, 0.4);
+    fishShadow.position.set(bobber.position.x, wy() + 0.03, bobber.position.z);
+    fishShadow.visible = true;
+  };
+
+  beginReeling = function () {
+    fishState = 'reeling';
+    currentCatch = rollFish(castBoost * PMEnv.boost());
+    fIdx = Math.max(0, RARITY_ORDER.indexOf(currentCatch.fish.rarity));
+    fSp = 0.8 + 0.3 * fIdx;
+    fDist = Math.max(2.5, Math.hypot(bobber.position.x - player.position.x, bobber.position.z - player.position.z));
+    fMax = fDist + 5 + fIdx * 1.2;
+    tension = 0.15; fTired = 1; fPhase = 'rest'; fPhaseT = 0; fPhaseDur = 1.0;
+    lastTapT = -9; reelLastTapTime = -999; fWob = Math.random() * 6.28; rippleT = 0; warnT = 0;
+    const s = 0.3 + fIdx * 0.07;
+    fishShadow.scale.set(s * 0.5, 1, s * 1.25); fishShadow.visible = true;
+    reelZoneEl.style.width = '85%'; reelZoneEl.className = '';
+    reelTapHint.textContent = Math.ceil(fDist - 1.6) + 'm';
+    reelLabelEl.textContent = 'TARIK! Tap cepat';
+    reelWrap.style.display = 'flex';
+    fishHint.style.display = 'none';
+    setFishBtnLabel('TARIK!', true);
+  };
+
+  handleReelTap = function () {
+    if (fishState !== 'reeling') return;
+    const nowMs = performance.now();
+    if (nowMs - reelLastTapTime < 60) return;
+    reelLastTapTime = nowMs; lastTapT = nowMs / 1000;
+    Sfx.tap();
+    if (fPhase === 'rest') { fDist -= 0.5; tension += 0.03; }
+    else { fDist -= 0.12; tension += 0.045 * (0.6 + 0.4 * fSp); }
+    checkEnd();
+  };
+
+  function updateRod(dt, now) {
+    let tx = 0.3, bend = 0, k = 9;
+    const st = fishState;
+    if (st === 'charging') { tx = -0.15 - chargeT * 0.6; bend = -0.12; }
+    else if (st === 'flying') { tx = 0.95; bend = 0.35 * (1 - flightT); k = 18; }
+    else if (st === 'waiting') { tx = 0.8; bend = 0.1 + (nibbleAnim > 0 ? 0.22 : 0); }
+    else if (st === 'strike') { tx = 0.55; bend = 0.55; k = 16; }
+    else if (st === 'reeling') { tx = 0.72; bend = 0.25 + tension * 0.95; }
+    rodMesh.rotation.x += (tx - rodMesh.rotation.x) * Math.min(1, dt * k);
+    tipSeg.rotation.x += (bend - tipSeg.rotation.x) * Math.min(1, dt * 12);
+    rodMesh.rotation.z = -0.5 + (st === 'reeling' ? Math.sin(now * 38) * 0.02 * tension : 0);
+  }
+
+  updateFishing = function (dt) {
+    const now = performance.now() / 1000;
+    if (fishState === 'charging') {
+      chargeT += dt * 0.9 * chargeDir;
+      if (chargeT >= 1) { chargeT = 1; chargeDir = -1; }
+      if (chargeT <= 0) { chargeT = 0; chargeDir = 1; }
+      powerFill.style.width = (chargeT * 100) + '%';
+      powerFill.className = chargeT > 0.8 ? 'critical' : (chargeT > 0.55 ? 'warn' : '');
+      powerMarker.style.left = (chargeT * 100) + '%';
+    } else if (fishState === 'flying') {
+      flightT += dt / flightDur;
+      if (flightT >= 1) {
+        bobber.position.copy(bobberTarget);
+        splash(bobberTarget.x, bobberTarget.z, 16, 1);
+        spawnRipple(bobberTarget.x, bobberTarget.z, 1.6);
+        Sfx.tap();
+        beginWaiting();
+      } else {
+        const u = flightT;
+        bobber.position.set(
+          bobberStart.x + (bobberTarget.x - bobberStart.x) * u,
+          bobberStart.y + (bobberTarget.y - bobberStart.y) * u + 4 * arcH * u * (1 - u),
+          bobberStart.z + (bobberTarget.z - bobberStart.z) * u);
+        drawLine(0.25 * (1 - u), 0);
+      }
+    } else if (fishState === 'waiting') {
+      waitTimer += dt;
+      const bx = bobberTarget.x + Math.sin(now * 0.7 + wobPh) * 0.12;
+      const bz = bobberTarget.z + Math.cos(now * 0.55 + wobPh) * 0.12;
+      let by = bobberTarget.y + Math.sin(now * 2.1 + wobPh) * 0.035;
+      if (nibbleIdx < nibbles.length && waitTimer >= nibbles[nibbleIdx]) {
+        nibbleIdx++; nibbleAnim = 0.35; spawnRipple(bx, bz, 0.6); Sfx.tap(); vibe(10);
+      }
+      if (nibbleAnim > 0) {
+        nibbleAnim -= dt;
+        by -= Math.sin(Math.max(0, 1 - nibbleAnim / 0.35) * Math.PI) * 0.09;
+      }
+      bobber.position.set(bx, by, bz);
+      drawLine(0.55 + Math.sin(now * 1.5) * 0.05, 0);
+      if (waitTimer >= waitTarget) beginStrikeWindow();
+    } else if (fishState === 'strike') {
+      strikeTimer += dt;
+      bobber.position.set(
+        bobberTarget.x + Math.sin(now * 17) * 0.06,
+        bobberTarget.y - 0.22 + Math.sin(now * 28) * 0.04,
+        bobberTarget.z + Math.cos(now * 13) * 0.06);
+      fishShadow.position.set(bobber.position.x, wy() + 0.03, bobber.position.z);
+      if (Math.random() < dt * 6) spawnRipple(bobber.position.x, bobber.position.z, 0.7);
+      drawLine(0.25, 0.35);
+      if (strikeTimer > 1.3) { resetFishing(); showToast('Kelamaan, ikannya lepas.'); }
+    } else if (fishState === 'reeling') {
+      fPhaseT += dt;
+      const tapping = (now - lastTapT) < 0.3;
+      if (fPhase === 'run') {
+        fDist += 1.0 * fSp * fTired * dt;
+        tension += 0.10 * fSp * fTired * dt;
+        if (!tapping) tension -= 0.45 * dt;
+        if (fPhaseT >= fPhaseDur) {
+          fPhase = 'rest'; fPhaseT = 0;
+          fPhaseDur = Math.max(0.9, 1.1 + Math.random() * 1.0 - fIdx * 0.08);
+          fTired = Math.max(0.45, fTired * 0.9);
+          setFishBtnLabel('TARIK!', true);
+        }
+      } else {
+        fDist += 0.15 * fSp * dt;
+        tension -= (tapping ? 0.25 : 0.5) * dt;
+        if (fPhaseT >= fPhaseDur) {
+          fPhase = 'run'; fPhaseT = 0;
+          fPhaseDur = 0.9 + Math.random() * 0.6 + fIdx * 0.08;
+          setFishBtnLabel('TAHAN!', false);
+          Sfx.bite(); vibe(40);
+        }
+      }
+      tension = Math.max(0, Math.min(1.05, tension));
+      const a = castAng + Math.sin(now * 1.3 + fWob) * (fPhase === 'run' ? 0.28 : 0.14);
+      const px = player.position.x + Math.sin(a) * fDist, pz = player.position.z + Math.cos(a) * fDist;
+      bobber.position.set(px + Math.sin(now * 9) * 0.03,
+        wy() + 0.02 - tension * 0.06 + Math.sin(now * (fPhase === 'run' ? 22 : 11)) * 0.025, pz);
+      fishShadow.position.set(px, wy() + 0.03, pz); fishShadow.rotation.y = a;
+      rippleT -= dt;
+      if (fPhase === 'run' && rippleT <= 0) { rippleT = 0.22; spawnRipple(px, pz, 0.8 + fIdx * 0.1); }
+      reelZoneEl.style.width = Math.max(0, 100 - tension * 100) + '%';
+      reelZoneEl.className = tension > 0.8 ? 'critical' : (tension > 0.55 ? 'warn' : '');
+      reelTapHint.textContent = Math.max(0, Math.ceil(fDist - 1.6)) + 'm';
+      reelLabelEl.textContent = tension > 0.85 ? 'TALI HAMPIR PUTUS!' : (fPhase === 'run' ? 'TAHAN! Ikan lari' : 'TARIK! Tap cepat');
+      if (tension > 0.85) { warnT -= dt; if (warnT <= 0) { warnT = 0.35; vibe(25); } }
+      drawLine(Math.max(0.05, 0.5 * (1 - tension)), tension);
+      checkEnd();
+    }
+    if (fishState === 'idle') {
+      fishHint.style.display = nearWater() ? 'none' : 'block';
+      if (!nearWater()) fishHint.textContent = 'Jalan ke tepi air dulu';
+    } else {
+      const target = fishState === 'charging' ? camYaw + Math.PI : castAng;
+      let d = target - player.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
+      player.rotation.y += d * Math.min(1, dt * 10);
+    }
+    updateRod(dt, now); updateRipples(dt); updateSplash(dt);
+  };
+
+  // auto-fish: cuma narik pas ikan lagi capek, jadi tali nggak putus
+  const _uaf = updateAutoFish;
+  updateAutoFish = function (dt) {
+    if (fishState === 'reeling' && !autoOk()) {
+      const real = handleReelTap;
+      handleReelTap = function () {};
+      try { _uaf(dt); } finally { handleReelTap = real; }
+    } else _uaf(dt);
+  };
+
+  return { autoOk: autoOk };
+})();
 
   fishBtn.addEventListener('pointerdown', () => {
     Sfx.unlock();
