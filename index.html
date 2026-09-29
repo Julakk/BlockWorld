@@ -306,13 +306,13 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v2.1</div>
+<div id="versionBadge">v2.2</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
   <div id="startSub">Jalan-jalan di pulau, lempar kail, tarik ikan, jual buat naik level!</div>
   <button id="startBtn">▶ MULAI MANCING</button>
-  <div id="startTips">Joystick kiri: jalan &nbsp;•&nbsp; Geser layar kanan: lihat sekitar<br>Deket air, tekan PANCING, lepas pas power pas, tarik pas ikan nyangkut!</div>
+  <div id="startTips">Joystick kiri: jalan &nbsp;•&nbsp; Geser layar kanan: lihat sekitar<br>Deket air, tekan PANCING, lepas di zona Perfect, lalu TAP TAP TAP sampai ikan naik!</div>
 </div>
 
 <div id="hud">
@@ -1685,6 +1685,7 @@ const PMFish = (function () {
 
   // ---- state ----
   let castAng = 0, castDist = 5, flightT = 0, flightDur = 0.8, arcH = 1.5;
+  let reelProg = 0, reelDrain = 0.3, reelGain = 0.07, reelGrace = 0;
   let nibbles = [], nibbleIdx = 0, nibbleAnim = 0, wobPh = 0;
   let fStart = 6, fDist = 0, fMax = 0, fSp = 1, fTired = 1, fPhase = 'rest', fPhaseT = 0, fPhaseDur = 1;
   let tension = 0, lastTapT = -9, fWob = 0, fIdx = 0, warnT = 0, rippleT = 0;
@@ -1849,46 +1850,27 @@ const PMFish = (function () {
       drawLine(0.25, 0.35);
       if (strikeTimer > 1.3) { resetFishing(); showToast('Kelamaan, ikannya lepas.'); }
     } else if (fishState === 'reeling') {
-      fPhaseT += dt;
-      const tapping = (now - lastTapT) < 0.3;
-      if (fPhase === 'run') {
-        fDist += 1.0 * fSp * fTired * dt;
-        tension += 0.10 * fSp * fTired * dt;
-        if (!tapping) tension -= 0.45 * dt;
-        if (fPhaseT >= fPhaseDur) {
-          fPhase = 'rest'; fPhaseT = 0;
-          fPhaseDur = Math.max(0.9, 1.1 + Math.random() * 1.0 - fIdx * 0.08);
-          fTired = Math.max(0.45, fTired * 0.9);
-          setFishBtnLabel('TARIK!', true);
-        }
-      } else {
-        fDist += 0.15 * fSp * dt;
-        tension -= (tapping ? 0.25 : 0.5) * dt;
-        if (fPhaseT >= fPhaseDur) {
-          fPhase = 'run'; fPhaseT = 0;
-          fPhaseDur = 0.9 + Math.random() * 0.6 + fIdx * 0.08;
-          setFishBtnLabel('TAHAN!', false);
-          Sfx.bite(); vibe(40);
-        }
-      }
-      if (currentCatch && currentCatch.tooHeavy) tension += 0.5 * dt;
-      tension = Math.max(0, Math.min(1.05, tension));
-      const a = castAng + Math.sin(now * 1.3 + fWob) * (fPhase === 'run' ? 0.28 : 0.14);
+      reelGrace = Math.max(0, reelGrace - dt);
+      const tapping = (now - lastTapT) < 0.25;
+      if (reelGrace <= 0) reelProg -= reelDrain * dt;
+      reelProg = Math.min(1, reelProg);
+      tension = 1 - Math.max(0, reelProg);
+      fDist = fStart - (fStart - 1.6) * Math.max(0, reelProg);
+      const a = castAng + Math.sin(now * 1.3 + fWob) * (tapping ? 0.1 : 0.22);
       const px = player.position.x + Math.sin(a) * fDist, pz = player.position.z + Math.cos(a) * fDist;
       bobber.position.set(px + Math.sin(now * 9) * 0.03,
-        wy() + 0.02 - tension * 0.06 + Math.sin(now * (fPhase === 'run' ? 22 : 11)) * 0.025, pz);
+        wy() + 0.02 - tension * 0.05 + Math.sin(now * (tapping ? 18 : 11)) * 0.025, pz);
       fishShadow.position.set(px, wy() + 0.03, pz); fishShadow.rotation.y = a;
       rippleT -= dt;
-      if (fPhase === 'run' && rippleT <= 0) { rippleT = 0.22; spawnRipple(px, pz, 0.8 + fIdx * 0.1); }
-      reelZoneEl.style.width = (Math.max(0, Math.min(1, (fStart - fDist) / Math.max(0.1, fStart - 1.6))) * 100) + '%';
-      reelProgressFill.style.width = Math.min(100, tension * 100) + '%';
-      reelProgressFill.style.background = tension > 0.8 ? '#ff5a5a' : (tension > 0.55 ? '#ffcf4d' : '#4ce88a');
-      reelZoneEl.className = tension > 0.8 ? 'critical' : (tension > 0.55 ? 'warn' : '');
+      if (tapping && rippleT <= 0) { rippleT = 0.2; spawnRipple(px, pz, 0.8 + fIdx * 0.1); }
+      reelZoneEl.style.width = (Math.max(0, reelProg) * 100) + '%';
+      reelZoneEl.className = reelProg < 0.25 ? 'critical' : (reelProg < 0.5 ? 'warn' : '');
       reelTapHint.textContent = '(' + String(Math.min(999, reelTapCount)).padStart(3, '0') + ')';
-      reelLabelEl.textContent = tension > 0.85 ? 'TALI HAMPIR PUTUS!' : (fPhase === 'run' ? 'TAHAN! Ikan lari' : 'Klik Cepat!');
-      if (tension > 0.85) { warnT -= dt; if (warnT <= 0) { warnT = 0.35; vibe(25); } }
+      reelLabelEl.textContent = reelProg < 0.25 ? 'CEPAT! Ikan mau lepas!' : 'Klik Cepat!';
+      if (reelProg < 0.25) { warnT -= dt; if (warnT <= 0) { warnT = 0.35; vibe(25); } }
       drawLine(Math.max(0.05, 0.5 * (1 - tension)), tension);
-      checkEnd();
+      if (reelProg >= 1) win();
+      else if (reelProg <= 0) failReel(currentCatch && currentCatch.tooHeavy ? 'Ikan ' + fmtKg(currentCatch.weight) + ' kelewat berat buat rod ini.' : 'Ikannya lepas! Tap lebih cepat.');
     }
     if (fishState === 'idle') {
       fishHint.style.display = nearWater() ? 'none' : 'block';
@@ -1910,6 +1892,45 @@ const PMFish = (function () {
       try { _uaf(dt); } finally { handleReelTap = real; }
     } else _uaf(dt);
   };
+
+    beginReeling = function () {
+    fishState = 'reeling';
+    currentCatch = rollFish(castBoost * PMEnv.boost()); assignWeight(currentCatch);
+    fIdx = Math.max(0, RARITY_ORDER.indexOf(currentCatch.fish.rarity));
+    const rod = currentRod();
+    const h = Math.min(1, (currentCatch.weight || 0) / (ROD_WEIGHT[rod.id] || 10));
+    reelGain = 0.07 * Math.sqrt(rod.biteSpeed) * (1.15 - 0.5 * h);
+    reelDrain = (0.22 + 0.06 * fIdx) * (1 + 0.5 * h);
+    if (currentCatch.tooHeavy) reelGain *= 0.25;
+    reelProg = 0.25; reelGrace = 0.8;
+    fStart = Math.max(2.5, Math.hypot(bobber.position.x - player.position.x, bobber.position.z - player.position.z));
+    fDist = fStart; tension = 0.75; lastTapT = -9; reelLastTapTime = -999;
+    fWob = Math.random() * 6.28; rippleT = 0; warnT = 0; reelTapCount = 0;
+    const sz = 0.3 + fIdx * 0.07;
+    fishShadow.scale.set(sz * 0.5, 1, sz * 1.25); fishShadow.visible = true;
+    reelZoneEl.style.width = '25%'; reelZoneEl.className = '';
+    reelTapHint.textContent = '(000)';
+    reelLabelEl.textContent = 'Klik Cepat!';
+    reelWrap.style.display = 'flex';
+    fishHint.style.display = 'none';
+    const rpt = document.getElementById('reelProgressTrack'); if (rpt) rpt.style.display = 'none';
+    setFishBtnLabel('TAP!', true);
+  };
+
+  handleReelTap = function () {
+    if (fishState !== 'reeling') return;
+    const nowMs = performance.now();
+    if (nowMs - reelLastTapTime < 50) return;
+    reelLastTapTime = nowMs; lastTapT = nowMs / 1000; reelTapCount++;
+    Sfx.tap();
+    reelProg = Math.min(1, reelProg + reelGain);
+    if (reelProg >= 1) win();
+  };
+
+  autoOk = function () { return true; };
+
+  const _bsw = beginStrikeWindow;
+  beginStrikeWindow = function () { _bsw(); setFishBtnLabel('TAP!', true); };
 
   return { autoOk: autoOk };
 })();
@@ -2356,14 +2377,16 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v2.1', DATE = '30 Sep 2026', KEY = 'pm_seen_ver';
+  var VER = 'v2.2', DATE = '30 Sep 2026', KEY = 'pm_seen_ver';
   var LOG = [
-    ["Judul bagian pertama", [
-      "Perubahan satu",
-      "Perubahan dua"
+    ["Reel tap-tap ala Fish It", [
+      "Sistem TAHAN dan TARIK dihapus, sekarang cukup tap terus.",
+      "Bar terisi tiap tap dan turun sendiri kalau berhenti. Penuh berarti ikan naik, kosong berarti ikan lepas.",
+      "Ikan yang lebih langka dan lebih berat bikin bar turun lebih cepat. Rod yang lebih bagus ngisi bar lebih banyak per tap.",
+      "Tali nggak bisa putus lagi. Ikan yang kelewat berat buat rod lu tetap bakal lepas."
     ]],
-    ["Judul bagian kedua", [
-      "Perubahan tiga"
+    ["Auto Mancing", [
+      "Auto tap terus sampai ikan naik, tapi ikan langka butuh rod yang cukup bagus. Ikan Rahasia tetap harus manual."
     ]]
   ];
   function lsGet() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
