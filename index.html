@@ -262,6 +262,31 @@
 #fishActionWrap { right: calc(30px + env(safe-area-inset-right, 0px)); }
 #interactBtn { right: calc(24px + env(safe-area-inset-right, 0px)); }
 </style>
+<style>
+/* ===== v2.0 gaya Fish It ===== */
+#powerZones { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, transparent 0 45%, rgba(123,232,107,.62) 45% 66%, rgba(74,168,255,.72) 66% 78%, rgba(255,194,51,.92) 78% 90%, rgba(74,168,255,.72) 90% 97%, rgba(255,90,90,.6) 97% 100%); }
+#powerFill { opacity: .5; }
+#powerMarker { z-index: 2; top: 0; bottom: 0; width: 4px; height: auto; border: none; background: #fff; margin-left: -2px; box-shadow: 0 0 6px #fff; filter: none; }
+#castRating { position: fixed; left: 50%; bottom: 190px; transform: translateX(-50%); z-index: 17; font-size: 22px; font-weight: 900; letter-spacing: 1px; opacity: 0; pointer-events: none; text-shadow: 0 3px 0 rgba(0,0,0,.45), 0 0 14px currentColor; }
+#castRating.show { animation: ratingPop .9s ease forwards; }
+@keyframes ratingPop { 0% { opacity: 0; transform: translate(-50%, 10px) scale(.6); } 20% { opacity: 1; transform: translate(-50%, 0) scale(1.2); } 70% { opacity: 1; transform: translate(-50%, -6px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -18px) scale(1); } }
+#reelZone { right: auto; left: 0; }
+#reelProgressTrack { display: block; width: 100%; height: 9px; border-radius: 999px; background: rgba(0,0,0,.45); border: 2px solid rgba(255,255,255,.7); overflow: hidden; }
+#reelProgressFill { transition: width .1s linear; }
+#statsRow { display: flex; gap: 5px; align-items: center; margin-top: 4px; font-size: 9px; font-weight: 800; white-space: nowrap; }
+#statsRow .st { padding: 1px 6px; border-radius: 7px; background: rgba(0,0,0,.35); border: 1.5px solid rgba(255,255,255,.25); }
+#statsRow .stL { color: #7bf08a; border-color: #3fbf5a; }
+#statsRow .stS { color: #ffe27a; border-color: #d9a92a; }
+#statsRow .stW { color: #8ecbff; border-color: #4a8fd6; }
+#invList { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+.fishCard { --rc: #9fb4bd; position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px 9px; border-radius: 16px; background: linear-gradient(165deg, rgba(255,255,255,.07), rgba(0,0,0,.28)); border: 2.5px solid var(--rc); box-shadow: 0 0 9px var(--rc); }
+.fishCard .fcImg { width: 64px; height: 64px; border-radius: 12px; image-rendering: pixelated; background: rgba(255,255,255,.08); }
+.fishCard .fcName { font-size: 12px; font-weight: 800; text-align: center; line-height: 1.2; color: var(--rc); }
+.fishCard .fcSub { font-size: 10px; color: var(--text-dim); text-align: center; }
+.fishCard .fcCount { position: absolute; top: 6px; left: 8px; font-size: 11px; font-weight: 900; background: rgba(0,0,0,.5); border-radius: 8px; padding: 1px 6px; }
+.fishCard .fcMut { position: absolute; top: 6px; right: 8px; font-size: 9px; font-weight: 900; color: #4a2600; background: linear-gradient(160deg, #ffe27a, #e0982a); border-radius: 8px; padding: 1px 6px; }
+.fishCard .rowBtn { width: 100%; padding: 7px 6px; font-size: 11px; }
+</style>
 </head>
 <body>
 
@@ -281,7 +306,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v1.9</div>
+<div id="versionBadge">v2.0</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -304,6 +329,7 @@
       </div>
     </div>
     <div id="gearRow"><span class="gearChip" id="rodChip"><svg class="ico"><use href="#ico-rod"/></svg><b id="rodVal">Starter Rod</b></span><span class="gearChip" id="baitChip"><span class="baitDot"></span><b id="baitVal">Starter</b></span></div>
+    <div id="statsRow"></div>
   </div>
   <div id="hudPills">
     <button class="hudPill" id="btnSellHud">Jual Semua</button>
@@ -337,9 +363,11 @@
 
 <div id="powerWrap">
   <div class="barEndIcon">↺</div>
-  <div id="powerTrack"><div id="powerFill"></div><div id="powerMarker"></div></div>
+  <div id="powerTrack"><div id="powerFill"></div><div id="powerZones"></div><div id="powerMarker"></div></div>
   <div class="barEndIcon">▶</div>
 </div>
+
+<div id="castRating"></div>
 
 <div id="reelWrap">
   <div id="reelLabelRow">
@@ -449,6 +477,33 @@
     { id: 'leviathan', name: 'Leviathan', rarity: 'mythical', value: 5500 },
     { id: 'kraken_purba', name: 'Kraken Purba', rarity: 'secret', value: 50000 },
   ];
+  const FISH_WEIGHT = { teri: [0.05, 0.3], mujair: [0.3, 1.2], lele: [0.8, 3], nila: [1, 6], kakap: [3, 15], tenggiri: [8, 40], tuna: [30, 250], hiu_kecil: [100, 800], marlin: [250, 1500], naga_laut: [800, 6000], mutiara: [500, 4000], leviathan: [5000, 60000], kraken_purba: [20000, 140000] };
+  const ROD_WEIGHT = { bambu: 10, kayu: 20, karbon: 400, perak: 5000, emas: 190000, legendaris: 150000 };
+  function fmtKg(w) {
+    if (w < 1) return Math.round(w * 1000) + ' g';
+    if (w < 100) return (Math.round(w * 10) / 10) + ' kg';
+    return String(Math.round(w)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' kg';
+  }
+  function assignWeight(c) {
+    const wr = FISH_WEIGHT[c.fish.id] || [1, 2];
+    const cap = ROD_WEIGHT[currentRod().id] || 10;
+    let w = wr[0] + Math.pow(Math.random(), 1.5) * (wr[1] - wr[0]);
+    c.tooHeavy = wr[0] > cap;
+    if (!c.tooHeavy) w = Math.min(w, cap);
+    c.weight = Math.round(w * 100) / 100;
+  }
+  function castRating(p) {
+    if (p >= 0.78 && p < 0.90) return { n: 'PERFECT!', b: 0.6, c: '#ffc233' };
+    if ((p >= 0.66 && p < 0.78) || (p >= 0.90 && p < 0.97)) return { n: 'AMAZING!', b: 0.35, c: '#4aa8ff' };
+    if (p >= 0.45 && p < 0.66) return { n: 'GOOD', b: 0.15, c: '#7be86b' };
+    return { n: 'MISS', b: 0, c: '#ff8a7a' };
+  }
+  function showCastRating(cr) {
+    const el = document.getElementById('castRating'); if (!el) return;
+    el.textContent = cr.n; el.style.color = cr.c;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  }
+  function castLuckBonus() { const cr = castRating(lockedPower); showCastRating(cr); return cr.b; }
   const FISH_BY_RARITY = {};
   FISH_TABLE.forEach(f => { (FISH_BY_RARITY[f.rarity] = FISH_BY_RARITY[f.rarity] || []).push(f); });
   const MUTATIONS = [
@@ -469,10 +524,10 @@
   const AUTOFISH_PRICE = 2500;
   const BAIT_TYPES = [
     { id: 'biasa', name: 'Starter Bait', price: 5, rarityBoost: 1.0, stock: 999 },
-    { id: 'midnight', name: 'Midnight Bait', price: 10, rarityBoost: 1.22, stock: 0 },
-    { id: 'super', name: 'Nature Bait', price: 25, rarityBoost: 1.45, stock: 0 },
-    { id: 'chroma', name: 'Chroma Bait', price: 60, rarityBoost: 2.0, stock: 0 },
-    { id: 'ajaib', name: 'Dark Matter Bait', price: 100, rarityBoost: 2.6, stock: 0 },
+    { id: 'midnight', name: 'Midnight Bait', price: 150, rarityBoost: 1.22, stock: 0 },
+    { id: 'super', name: 'Nature Bait', price: 500, rarityBoost: 1.45, stock: 0 },
+    { id: 'chroma', name: 'Chroma Bait', price: 1800, rarityBoost: 2.0, stock: 0 },
+    { id: 'ajaib', name: 'Dark Matter Bait', price: 5000, rarityBoost: 2.6, stock: 0 },
   ];
 
   // ================= PELUANG RARITAS =================
@@ -482,7 +537,7 @@
   const RARITY_MAXGEAR = [20, 28, 28, 16, 6.5, 1.3, 0.2]; // peluang di gear paling maksimal (jumlahnya tetap 100) -- secret tetap sangat jarang walau gear full
   // boost 1 = gear paling awal, MAX_BOOST = joran+umpan paling mahal. Di antaranya interpolasi lurus,
   // biar ikan mitos tetap kerasa "langka" walau udah gear terbaik (gak sampe lebih umum dari ikan biasa).
-  const MAX_BOOST = ROD_TIERS[ROD_TIERS.length - 1].rarityBoost * BAIT_TYPES[BAIT_TYPES.length - 1].rarityBoost;
+  const MAX_BOOST = ROD_TIERS[ROD_TIERS.length - 1].rarityBoost + BAIT_TYPES[BAIT_TYPES.length - 1].rarityBoost - 1;
   function rollRarity(boost) {
     const t = Math.max(0, Math.min(1, (boost - 1) / (MAX_BOOST - 1)));
     const shifted = RARITY_BASE.map((w, i) => w + (RARITY_MAXGEAR[i] - w) * t);
@@ -538,7 +593,7 @@
   }
   function currentRod() { return ROD_TIERS.find(r => r.id === save.rod) || ROD_TIERS[0]; }
   function currentBait() { return BAIT_TYPES.find(b => b.id === save.bait) || BAIT_TYPES[0]; }
-  function totalBoost() { return currentRod().rarityBoost * currentBait().rarityBoost; }
+  function totalBoost() { return currentRod().rarityBoost + currentBait().rarityBoost - 1; }
 
   // ================= TOAST =================
   function showToast(text, variant) {
@@ -617,15 +672,15 @@
   function saveQuiet() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
 
   // ================= REVEAL IKAN LANGKA (epic ke atas, secret punya efek sendiri) =================
-  const REVEAL_SECS = { epic: 1.7, legendary: 2.4, mythical: 3.0 };
+  const REVEAL_SECS = { common: 1.3, uncommon: 1.4, rare: 1.6, epic: 1.9, legendary: 2.5, mythical: 3.0 };
   let revealTimer = null;
   function showCatchReveal(c) {
     const dur = REVEAL_SECS[c.fish.rarity]; if (!dur) return;
     const el = document.getElementById('catchReveal'), card = document.getElementById('catchRevealCard');
     document.getElementById('catchRevealImg').src = fishIconCanvas(c.fish, c.mutation);
-    document.getElementById('catchRevealTier').textContent = RARITY_LABEL[c.fish.rarity];
+    document.getElementById('catchRevealTier').textContent = RARITY_LABEL[c.fish.rarity] + (c.mutation.name ? ' • MUTASI ' + c.mutation.name : '');
     document.getElementById('catchRevealName').textContent = (c.mutation.name ? c.mutation.name + ' ' : '') + c.fish.name;
-    document.getElementById('catchRevealVal').textContent = c.value + ' koin';
+    document.getElementById('catchRevealVal').textContent = (c.weight ? fmtKg(c.weight) + ' • ' : '') + c.value + ' koin';
     card.style.setProperty('--rc', RARITY_COLOR[c.fish.rarity]);
     card.style.setProperty('--dur', dur + 's');
     el.className = ''; void el.offsetWidth;
@@ -1355,7 +1410,7 @@
     fishHint.style.display = 'none';
   }
 
-  function consumeBait() {
+  function consumeBait() { return; /* bait permanen ala Fish It */
     const id = save.bait;
     if (id === 'biasa') return;
     save.baitStock[id] = Math.max(0, (save.baitStock[id] || 0) - 1);
@@ -1373,7 +1428,7 @@
   function releaseCast() {
     lockedPower = chargeT; // 0..1
     fishState = 'flying';
-    castBoost = totalBoost(); consumeBait();
+    castBoost = totalBoost() + castLuckBonus(); consumeBait();
     Sfx.cast(); vibe(15);
     powerWrap.style.display = 'none';
     const rod = currentRod();
@@ -1405,7 +1460,7 @@
 
   function beginReeling() {
     fishState = 'reeling';
-    currentCatch = rollFish(castBoost * PMEnv.boost());
+    currentCatch = rollFish(castBoost * PMEnv.boost()); assignWeight(currentCatch);
     reelExpandRate = RARITY_REEL_RATE[currentCatch.fish.rarity] || 12;
     reelDanger = 25; // buffer awal biar gak langsung kalah
     reelLastTapTime = -999;
@@ -1502,6 +1557,7 @@
       const key = currentCatch.fish.id + '|' + currentCatch.mutation.id;
       save.inventory[key] = save.inventory[key] || { fish: currentCatch.fish, mutation: currentCatch.mutation, count: 0 };
       save.inventory[key].count++; Quest.on('catch', currentCatch);
+      save.inventory[key].maxW = Math.max(save.inventory[key].maxW || 0, currentCatch.weight || 0);
       addXp(Math.round(currentCatch.value / 4) + 5);
       save.discovered = save.discovered || {}; save.discovered[currentCatch.fish.id] = true;
       const label = currentCatch.mutation.name ? currentCatch.mutation.name + ' ' + currentCatch.fish.name : currentCatch.fish.name;
@@ -1509,7 +1565,7 @@
         triggerSecretCatchFX(label + ' — ' + currentCatch.value + ' koin!');
         showToast('IKAN RAHASIA: ' + label + '!', 'secret');
       } else {
-        showToast('Dapat ' + label + '! (' + currentCatch.value + ' koin kalo dijual)');
+        /* hasil tangkapan tampil di popup */
       }
       Sfx.catchFish(currentCatch.fish.rarity); vibe(CATCH_VIBE[currentCatch.fish.rarity] || [25]);
       showCatchReveal(currentCatch);
@@ -1630,7 +1686,7 @@ const PMFish = (function () {
   // ---- state ----
   let castAng = 0, castDist = 5, flightT = 0, flightDur = 0.8, arcH = 1.5;
   let nibbles = [], nibbleIdx = 0, nibbleAnim = 0, wobPh = 0;
-  let fDist = 0, fMax = 0, fSp = 1, fTired = 1, fPhase = 'rest', fPhaseT = 0, fPhaseDur = 1;
+  let fStart = 6, fDist = 0, fMax = 0, fSp = 1, fTired = 1, fPhase = 'rest', fPhaseT = 0, fPhaseDur = 1;
   let tension = 0, lastTapT = -9, fWob = 0, fIdx = 0, warnT = 0, rippleT = 0;
 
   function autoOk() { return fishState === 'reeling' && fPhase === 'rest' && tension < 0.85; }
@@ -1645,9 +1701,9 @@ const PMFish = (function () {
   }
   function checkEnd() {
     if (fishState !== 'reeling') return;
-    if (tension >= 1) failReel('Tali putus! Jangan tap terus pas ikan lari.');
+    if (tension >= 1) failReel(currentCatch && currentCatch.tooHeavy ? 'Tali putus! Ikan ' + fmtKg(currentCatch.weight) + ' kelewat berat buat rod ini.' : 'Tali putus! Jangan tap terus pas ikan lari.');
     else if (fDist >= fMax) failReel('Ikannya kabur jauh...');
-    else if (fDist <= 1.6) win();
+    else if (fDist <= 1.6 && !(currentCatch && currentCatch.tooHeavy)) win();
   }
 
   const _resetFishing = resetFishing;
@@ -1659,7 +1715,7 @@ const PMFish = (function () {
   releaseCast = function () {
     lockedPower = chargeT;
     fishState = 'flying';
-    castBoost = totalBoost(); consumeBait();
+    castBoost = totalBoost() + castLuckBonus(); consumeBait();
     Sfx.cast(); vibe(15);
     powerWrap.style.display = 'none';
     const rod = currentRod();
@@ -1701,18 +1757,18 @@ const PMFish = (function () {
 
   beginReeling = function () {
     fishState = 'reeling';
-    currentCatch = rollFish(castBoost * PMEnv.boost());
+    currentCatch = rollFish(castBoost * PMEnv.boost()); assignWeight(currentCatch);
     fIdx = Math.max(0, RARITY_ORDER.indexOf(currentCatch.fish.rarity));
-    fSp = 0.8 + 0.3 * fIdx;
+    fSp = (0.8 + 0.3 * fIdx) * (1 + 0.5 * Math.min(1, (currentCatch.weight || 0) / (ROD_WEIGHT[currentRod().id] || 10)));
     fDist = Math.max(2.5, Math.hypot(bobber.position.x - player.position.x, bobber.position.z - player.position.z));
     fMax = fDist + 5 + fIdx * 1.2;
-    tension = 0.15; fTired = 1; fPhase = 'rest'; fPhaseT = 0; fPhaseDur = 1.0;
-    lastTapT = -9; reelLastTapTime = -999; fWob = Math.random() * 6.28; rippleT = 0; warnT = 0;
+    fStart = fDist; tension = 0.15; fTired = 1; fPhase = 'rest'; fPhaseT = 0; fPhaseDur = 1.0;
+    lastTapT = -9; reelLastTapTime = -999; fWob = Math.random() * 6.28; rippleT = 0; warnT = 0; reelTapCount = 0;
     const s = 0.3 + fIdx * 0.07;
     fishShadow.scale.set(s * 0.5, 1, s * 1.25); fishShadow.visible = true;
-    reelZoneEl.style.width = '85%'; reelZoneEl.className = '';
-    reelTapHint.textContent = Math.ceil(fDist - 1.6) + 'm';
-    reelLabelEl.textContent = 'TARIK! Tap cepat';
+    reelZoneEl.style.width = '0%'; reelZoneEl.className = '';
+    reelTapHint.textContent = '(000)';
+    reelLabelEl.textContent = 'Klik Cepat!';
     reelWrap.style.display = 'flex';
     fishHint.style.display = 'none';
     setFishBtnLabel('TARIK!', true);
@@ -1722,7 +1778,7 @@ const PMFish = (function () {
     if (fishState !== 'reeling') return;
     const nowMs = performance.now();
     if (nowMs - reelLastTapTime < 60) return;
-    reelLastTapTime = nowMs; lastTapT = nowMs / 1000;
+    reelLastTapTime = nowMs; lastTapT = nowMs / 1000; reelTapCount++;
     Sfx.tap();
     if (fPhase === 'rest') { fDist -= 0.5; tension += 0.03; }
     else { fDist -= 0.12; tension += 0.045 * (0.6 + 0.4 * fSp); }
@@ -1745,7 +1801,7 @@ const PMFish = (function () {
   updateFishing = function (dt) {
     const now = performance.now() / 1000;
     if (fishState === 'charging') {
-      chargeT += dt * 0.9 * chargeDir;
+      chargeT += dt * 0.75 * chargeDir;
       if (chargeT >= 1) { chargeT = 1; chargeDir = -1; }
       if (chargeT <= 0) { chargeT = 0; chargeDir = 1; }
       powerFill.style.width = (chargeT * 100) + '%';
@@ -1815,6 +1871,7 @@ const PMFish = (function () {
           Sfx.bite(); vibe(40);
         }
       }
+      if (currentCatch && currentCatch.tooHeavy) tension += 0.5 * dt;
       tension = Math.max(0, Math.min(1.05, tension));
       const a = castAng + Math.sin(now * 1.3 + fWob) * (fPhase === 'run' ? 0.28 : 0.14);
       const px = player.position.x + Math.sin(a) * fDist, pz = player.position.z + Math.cos(a) * fDist;
@@ -1823,10 +1880,12 @@ const PMFish = (function () {
       fishShadow.position.set(px, wy() + 0.03, pz); fishShadow.rotation.y = a;
       rippleT -= dt;
       if (fPhase === 'run' && rippleT <= 0) { rippleT = 0.22; spawnRipple(px, pz, 0.8 + fIdx * 0.1); }
-      reelZoneEl.style.width = Math.max(0, 100 - tension * 100) + '%';
+      reelZoneEl.style.width = (Math.max(0, Math.min(1, (fStart - fDist) / Math.max(0.1, fStart - 1.6))) * 100) + '%';
+      reelProgressFill.style.width = Math.min(100, tension * 100) + '%';
+      reelProgressFill.style.background = tension > 0.8 ? '#ff5a5a' : (tension > 0.55 ? '#ffcf4d' : '#4ce88a');
       reelZoneEl.className = tension > 0.8 ? 'critical' : (tension > 0.55 ? 'warn' : '');
-      reelTapHint.textContent = Math.max(0, Math.ceil(fDist - 1.6)) + 'm';
-      reelLabelEl.textContent = tension > 0.85 ? 'TALI HAMPIR PUTUS!' : (fPhase === 'run' ? 'TAHAN! Ikan lari' : 'TARIK! Tap cepat');
+      reelTapHint.textContent = '(' + String(Math.min(999, reelTapCount)).padStart(3, '0') + ')';
+      reelLabelEl.textContent = tension > 0.85 ? 'TALI HAMPIR PUTUS!' : (fPhase === 'run' ? 'TAHAN! Ikan lari' : 'Klik Cepat!');
       if (tension > 0.85) { warnT -= dt; if (warnT <= 0) { warnT = 0.35; vibe(25); } }
       drawLine(Math.max(0.05, 0.5 * (1 - tension)), tension);
       checkEnd();
@@ -1877,7 +1936,7 @@ const PMFish = (function () {
     if (fishState === 'idle') {
       if (!nearWater()) return;
       autoTimer += dt;
-      if (autoTimer > 0.9) { autoTimer = 0; fishState = 'charging'; chargeT = 0.85; releaseCast(); }
+      if (autoTimer > 0.9) { autoTimer = 0; fishState = 'charging'; chargeT = 0.5 + Math.random() * 0.2; releaseCast(); }
     } else if (fishState === 'strike') {
       autoTimer += dt;
       if (autoTimer > 0.35) {
@@ -1893,7 +1952,7 @@ const PMFish = (function () {
 
   function updateFishing(dt) {
     if (fishState === 'charging') {
-      chargeT += dt * 0.9 * chargeDir;
+      chargeT += dt * 0.75 * chargeDir;
       if (chargeT >= 1) { chargeT = 1; chargeDir = -1; }
       if (chargeT <= 0) { chargeT = 0; chargeDir = 1; }
       powerFill.style.width = (chargeT * 100) + '%';
@@ -1934,14 +1993,15 @@ const PMFish = (function () {
     invList.innerHTML = '';
     const entries = Object.values(save.inventory).filter(e => e.count > 0);
     let total = 0;
-    if (entries.length === 0) invList.innerHTML = '<div class="rowSub" style="text-align:center;padding:20px 0;">Belum ada ikan. Yuk mancing!</div>';
+    if (entries.length === 0) invList.innerHTML = '<div class="rowSub" style="grid-column:1/-1;text-align:center;padding:20px 0;">Belum ada ikan. Yuk mancing!</div>';
     entries.sort((a, b) => RARITY_ORDER.indexOf(b.fish.rarity) - RARITY_ORDER.indexOf(a.fish.rarity));
     for (const e of entries) {
       total += e.count;
       const row = document.createElement('div'); row.className = 'rowItem';
       const label = (e.mutation.name ? e.mutation.name + ' ' : '') + e.fish.name;
       const val = Math.round(e.fish.value * e.mutation.mult);
-      row.innerHTML = `<img class="rowIcon" src="${fishIconCanvas(e.fish, e.mutation)}"><div class="rowInfo"><div class="rowName" style="color:${RARITY_COLOR[e.fish.rarity]}">${label} x${e.count}</div><div class="rowSub">${RARITY_LABEL[e.fish.rarity]} • ${val} koin/ekor</div></div><button class="rowBtn" data-sell="${e.fish.id}|${e.mutation.id}">Jual</button>`;
+      row.className = 'fishCard'; row.style.setProperty('--rc', RARITY_COLOR[e.fish.rarity]);
+      row.innerHTML = `<span class="fcCount">x${e.count}</span>${e.mutation.name ? `<span class="fcMut">${e.mutation.name}</span>` : ''}<img class="fcImg" src="${fishIconCanvas(e.fish, e.mutation)}"><div class="fcName">${label}</div><div class="fcSub">${RARITY_LABEL[e.fish.rarity]} • ${e.maxW ? 'Terberat ' + fmtKg(e.maxW) : '-'}</div><button class="rowBtn" data-sell="${e.fish.id}|${e.mutation.id}">Jual ${val}</button>`;
       invList.appendChild(row);
     }
     invTotalCount.textContent = total + ' ikan';
@@ -2008,7 +2068,7 @@ const PMFish = (function () {
         const canBuy = save.coins >= rod.price;
         const row = document.createElement('div'); row.className = 'rowItem';
         const btnLabel = equipped ? 'Terpasang' : (owned ? 'Pakai' : (rod.price + ' koin'));
-        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('rod', rod.id)}"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Luck +${Math.round((rod.rarityBoost - 1) * 100)}% • Speed x${rod.biteSpeed} • Range ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
+        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('rod', rod.id)}"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Luck +${Math.round((rod.rarityBoost - 1) * 100)}% • Speed +${Math.round((rod.biteSpeed - 1) * 100)}% • Weight ${fmtKg(ROD_WEIGHT[rod.id])} • Range ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
         shopList.appendChild(row);
       }
     } else if (shopTab === 'bait') {
@@ -2019,8 +2079,9 @@ const PMFish = (function () {
         const row = document.createElement('div'); row.className = 'rowItem';
         let btns;
         if (bait.id === 'biasa') btns = `<button class="rowBtn ${equipped ? 'owned' : ''}" data-usebait="biasa" ${equipped ? 'disabled' : ''}>${equipped ? 'Dipakai' : 'Pakai'}</button>`;
-        else btns = `${stock > 0 && !equipped ? `<button class="rowBtn" data-usebait="${bait.id}">Pakai</button>` : ''}<button class="rowBtn" data-bait="${bait.id}" ${!canBuy ? 'disabled' : ''}>Beli (${bait.price})</button>`;
-        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('bait', bait.id)}"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Luck +${Math.round((bait.rarityBoost - 1) * 100)}% • Stock: ${stock === 999 ? 'Unlimited' : stock}</div></div><div class="rowBtns">${btns}</div>`;
+        else if (stock > 0) btns = `<button class="rowBtn ${equipped ? 'owned' : ''}" data-usebait="${bait.id}" ${equipped ? 'disabled' : ''}>${equipped ? 'Dipakai' : 'Pakai'}</button>`;
+        else btns = `<button class="rowBtn" data-bait="${bait.id}" ${!canBuy ? 'disabled' : ''}>${bait.price} koin</button>`;
+        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('bait', bait.id)}"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Luck +${Math.round((bait.rarityBoost - 1) * 100)}% • ${bait.id === 'biasa' || stock > 0 ? 'Dimiliki' : 'Belum dimiliki'}</div></div><div class="rowBtns">${btns}</div>`;
         shopList.appendChild(row);
       }
     } else {
@@ -2060,8 +2121,8 @@ const PMFish = (function () {
     if (baitBtn) {
       const id = baitBtn.dataset.bait; const bait = BAIT_TYPES.find(b => b.id === id);
       if (save.coins >= bait.price) {
-        save.coins -= bait.price; save.baitStock[id] = (save.baitStock[id] || 0) + 5; save.bait = id;
-        showToast('Beli ' + bait.name + ' x5!');
+        save.coins -= bait.price; save.baitStock[id] = Math.max(1, save.baitStock[id] || 0); save.bait = id;
+        showToast('Beli ' + bait.name + '!');
       }
       persistSave(); renderShop(); refreshHud();
     }
@@ -2094,8 +2155,10 @@ const PMFish = (function () {
     document.getElementById('xpFill').style.width = Math.min(100, (save.xp / xpForLevel(save.level)) * 100) + '%';
     document.getElementById('rodVal').textContent = currentRod().name; document.getElementById('rodChip').style.setProperty('--rc', GEAR_COLORS.rod[save.rod] || '#9fb4bd');
     document.getElementById('xpText').textContent = save.xp + '/' + xpForLevel(save.level);
+    const _rd = currentRod();
+    document.getElementById('statsRow').innerHTML = '<span class="st stL">Luck +' + Math.round((totalBoost() - 1) * 100) + '%</span><span class="st stS">Speed +' + Math.round((_rd.biteSpeed - 1) * 100) + '%</span><span class="st stW">Weight ' + fmtKg(ROD_WEIGHT[_rd.id] || 10) + '</span>';
     const b = currentBait();
-    document.getElementById('baitVal').textContent = b.name.replace(' Bait', '') + (b.id === 'biasa' ? '' : ' x' + (save.baitStock[b.id] || 0)); document.getElementById('baitChip').style.setProperty('--rc', GEAR_COLORS.bait[b.id] || '#9fb4bd');
+    document.getElementById('baitVal').textContent = b.name.replace(' Bait', ''); document.getElementById('baitChip').style.setProperty('--rc', GEAR_COLORS.bait[b.id] || '#9fb4bd');
     const cnt = Object.values(save.inventory).reduce((a, e) => a + e.count, 0);
     const badge = document.getElementById('invBadge');
     badge.textContent = cnt > 99 ? '99+' : cnt; badge.classList.toggle('show', cnt > 0);
