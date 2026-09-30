@@ -3155,7 +3155,7 @@ const PMFish = (function () {
 <script>
 (function () {
   var C = window.__PMC; if (!C) return;
-  var HASH = 2654374871;
+  var HASH = 2873835619;
   function hh(s) { var x = 2166136261; for (var i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return x >>> 0; }
   var dev = false; try { dev = localStorage.getItem('pm_dev') === '1'; } catch (e) {}
   var lab = null;
@@ -3221,17 +3221,25 @@ const PMFish = (function () {
   // buka: tap badge versi 7x lalu masukkan kode
   var badge = document.getElementById('versionBadge'), n = 0, t0 = 0;
   if (badge) {
-    badge.style.pointerEvents = 'auto';
+    badge.style.pointerEvents = 'auto'; badge.style.padding = '16px 30px';
     badge.addEventListener('click', function () {
       var now = Date.now(); if (now - t0 > 3000) n = 0; t0 = now;
-      if (++n < 7) return; n = 0;
+      if (++n < 7) { if (n >= 3) C.toast('Developer: ' + n + '/7'); return; } n = 0;
       if (dev) { C.toast('Mode developer sudah aktif'); return; }
-      var k = prompt('Kode developer:');
-      if (k === null) return;
-      if (hh('pm-dev:' + k) === HASH) {
-        dev = true; try { localStorage.setItem('pm_dev', '1'); } catch (e) {}
-        enable(); C.toast('Mode developer aktif');
-      } else C.toast('Kode salah');
+      askCode(function (k) {
+        if (hh('pm-dev:' + k) === HASH) {
+          dev = true; try { localStorage.setItem('pm_dev', '1'); } catch (e) {}
+          enable(); C.toast('Mode developer aktif');
+        } else C.toast('Kode salah');
+      });
+      function askCode(cb) {
+        var o = document.createElement('div'); o.className = 'modalOverlay show'; o.style.zIndex = 90;
+        o.innerHTML = '<div class="modalBox" style="width:min(90vw,360px)"><div class="modalHead"><h2>Kode developer</h2></div><div class="modalBody"><input id="pmDevIn" type="password" autocomplete="off" style="width:100%;padding:10px;border-radius:12px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;font-size:14px;user-select:text;-webkit-user-select:text"><div style="display:flex;gap:8px"><button class="rowBtn" id="pmDevNo" style="flex:1">Batal</button><button class="rowBtn" id="pmDevOk" style="flex:1">Masuk</button></div></div></div>';
+        document.body.appendChild(o);
+        var i = o.querySelector('#pmDevIn'); setTimeout(function () { i.focus(); }, 100);
+        o.querySelector('#pmDevNo').onclick = function () { o.remove(); };
+        o.querySelector('#pmDevOk').onclick = function () { var v = i.value; o.remove(); cb(v); };
+      }
     });
   }
 })();
