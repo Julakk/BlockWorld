@@ -309,7 +309,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v2.5</div>
+<div id="versionBadge">v2.6</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -2693,7 +2693,7 @@ const PMFish = (function () {
     if (gameStarted) {
       updatePlayerMove(dt);
       updateAutoFish(dt);
-      updateFishing(dt);
+      if (!document.querySelector(".modalOverlay.show")) updateFishing(dt);
       updateCamera();
       water.rotation.y += dt * 0.01;
       updateTownAnim(now / 1000);
@@ -2861,8 +2861,9 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v2.5', DATE = '30 Sep 2026', KEY = 'pm_seen_ver';
+  var VER = 'v2.6', DATE = '1 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v2.6", ["Save otomatis tiap 15 detik dan langsung tersimpan saat app di-minimize.", "Layar tidak mati lagi saat mancing.", "Game berhenti sementara saat menu terbuka.", "Tap area gelap di luar menu buat menutupnya.", "Bonus login harian dengan streak sampai 7 hari."]],
     ["Trofi & Perahu", ["Menu baru: Trofi (17 achievement), Karakter (baju/celana/topi), Pasar (harga ikan berubah tiap hari), Rekor.", "Perahu di dermaga kiri buat berlayar ke Laut Dalam. Akuarium di plaza buat pajang ikan langka.", "Event acak Golden Hour dan Blood Moon: mutasi lebih sering muncul.", "Joran sekarang punya warna dan cahaya sesuai tier."]],
     ["Tampilan Landscape", ["Game sekarang auto-rotate: bisa dimainkan portrait maupun landscape.", "HUD, tombol, dan menu otomatis menyesuaikan layar landscape."]],
     ["Ikan baru & Koleksi", [
@@ -2956,6 +2957,50 @@ const PMFish = (function () {
   function later() { setTimeout(f, 120); setTimeout(f, 400); }
   window.addEventListener('orientationchange', later);
   if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', later);
+})();
+</script>
+<script>
+(function () {
+  var KEY = 'pancingmania_save_v1';
+  function C() { return window.__PMC; }
+  function flush() {
+    try { if (C() && C().save) localStorage.setItem(KEY, JSON.stringify(C().save)); } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) flush(); });
+  window.addEventListener('pagehide', flush);
+  setInterval(flush, 15000);
+  var wl = null;
+  function lockScreen() {
+    try {
+      if ('wakeLock' in navigator && !wl) {
+        navigator.wakeLock.request('screen').then(function (l) {
+          wl = l; l.addEventListener('release', function () { wl = null; });
+        }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) lockScreen(); });
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.classList && t.classList.contains('modalOverlay') && t.id !== 'modalUpdate') t.classList.remove('show');
+  });
+  function dstr(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  function dailyBonus() {
+    var c = C(); if (!c) return;
+    var s = c.save, today = dstr(new Date()), yest = dstr(new Date(Date.now() - 86400000));
+    if (s.loginDay === today) return;
+    s.loginStreak = (s.loginDay === yest) ? (s.loginStreak || 0) + 1 : 1;
+    s.loginDay = today;
+    var n = Math.min(s.loginStreak, 7), coins = 40 * n + 10 * (s.level || 1);
+    s.coins += coins; c.persist(); c.refresh();
+    c.toast('Bonus login hari ke-' + s.loginStreak + ': +' + coins + ' koin');
+    c.Sfx.sell();
+  }
+  var sb = document.getElementById('startBtn');
+  if (sb) sb.addEventListener('click', function () {
+    lockScreen();
+    setTimeout(dailyBonus, 1200);
+  });
 })();
 </script>
 </body>
