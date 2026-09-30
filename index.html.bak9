@@ -287,9 +287,6 @@
 .fishCard .fcMut { position: absolute; top: 6px; right: 8px; font-size: 9px; font-weight: 900; color: #4a2600; background: linear-gradient(160deg, #ffe27a, #e0982a); border-radius: 8px; padding: 1px 6px; }
 .fishCard .rowBtn { width: 100%; padding: 7px 6px; font-size: 11px; }
 </style>
-<style>/* v2.3 fix interact */
-#interactBtn { bottom: 215px; }
-</style>
 </head>
 <body>
 
@@ -309,7 +306,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v2.4</div>
+<div id="versionBadge">v2.3</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -434,8 +431,7 @@
   </div>
 </div>
 
-<script src="three.min.js"></script>
-<script>window.THREE || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ================= PENGAMAN LOADING SCREEN (paling awal, di luar kode game) =================
 // Nangkep error apa pun yang bikin skrip berhenti sebelum boot() sempat jalan,
@@ -700,8 +696,6 @@
     function arp(n, step, type, vol) { for (let i = 0; i < n; i++) tone(SCALE[i % SCALE.length], i * step, 0.28, type, vol); }
     return {
       unlock() { ensure(); },
-      suspend() { try { if (ctx && ctx.state === 'running') ctx.suspend(); } catch (e) {} },
-      resume() { try { if (ctx && ctx.state === 'suspended' && !save.muted) ctx.resume(); } catch (e) {} },
       cast() { tone(700, 0, 0.25, 'sine', 0.1, 220); },
       bite() { tone(880, 0, 0.09, 'square', 0.07); tone(1175, 0.11, 0.12, 'square', 0.07); },
       tap() { tone(1000, 0, 0.04, 'triangle', 0.05); },
@@ -1098,7 +1092,7 @@
   const altGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeGlowTexture(), color: 0xb56bff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
   altGlow.scale.set(2.8, 2.8, 1); altGlow.position.y = 1.65; altar.add(altGlow);
   const altSign = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeSignTexture('ENCHANT', '#5a2a8a'), fog: false }));
-  altSign.scale.set(2.0, 0.5, 1); altSign.position.y = 2.9; altar.add(altSign);
+  altSign.scale.set(2.6, 0.65, 1); altSign.position.y = 3.0; altar.add(altSign);
   altar.position.set(-10.5, DECK_Y, 19.5);
   town.add(altar);
   TOWN_COLLIDERS.push({ x: -10.5, z: 19.5, r: 1.8 });
@@ -1411,7 +1405,7 @@
   
     const lbl = document.createElement('div');
     lbl.style.cssText = 'position:fixed;top:calc(74px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:9;font-size:10px;font-weight:700;color:rgba(255,255,255,0.8);text-shadow:1px 1px 2px rgba(0,0,0,0.8);pointer-events:none;white-space:nowrap;';
-    lbl.id = 'envLabel'; document.body.appendChild(lbl);
+    document.body.appendChild(lbl);
   
     let last = performance.now(), tDay = 0, rainLevel = 0, rainTarget = 0, skyAcc = 9, lblAcc = 9;
     let nextWx = last / 1000 + 80 + Math.random() * 60;
@@ -2394,10 +2388,8 @@ const PMFish = (function () {
   // ================= LOOP UTAMA =================
   let lastT = performance.now(), fpsAcc = 0, fpsCount = 0, fpsShown = 60;
   const fpsEl = document.getElementById('fpsFish');
-  let rafId = 0, loopOn = false, loopPaused = false;
   function animate() {
-    loopOn = true;
-    rafId = requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
     const now = performance.now();
     let dt = (now - lastT) / 1000; lastT = now;
     dt = Math.min(dt, 0.08);
@@ -2416,21 +2408,6 @@ const PMFish = (function () {
     }
     renderer.render(scene, camera);
   }
-
-  // Pause loop + audio waktu app di-minimize / layar mati, lanjut lagi pas balik
-  document.addEventListener('visibilitychange', () => {
-    if (!loopOn) return;
-    if (document.hidden) {
-      loopPaused = true;
-      cancelAnimationFrame(rafId);
-      Sfx.suspend();
-    } else if (loopPaused) {
-      loopPaused = false;
-      lastT = performance.now(); // biar dt gak loncat besar setelah balik
-      Sfx.resume();
-      rafId = requestAnimationFrame(animate);
-    }
-  });
 
   // ================= LOADING & START =================
   const loadingScreenEl = document.getElementById('loadingScreen');
@@ -2559,9 +2536,8 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v2.4', DATE = '30 Sep 2026', KEY = 'pm_seen_ver';
+  var VER = 'v2.3', DATE = '30 Sep 2026', KEY = 'pm_seen_ver';
   var LOG = [
-    ["Tampilan Landscape", ["Game sekarang auto-rotate: bisa dimainkan portrait maupun landscape.", "HUD, tombol, dan menu otomatis menyesuaikan layar landscape."]],
     ["Ikan baru & Koleksi", [
       "17 ikan baru, jadi total 30 ikan di Koleksi. Koleksi sekarang nunjukin zona tiap ikan.",
       "Ada ikan Perairan Dangkal (Kerapu, Ubur-ubur Bening, Kuda Laut Kristal, Penyu Hijau, dan lainnya) dan ikan Laut Dalam."
@@ -2608,51 +2584,6 @@ const PMFish = (function () {
   if (startBtn) startBtn.addEventListener('click', function () {
     if (lsGet() !== VER) setTimeout(function () { ov.classList.add('show'); }, 700);
   });
-})();
-</script>
-<!-- landscape-fix v2.4 -->
-<style>
-@media (orientation: landscape) and (max-height: 520px) {
-  #hud { top: calc(6px + env(safe-area-inset-top, 0px)); }
-  .hudPanel { padding: 4px 10px 4px 16px; border-width: 2px; }
-  #hudPills { top: calc(8px + env(safe-area-inset-top, 0px)); left: auto; right: calc(70px + env(safe-area-inset-right, 0px)); transform: none; max-width: none; gap: 4px; }
-  .hudPill { font-size: 9px; padding: 4px 8px; }
-  #versionBadge { top: auto; bottom: calc(3px + env(safe-area-inset-bottom, 0px)); }
-  #envLabel { top: auto !important; bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important; }
-  #topRightBW { top: calc(6px + env(safe-area-inset-top, 0px)); gap: 5px; }
-  .iconBtn { width: 46px; }
-  .iconCircle { width: 40px; height: 40px; }
-  #topRightBW .ico { width: 20px !important; height: 20px !important; }
-  #joystickZone { width: 104px; height: 104px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
-  #fishActionWrap { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
-  #fishBtn { width: 84px; height: 84px; font-size: 11px; border-width: 3px; }
-  #fishBtn .ico { width: 17px; height: 17px; }
-  #powerWrap, #reelWrap { bottom: calc(40px + env(safe-area-inset-bottom, 0px)); }
-  #castRating { bottom: 100px; }
-  #interactBtn { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); right: calc(132px + env(safe-area-inset-right, 0px)); }
-  #toastWrap { top: 56px; }
-  .modalOverlay { padding: 8px calc(8px + env(safe-area-inset-right, 0px)) 8px calc(8px + env(safe-area-inset-left, 0px)); }
-  .modalBox { width: min(92vw, 620px); max-height: 92vh; max-height: 92dvh; }
-  .modalHead { padding: 9px 14px; }
-  .modalBody { padding: 8px 12px; }
-  .modalFoot { padding: 8px 14px; }
-  #invList { grid-template-columns: repeat(3, 1fr); }
-  #startScreen { gap: 8px; padding: 10px; overflow-y: auto; justify-content: flex-start; }
-  #startScreen > :first-child { margin-top: auto; }
-  #startScreen > :last-child { margin-bottom: auto; }
-  #startTitle { font-size: 30px; }
-  #startBtn { padding: 10px 36px; margin-top: 2px; }
-  #startTips { padding: 6px 12px; }
-  #loadingScreen { gap: 10px; }
-  #loadingLogo { font-size: 26px; }
-}
-</style>
-<script>
-(function () {
-  function f() { window.dispatchEvent(new Event('resize')); }
-  function later() { setTimeout(f, 120); setTimeout(f, 400); }
-  window.addEventListener('orientationchange', later);
-  if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', later);
 })();
 </script>
 </body>
