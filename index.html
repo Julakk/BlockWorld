@@ -351,7 +351,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v3.0</div>
+<div id="versionBadge">v3.1</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -2933,7 +2933,7 @@ const PMFish = (function () {
     scene: scene, player: player, body: body, legL: legL, rodMesh: rodMesh, boatMesh: boatMesh, town: town,
     TOWN_SHOPS: TOWN_SHOPS, TOWN_COLLIDERS: TOWN_COLLIDERS, FISH_TABLE: FISH_TABLE, MUTATIONS: MUTATIONS,
     RARITY_COLOR: RARITY_COLOR, RARITY_LABEL: RARITY_LABEL, RARITY_ORDER: RARITY_ORDER, ROD_TIERS: ROD_TIERS, BAIT_TYPES: BAIT_TYPES,
-    GEAR_COLORS: GEAR_COLORS, ISLAND_RADIUS: ISLAND_RADIUS, DECK_Y: DECK_Y, fmtKg: fmtKg,
+    GEAR_COLORS: GEAR_COLORS, ISLAND_RADIUS: ISLAND_RADIUS, DECK_Y: DECK_Y, fmtKg: fmtKg, get fishState() { return fishState; }, get tapCount() { return reelTapCount; },
     makeSignTexture: makeSignTexture, fishIconCanvas: fishIconCanvas, addXp: addXp, Sfx: Sfx, vibe: vibe,
     get save() { return save; }, persist: persistSave, refresh: refreshHud, toast: showToast,
     hookFinish: function (w) { var o = finishReel; finishReel = function (ok) { var c = currentCatch; o(ok); w(ok, c); }; },
@@ -3030,32 +3030,9 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v3.0', DATE = '2 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v3.1', DATE = '2 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
-    ["Update v3.0", ["Gambar 30 ikan diganti jadi HD: tiap spesies punya bentuk, sisik, sirip, dan mata sendiri.", "Ikon Rod dan Bait sekarang berupa gambar joran dan umpan, bukan kotak warna.", "Perahu 3D lebih detail: kayu bertekstur, pagar, bangku, lentera, dan bendera.", "Joran di tangan punya permata bercahaya sesuai tier."]],
-    ["Update v2.9", ["Perbaikan kecil dan peningkatan stabilitas."]],
-    ["Update v2.8", ["Loading screen baru: ombak bergerak, pelampung, persen loading, dan tips acak.", "Halaman utama baru: matahari terbenam, ombak, gelembung, dan kartu status Level, koin, koleksi.", "Tombol MULAI lebih hidup. Animasi otomatis mati kalau HP diset kurangi gerakan."]],
-    ["Update v2.7", ["Konfirmasi sebelum Jual Semua kalau ada ikan Epik ke atas atau mutasi.", "Tombol Back Android sekarang nutup menu, bukan keluar dari game.", "Pengaturan Getar ON/OFF di Menu."]],
-    ["Update v2.6", ["Save otomatis tiap 15 detik dan langsung tersimpan saat app di-minimize.", "Layar tidak mati lagi saat mancing.", "Game berhenti sementara saat menu terbuka.", "Tap area gelap di luar menu buat menutupnya.", "Bonus login harian dengan streak sampai 7 hari."]],
-    ["Trofi & Perahu", ["Menu baru: Trofi (17 achievement), Karakter (baju/celana/topi), Pasar (harga ikan berubah tiap hari), Rekor.", "Perahu di dermaga kiri buat berlayar ke Laut Dalam. Akuarium di plaza buat pajang ikan langka.", "Event acak Golden Hour dan Blood Moon: mutasi lebih sering muncul.", "Joran sekarang punya warna dan cahaya sesuai tier."]],
-    ["Tampilan Landscape", ["Game sekarang auto-rotate: bisa dimainkan portrait maupun landscape.", "HUD, tombol, dan menu otomatis menyesuaikan layar landscape."]],
-    ["Ikan baru & Koleksi", [
-      "17 ikan baru, jadi total 30 ikan di Koleksi. Koleksi sekarang nunjukin zona tiap ikan.",
-      "Ada ikan Perairan Dangkal (Kerapu, Ubur-ubur Bening, Kuda Laut Kristal, Penyu Hijau, dan lainnya) dan ikan Laut Dalam."
-    ]],
-    ["Zona Laut Dalam", [
-      "Air gelap di kejauhan adalah Laut Dalam. Lempar dari ujung dermaga dengan Carbon Rod ke atas buat sampai ke sana.",
-      "Isinya Ikan Lentera, Todak, Pari Manta, Hiu Martil, Cumi Raksasa, Ikan Bulan, Paus Biru, dan Megalodon (Secret).",
-      "Peluang ikan langka lebih tinggi, tapi ikannya lebih kuat narik."
-    ]],
-    ["Shiny dan mutasi baru", [
-      "Mutasi baru: Besar (lebih berat, harga x2.5) dan Hantu (harga x6).",
-      "Shiny punya peluang sendiri 4% dan bisa nempel ke mutasi lain, harga x3."
-    ]],
-    ["Altar Enchant", [
-      "Altar baru di plaza sisi kiri. Enchant rod lu buat bonus Luck atau Speed, dari Luck I sampai Swift III dan Fortune.",
-      "Hasil enchant bisa dipilih dulu: Pakai atau Buang. Biayanya makin mahal buat rod yang lebih bagus."
-    ]]
+    ["Update v3.1", ["Karakter dibuat ulang lebih detail: wajah, telinga, alis, kerah, rompi, dan jam tangan.", "Tangan sekarang memegang joran dengan siku yang menekuk.", "Animasi mancing: melempar, menunggu, strike tersentak, dan memutar reel saat menarik ikan.", "Info Update lama dihapus, sekarang hanya menampilkan update terbaru."]]
   ];
   function lsGet() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
   function lsSet(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
@@ -3407,6 +3384,117 @@ const PMFish = (function () {
     var id = C.save.rod; if (id === lastRod) return; lastRod = id;
     var idx = C.ROD_TIERS.findIndex(function (r) { return r.id === id; }), col = new THREE.Color(C.GEAR_COLORS.rod[id] || '#9fb4bd');
     gem.material.color.copy(col); gem.material.emissive.copy(col); gem.visible = ring.visible = idx >= 1; gem.scale.setScalar(1 + idx * 0.25);
+  });
+})();
+</script>
+<script>
+(function () {
+  var C = window.__PMC; if (!C || !C.player) return;
+  var P = C.player, rod = C.rodMesh, V = THREE.Vector3, Q = THREE.Quaternion, DOWN = new V(0, -1, 0);
+  P.rotation.order = 'YXZ';
+  function std(c, r, m) { return new THREE.MeshStandardMaterial({ color: c, roughness: r === undefined ? 0.7 : r, metalness: m || 0 }); }
+  function put(par, geo, mat, x, y, z) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; par.add(m); return m; }
+  var kids = P.children.slice(), arms = {}, legs = {}, headM = null;
+  kids.forEach(function (m) {
+    var p = m.geometry && m.geometry.parameters; if (!m.isMesh || !p) return;
+    if (p.radiusTop === 0.08 && p.radiusBottom === 0.07 && m.position.y > 1.1) arms[m.position.x < 0 ? 'L' : 'R'] = m;
+    if (p.radiusTop === 0.105) legs[m.position.x < 0 ? 'L' : 'R'] = m;
+    if (p.radius === 0.2 && p.widthSegments === 24) headM = m;
+  });
+  if (!arms.L || !arms.R || !legs.L || !legs.R || !headM) { console.warn('Karakter HD: bagian tidak ketemu'); return; }
+
+  // kepala jadi grup sendiri biar bisa menunduk / menoleh
+  var HG = new THREE.Group(); HG.position.set(0, 1.3, 0); P.add(HG);
+  kids.forEach(function (m) { if (m.isMesh && m.position.y > 1.29) HG.attach(m); });
+
+  // wajah
+  var skin = headM.material, hairM = std(0x3a2a1a, 0.9), white = std(0xffffff, 0.3), brass = std(0xc9a24a, 0.3, 0.8);
+  var eyes = HG.children.filter(function (m) { return m.geometry && m.geometry.parameters && m.geometry.parameters.radius === 0.024; });
+  [-1, 1].forEach(function (s) {
+    eyes.push(put(HG, new THREE.SphereGeometry(0.036, 12, 10), white, s * 0.075, 0.2, 0.16));
+    eyes.push(put(HG, new THREE.SphereGeometry(0.007, 8, 6), white, s * 0.068, 0.212, 0.204));
+    var br = put(HG, new THREE.BoxGeometry(0.06, 0.011, 0.012), hairM, s * 0.075, 0.255, 0.178); br.rotation.z = -s * 0.12;
+    var ear = put(HG, new THREE.SphereGeometry(0.042, 10, 8), skin, s * 0.198, 0.19, 0); ear.scale.set(0.5, 1, 0.8);
+  });
+  var mouth = put(HG, new THREE.TorusGeometry(0.032, 0.005, 6, 12, Math.PI), std(0x8a3b32, 0.6), 0, 0.11, 0.186); mouth.rotation.z = Math.PI;
+
+  // pakaian: kerah, kantong rompi, gesper, kantong umpan
+  var kh = std(0x8a7a52, 0.9);
+  var collar = put(P, new THREE.TorusGeometry(0.14, 0.03, 8, 20), std(0xeeeeee, 0.8), 0, 1.275, 0); collar.rotation.x = Math.PI / 2; collar.scale.y = 0.9;
+  [-1, 1].forEach(function (s) { put(P, new THREE.BoxGeometry(0.13, 0.13, 0.035), kh, s * 0.1, 0.86, 0.168); });
+  put(P, new THREE.BoxGeometry(0.06, 0.05, 0.02), brass, 0, 0.7, 0.166);
+  put(P, new THREE.BoxGeometry(0.11, 0.14, 0.09), std(0x5a3a1e, 0.9), 0.27, 0.64, 0.02);
+
+  // tangan: pisah lengan atas + lengan bawah (siku)
+  function prep(arm) {
+    var k = arm.children.slice(), el = new THREE.Group(); el.position.set(0, -0.27, 0); arm.add(el);
+    if (k[1]) el.attach(k[1]); if (k[2]) el.attach(k[2]); return el;
+  }
+  var eL = prep(arms.L), eR = prep(arms.R);
+  var watch = put(eL, new THREE.TorusGeometry(0.052, 0.011, 6, 16), brass, 0, -0.22, 0); watch.rotation.x = Math.PI / 2;
+
+  var tmp = new V(), pv = new V(), up = new V(), ep = new V(), lo = new V(), tg = new V(), qa = new Q(), qe = new Q(), qi = new Q();
+  function gp(x, y, z) { rod.updateMatrix(); return tg.set(x, y, z).applyMatrix4(rod.matrix); }
+  function ik(arm, el, target, side, wt) {
+    var s = arm.position, d = tmp.copy(target).sub(s), len = d.length() || 1e-3, a = 0.27, b = 0.29;
+    var D = Math.min(len, a + b - 0.004); d.multiplyScalar(1 / len);
+    var cA = Math.max(-1, Math.min(1, (a * a + D * D - b * b) / (2 * a * D))), sA = Math.sqrt(1 - cA * cA);
+    pv.set(side * 0.5, -0.6, -0.6); pv.addScaledVector(d, -pv.dot(d));
+    if (pv.lengthSq() < 1e-6) pv.set(side, 0, 0); pv.normalize();
+    up.copy(d).multiplyScalar(cA).addScaledVector(pv, sA);
+    qa.setFromUnitVectors(DOWN, up);
+    ep.copy(up).multiplyScalar(a).add(s);
+    lo.copy(target).sub(ep).normalize().applyQuaternion(qi.copy(qa).invert());
+    qe.setFromUnitVectors(DOWN, lo);
+    arm.quaternion.slerp(qa, wt); el.quaternion.slerp(qe, wt);
+  }
+
+  var t0 = 0, w = 0, theta = 0, lastTap = 0, spin = 0, blinkAt = 3, blinkT = -1, lean = 0, kick = 0, prevSt = 'idle';
+  C.hookAnim(function (t) {
+    var dt = Math.min(0.1, Math.max(0.001, t - t0)); t0 = t;
+    var st = C.fishState, fishing = st !== 'idle';
+    w += ((fishing ? 1 : 0) - w) * Math.min(1, dt * 9);
+    if (st === 'strike' && prevSt !== 'strike') kick = 1;
+    prevSt = st; kick = Math.max(0, kick - dt * 2.2);
+    var tc = C.tapCount; if (tc !== lastTap) { spin = 1; lastTap = tc; }
+    spin = Math.max(0, spin - dt * 2.5);
+    if (st === 'reeling') theta += dt * (3 + spin * 16);
+
+    // joran dipegang di depan dada saat mancing
+    rod.position.x = 0.42 - 0.32 * w; rod.position.z = 0.2 + 0.08 * w;
+
+    // tangan kanan selalu pegang gagang joran
+    eR.rotation.set(-0.3, 0, 0);
+    ik(arms.R, eR, gp(0, -0.4, 0), 1, 1);
+    // tangan kiri: bebas saat jalan, pegang joran / putar reel saat mancing
+    eL.rotation.set(-0.3 - Math.abs(arms.L.rotation.x) * 0.6, 0, 0);
+    if (w > 0.01) {
+      var tgt = st === 'reeling' ? gp(-0.03, -0.2 + 0.045 * Math.cos(theta), 0.045 * Math.sin(theta)) : gp(0, -0.12, 0);
+      ik(arms.L, eL, tgt, -1, w);
+    }
+
+    // kaki membuka saat mancing
+    legs.L.rotation.z = -0.09 * w; legs.R.rotation.z = 0.09 * w;
+
+    // badan condong + kepala
+    var tl = 0, th = 0.03 * Math.sin(t * 0.8);
+    if (st === 'charging') tl = -0.12;
+    else if (st === 'flying') tl = 0.2;
+    else if (st === 'waiting') { tl = 0.04; th = 0.2; }
+    else if (st === 'strike') { tl = -0.1; th = 0.05; }
+    else if (st === 'reeling') { tl = -0.1 - 0.04 * Math.sin(theta); th = 0.12; }
+    tl -= 0.22 * kick;
+    lean += (tl - lean) * Math.min(1, dt * 10); P.rotation.x = lean;
+    HG.rotation.x += (th - HG.rotation.x) * Math.min(1, dt * 8);
+    HG.rotation.z = kick > 0 ? Math.sin(t * 50) * 0.03 * kick : 0;
+    HG.rotation.y = fishing ? 0 : 0.05 * Math.sin(t * 0.5);
+
+    // napas + kedip
+    C.body.scale.y = 1 + 0.012 * Math.sin(t * 2.2); HG.position.y = 1.3 + 0.005 * Math.sin(t * 2.2);
+    var bl = 1;
+    if (blinkT < 0 && t > blinkAt) blinkT = t;
+    if (blinkT >= 0) { var u = (t - blinkT) / 0.14; if (u >= 1) { blinkT = -1; blinkAt = t + 2.5 + Math.random() * 3.5; } else bl = 1 - 0.9 * Math.sin(u * Math.PI); }
+    eyes.forEach(function (e) { e.scale.y = bl; });
   });
 })();
 </script>
