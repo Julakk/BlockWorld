@@ -290,6 +290,47 @@
 <style>/* v2.3 fix interact */
 #interactBtn { bottom: 215px; }
 </style>
+<style>
+/* ===== v2.8 loading + halaman utama ===== */
+:root { --wave: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12' preserveAspectRatio='none'><path d='M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 V12 H0Z' fill='white'/></svg>"); }
+#loadingScreen { background: linear-gradient(180deg, #0d4a6b 0%, #0a2c44 52%, #041522 100%); overflow: hidden; }
+#loadingLogo { font-size: 36px; }
+#loadingPct { font-size: 12px; font-weight: 800; color: var(--gold); min-height: 14px; }
+#loadingTip { max-width: 290px; text-align: center; font-size: 11.5px; line-height: 1.5; color: var(--text-dim); padding: 8px 14px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+.wvBox { position: absolute; left: 0; right: 0; bottom: 0; height: 26%; pointer-events: none; }
+.wv { position: absolute; left: 0; right: 0; bottom: 0; background: var(--wave) repeat-x; background-size: 240px 100%; animation: wvMove 7s linear infinite; }
+.wv.w1 { height: 70%; opacity: .10; }
+.wv.w2 { height: 50%; opacity: .16; animation-duration: 5s; animation-direction: reverse; }
+.wv.w3 { height: 32%; opacity: .22; animation-duration: 9s; }
+@keyframes wvMove { to { background-position-x: 240px; } }
+.ldBobber { position: absolute; left: 50%; bottom: 52%; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: linear-gradient(180deg, #fff 0 45%, #e04a3a 45% 100%); border: 2px solid #fff; box-shadow: 0 0 14px rgba(255,255,255,.5); animation: bobFloat 2.2s ease-in-out infinite; }
+@keyframes bobFloat { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-9px) rotate(6deg); } }
+
+#startScreen { background: transparent !important; }
+#startDeco { position: fixed; inset: 0; z-index: 19; overflow: hidden; pointer-events: none;
+  background: linear-gradient(180deg, #1c3f7a 0%, #6a5a9e 28%, #f08a6a 52%, #ffc98a 66%, #0f5577 66.2%, #083049 100%); }
+#startScreen[style*="display: none"] + #startDeco, #startScreen[style*="display:none"] + #startDeco { display: none; }
+#startDeco .sun { position: absolute; left: 50%; top: 50%; width: 120px; height: 120px; margin-left: -60px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #fff6c9, #ffd27a 55%, #ff9e4a); box-shadow: 0 0 60px 20px rgba(255,190,110,.45); animation: sunPulse 5s ease-in-out infinite; }
+@keyframes sunPulse { 50% { box-shadow: 0 0 80px 28px rgba(255,190,110,.6); } }
+#startDeco .wvBox { height: 36%; }
+#startDeco .wv { background-size: 300px 100%; }
+#startDeco .wv.w1 { opacity: .14; } #startDeco .wv.w2 { opacity: .2; } #startDeco .wv.w3 { opacity: .3; }
+.bub { position: absolute; bottom: -20px; width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.35); border: 1px solid rgba(255,255,255,.5); animation: bubUp linear infinite; }
+@keyframes bubUp { to { transform: translateY(-105vh) translateX(18px); opacity: 0; } }
+#startTitle { font-size: 46px; letter-spacing: .5px; filter: drop-shadow(0 0 14px rgba(55,209,200,.55)) drop-shadow(2px 5px 6px rgba(0,0,0,.55)); }
+#startSub { color: #ffeedd; text-shadow: 1px 1px 3px rgba(0,0,0,.6); }
+#startStats { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+#startStats span { padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 800; background: rgba(8,22,32,.6); border: 2px solid rgba(255,255,255,.7); box-shadow: 0 3px 0 rgba(0,0,0,.3); }
+#startBtn { position: relative; overflow: hidden; border: 3px solid #fff; padding: 16px 52px; font-size: 17px; box-shadow: 0 7px 0 rgba(0,80,90,.55), 0 14px 26px rgba(0,0,0,.4); animation: btnBreath 2.4s ease-in-out infinite; }
+#startBtn::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); animation: btnShine 3s ease-in-out infinite; }
+@keyframes btnBreath { 50% { transform: scale(1.04); } }
+@keyframes btnShine { 0% { left: -60%; } 55%,100% { left: 130%; } }
+#startBtn:active { transform: translateY(5px); box-shadow: 0 2px 0 rgba(0,80,90,.55); animation: none; }
+#startTips { background: rgba(8,22,32,.55); border-color: rgba(255,255,255,.2); }
+@media (orientation: landscape) and (max-height: 520px) { #startDeco .sun { width: 80px; height: 80px; margin-left: -40px; top: 40%; } #startTitle { font-size: 32px; } #ldTipHide, #loadingTip { display: none; } }
+@media (prefers-reduced-motion: reduce) { .wv, .bub, .ldBobber, #startBtn, #startBtn::after, #startDeco .sun, #startTitle, #loadingLogo { animation: none !important; } }
+</style>
 </head>
 <body>
 
@@ -309,7 +350,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v2.7</div>
+<div id="versionBadge">v2.8</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -2861,8 +2902,9 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v2.7', DATE = '2 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v2.8', DATE = '2 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v2.8", ["Loading screen baru: ombak bergerak, pelampung, persen loading, dan tips acak.", "Halaman utama baru: matahari terbenam, ombak, gelembung, dan kartu status Level, koin, koleksi.", "Tombol MULAI lebih hidup. Animasi otomatis mati kalau HP diset kurangi gerakan."]],
     ["Update v2.7", ["Konfirmasi sebelum Jual Semua kalau ada ikan Epik ke atas atau mutasi.", "Tombol Back Android sekarang nutup menu, bukan keluar dari game.", "Pengaturan Getar ON/OFF di Menu."]],
     ["Update v2.6", ["Save otomatis tiap 15 detik dan langsung tersimpan saat app di-minimize.", "Layar tidak mati lagi saat mancing.", "Game berhenti sementara saat menu terbuka.", "Tap area gelap di luar menu buat menutupnya.", "Bonus login harian dengan streak sampai 7 hari."]],
     ["Trofi & Perahu", ["Menu baru: Trofi (17 achievement), Karakter (baju/celana/topi), Pasar (harga ikan berubah tiap hari), Rekor.", "Perahu di dermaga kiri buat berlayar ke Laut Dalam. Akuarium di plaza buat pajang ikan langka.", "Event acak Golden Hour dan Blood Moon: mutasi lebih sering muncul.", "Joran sekarang punya warna dan cahaya sesuai tier."]],
@@ -3054,6 +3096,58 @@ const PMFish = (function () {
       if (vib && ov) ov(30);
     };
     host.appendChild(btn);
+  }
+})();
+</script>
+<script>
+(function () {
+  function waves() { return '<div class="wvBox"><div class="wv w1"></div><div class="wv w2"></div><div class="wv w3"></div></div>'; }
+
+  // ---- loading screen ----
+  var ls = document.getElementById('loadingScreen');
+  if (ls) {
+    var tips = ['Lepas tombol pas marker di zona Perfect buat peluang ikan langka naik.',
+      'Malam hari dan hujan bikin ikan langka lebih gampang nyangkut.',
+      'Ikan Rahasia harus ditarik manual, Auto Mancing gak bisa.',
+      'Pajang ikan langka di Akuarium biar gak ikut kejual.',
+      'Cek Pasar tiap hari, harga ikan berubah-ubah.',
+      'Lempar jauh dari ujung dermaga buat masuk Laut Dalam.'];
+    var tip = document.createElement('div'); tip.id = 'loadingTip';
+    tip.textContent = 'Tips: ' + tips[Math.floor(Math.random() * tips.length)];
+    var pct = document.createElement('div'); pct.id = 'loadingPct'; pct.textContent = '0%';
+    var track = document.getElementById('loadingBarTrack');
+    if (track) track.insertAdjacentElement('afterend', pct);
+    ls.appendChild(tip);
+    ls.insertAdjacentHTML('beforeend', waves() + '<div class="ldBobber"></div>');
+    var fill = document.getElementById('loadingBarFill');
+    if (fill) new MutationObserver(function () {
+      pct.textContent = Math.round(parseFloat(fill.style.width) || 0) + '%';
+    }).observe(fill, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  // ---- halaman utama ----
+  var ss = document.getElementById('startScreen');
+  if (ss) {
+    var d = document.createElement('div'); d.id = 'startDeco';
+    var b = '<div class="sun"></div>' + waves();
+    for (var i = 0; i < 14; i++) {
+      var sz = 4 + Math.floor(Math.random() * 7);
+      b += '<i class="bub" style="left:' + Math.floor(Math.random() * 100) + '%;width:' + sz + 'px;height:' + sz + 'px;animation-duration:' + (7 + Math.random() * 9).toFixed(1) + 's;animation-delay:-' + (Math.random() * 12).toFixed(1) + 's"></i>';
+    }
+    d.innerHTML = b;
+    ss.insertAdjacentElement('afterend', d);
+
+    var stats = document.createElement('div'); stats.id = 'startStats';
+    var btn = document.getElementById('startBtn');
+    if (btn) ss.insertBefore(stats, btn);
+    function upd() {
+      var c = window.__PMC; if (!c || !c.save) return;
+      var s = c.save, n = Object.keys(s.discovered || {}).length;
+      stats.innerHTML = '<span>Level ' + s.level + '</span><span>' + s.coins + ' koin</span><span>Koleksi ' + n + '/' + c.FISH_TABLE.length + '</span>';
+    }
+    upd();
+    new MutationObserver(upd).observe(ss, { attributes: true, attributeFilter: ['style'] });
+    setTimeout(upd, 400);
   }
 })();
 </script>
