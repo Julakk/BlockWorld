@@ -1,1 +1,4 @@
 node_modules/
+# di-copy otomatis oleh CI dari root sebelum build
+www/index.html
+www/three.min.js

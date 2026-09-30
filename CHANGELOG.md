@@ -4,6 +4,7 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 
 ## 2026-09-30
 
+- **Fix build & APK**: Three.js sekarang disimpan lokal (`three.min.js`) dan ikut di dalam APK, jadi game jalan tanpa internet (CDN cuma jadi cadangan). `versionCode` otomatis naik tiap build dan `versionName` ngikutin versi game, jadi APK baru bisa nimpa yang lama. Game dan audio otomatis pause saat app di-minimize. Workflow pakai JDK 17. `sw.js` dan workflow auto-bump dihapus karena nggak dipakai, `www/index.html` sekarang di-gitignore.
 - **v2.3 - Ikan baru & Koleksi**: 17 ikan baru, jadi total 30 ikan di Koleksi. Koleksi sekarang nunjukin zona tiap ikan. Ada ikan Perairan Dangkal (Kerapu, Ubur-ubur Bening, Kuda Laut Kristal, Penyu Hijau, dan lainnya) dan ikan Laut Dalam.
 - **v2.3 - Zona Laut Dalam**: Air gelap di kejauhan adalah Laut Dalam. Lempar dari ujung dermaga dengan Carbon Rod ke atas buat sampai ke sana. Isinya Ikan Lentera, Todak, Pari Manta, Hiu Martil, Cumi Raksasa, Ikan Bulan, Paus Biru, dan Megalodon (Secret). Peluang ikan langka lebih tinggi, tapi ikannya lebih kuat narik.
 - **v2.3 - Shiny dan mutasi baru**: Mutasi baru: Besar (lebih berat, harga x2.5) dan Hantu (harga x6). Shiny punya peluang sendiri 4% dan bisa nempel ke mutasi lain, harga x3.

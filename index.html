@@ -434,7 +434,8 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="three.min.js"></script>
+<script>window.THREE || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
 <script>
 // ================= PENGAMAN LOADING SCREEN (paling awal, di luar kode game) =================
 // Nangkep error apa pun yang bikin skrip berhenti sebelum boot() sempat jalan,
@@ -699,6 +700,8 @@
     function arp(n, step, type, vol) { for (let i = 0; i < n; i++) tone(SCALE[i % SCALE.length], i * step, 0.28, type, vol); }
     return {
       unlock() { ensure(); },
+      suspend() { try { if (ctx && ctx.state === 'running') ctx.suspend(); } catch (e) {} },
+      resume() { try { if (ctx && ctx.state === 'suspended' && !save.muted) ctx.resume(); } catch (e) {} },
       cast() { tone(700, 0, 0.25, 'sine', 0.1, 220); },
       bite() { tone(880, 0, 0.09, 'square', 0.07); tone(1175, 0.11, 0.12, 'square', 0.07); },
       tap() { tone(1000, 0, 0.04, 'triangle', 0.05); },
@@ -2391,8 +2394,10 @@ const PMFish = (function () {
   // ================= LOOP UTAMA =================
   let lastT = performance.now(), fpsAcc = 0, fpsCount = 0, fpsShown = 60;
   const fpsEl = document.getElementById('fpsFish');
+  let rafId = 0, loopOn = false, loopPaused = false;
   function animate() {
-    requestAnimationFrame(animate);
+    loopOn = true;
+    rafId = requestAnimationFrame(animate);
     const now = performance.now();
     let dt = (now - lastT) / 1000; lastT = now;
     dt = Math.min(dt, 0.08);
@@ -2411,6 +2416,21 @@ const PMFish = (function () {
     }
     renderer.render(scene, camera);
   }
+
+  // Pause loop + audio waktu app di-minimize / layar mati, lanjut lagi pas balik
+  document.addEventListener('visibilitychange', () => {
+    if (!loopOn) return;
+    if (document.hidden) {
+      loopPaused = true;
+      cancelAnimationFrame(rafId);
+      Sfx.suspend();
+    } else if (loopPaused) {
+      loopPaused = false;
+      lastT = performance.now(); // biar dt gak loncat besar setelah balik
+      Sfx.resume();
+      rafId = requestAnimationFrame(animate);
+    }
+  });
 
   // ================= LOADING & START =================
   const loadingScreenEl = document.getElementById('loadingScreen');
