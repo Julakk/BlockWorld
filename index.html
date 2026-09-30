@@ -309,7 +309,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v2.6</div>
+<div id="versionBadge">v2.7</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -2861,8 +2861,9 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v2.6', DATE = '1 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v2.7', DATE = '2 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v2.7", ["Konfirmasi sebelum Jual Semua kalau ada ikan Epik ke atas atau mutasi.", "Tombol Back Android sekarang nutup menu, bukan keluar dari game.", "Pengaturan Getar ON/OFF di Menu."]],
     ["Update v2.6", ["Save otomatis tiap 15 detik dan langsung tersimpan saat app di-minimize.", "Layar tidak mati lagi saat mancing.", "Game berhenti sementara saat menu terbuka.", "Tap area gelap di luar menu buat menutupnya.", "Bonus login harian dengan streak sampai 7 hari."]],
     ["Trofi & Perahu", ["Menu baru: Trofi (17 achievement), Karakter (baju/celana/topi), Pasar (harga ikan berubah tiap hari), Rekor.", "Perahu di dermaga kiri buat berlayar ke Laut Dalam. Akuarium di plaza buat pajang ikan langka.", "Event acak Golden Hour dan Blood Moon: mutasi lebih sering muncul.", "Joran sekarang punya warna dan cahaya sesuai tier."]],
     ["Tampilan Landscape", ["Game sekarang auto-rotate: bisa dimainkan portrait maupun landscape.", "HUD, tombol, dan menu otomatis menyesuaikan layar landscape."]],
@@ -3001,6 +3002,59 @@ const PMFish = (function () {
     lockScreen();
     setTimeout(dailyBonus, 1200);
   });
+})();
+</script>
+<script>
+(function () {
+  function C() { return window.__PMC; }
+
+  // 1) Konfirmasi sebelum Jual Semua kalau ada ikan Epik+ atau mutasi
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#btnSellHud,#btnSellAll');
+    if (!b) return;
+    var c = C(); if (!c) return;
+    var inv = c.save.inventory, keep = 0;
+    for (var k in inv) {
+      var x = inv[k]; if (!x || x.count <= 0) continue;
+      if (c.RARITY_ORDER.indexOf(x.fish.rarity) >= 3 || (x.mutation && x.mutation.id !== 'normal')) keep += x.count;
+    }
+    if (keep > 0 && !confirm('Di tas ada ' + keep + ' ikan Epik ke atas / mutasi. Jual semua?')) {
+      e.stopImmediatePropagation(); e.preventDefault();
+    }
+  }, true);
+
+  // 2) Tombol Back Android menutup menu yang kebuka
+  var pushed = false;
+  function anyOpen() { return !!document.querySelector('.modalOverlay.show'); }
+  new MutationObserver(function () {
+    var open = anyOpen();
+    if (open && !pushed) { pushed = true; try { history.pushState({ pm: 1 }, ''); } catch (e) {} }
+    else if (!open && pushed) { pushed = false; try { history.back(); } catch (e) {} }
+  }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+  window.addEventListener('popstate', function () {
+    if (!anyOpen()) return;
+    pushed = false;
+    document.querySelectorAll('.modalOverlay.show').forEach(function (m) { m.classList.remove('show'); });
+  });
+
+  // 3) Toggle getar
+  var vib = true;
+  try { vib = localStorage.getItem('pm_vib') !== '0'; } catch (e) {}
+  var ov = navigator.vibrate && navigator.vibrate.bind(navigator);
+  if (ov) navigator.vibrate = function (p) { return vib ? ov(p) : false; };
+  var host = document.getElementById('menuPanel') || document.getElementById('hudPills');
+  if (host) {
+    var btn = document.createElement('button');
+    btn.className = 'hudPill';
+    btn.textContent = 'Getar: ' + (vib ? 'ON' : 'OFF');
+    btn.onclick = function () {
+      vib = !vib;
+      try { localStorage.setItem('pm_vib', vib ? '1' : '0'); } catch (e) {}
+      btn.textContent = 'Getar: ' + (vib ? 'ON' : 'OFF');
+      if (vib && ov) ov(30);
+    };
+    host.appendChild(btn);
+  }
 })();
 </script>
 </body>
