@@ -306,7 +306,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v2.2</div>
+<div id="versionBadge">v2.3</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -2377,16 +2377,24 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v2.2', DATE = '30 Sep 2026', KEY = 'pm_seen_ver';
+  var VER = 'v2.3', DATE = '30 Sep 2026', KEY = 'pm_seen_ver';
   var LOG = [
-    ["Reel tap-tap ala Fish It", [
-      "Sistem TAHAN dan TARIK dihapus, sekarang cukup tap terus.",
-      "Bar terisi tiap tap dan turun sendiri kalau berhenti. Penuh berarti ikan naik, kosong berarti ikan lepas.",
-      "Ikan yang lebih langka dan lebih berat bikin bar turun lebih cepat. Rod yang lebih bagus ngisi bar lebih banyak per tap.",
-      "Tali nggak bisa putus lagi. Ikan yang kelewat berat buat rod lu tetap bakal lepas."
+    ["Ikan baru & Koleksi", [
+      "17 ikan baru, jadi total 30 ikan di Koleksi. Koleksi sekarang nunjukin zona tiap ikan.",
+      "Ada ikan Perairan Dangkal (Kerapu, Ubur-ubur Bening, Kuda Laut Kristal, Penyu Hijau, dan lainnya) dan ikan Laut Dalam."
     ]],
-    ["Auto Mancing", [
-      "Auto tap terus sampai ikan naik, tapi ikan langka butuh rod yang cukup bagus. Ikan Rahasia tetap harus manual."
+    ["Zona Laut Dalam", [
+      "Air gelap di kejauhan adalah Laut Dalam. Lempar dari ujung dermaga dengan Carbon Rod ke atas buat sampai ke sana.",
+      "Isinya Ikan Lentera, Todak, Pari Manta, Hiu Martil, Cumi Raksasa, Ikan Bulan, Paus Biru, dan Megalodon (Secret).",
+      "Peluang ikan langka lebih tinggi, tapi ikannya lebih kuat narik."
+    ]],
+    ["Shiny dan mutasi baru", [
+      "Mutasi baru: Besar (lebih berat, harga x2.5) dan Hantu (harga x6).",
+      "Shiny punya peluang sendiri 4% dan bisa nempel ke mutasi lain, harga x3."
+    ]],
+    ["Altar Enchant", [
+      "Altar baru di plaza sisi kiri. Enchant rod lu buat bonus Luck atau Speed, dari Luck I sampai Swift III dan Fortune.",
+      "Hasil enchant bisa dipilih dulu: Pakai atau Buang. Biayanya makin mahal buat rod yang lebih bagus."
     ]]
   ];
   function lsGet() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }

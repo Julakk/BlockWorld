@@ -4,6 +4,10 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 
 ## 2026-09-30
 
+- **v2.3 - Ikan baru & Koleksi**: 17 ikan baru, jadi total 30 ikan di Koleksi. Koleksi sekarang nunjukin zona tiap ikan. Ada ikan Perairan Dangkal (Kerapu, Ubur-ubur Bening, Kuda Laut Kristal, Penyu Hijau, dan lainnya) dan ikan Laut Dalam.
+- **v2.3 - Zona Laut Dalam**: Air gelap di kejauhan adalah Laut Dalam. Lempar dari ujung dermaga dengan Carbon Rod ke atas buat sampai ke sana. Isinya Ikan Lentera, Todak, Pari Manta, Hiu Martil, Cumi Raksasa, Ikan Bulan, Paus Biru, dan Megalodon (Secret). Peluang ikan langka lebih tinggi, tapi ikannya lebih kuat narik.
+- **v2.3 - Shiny dan mutasi baru**: Mutasi baru: Besar (lebih berat, harga x2.5) dan Hantu (harga x6). Shiny punya peluang sendiri 4% dan bisa nempel ke mutasi lain, harga x3.
+- **v2.3 - Altar Enchant**: Altar baru di plaza sisi kiri. Enchant rod lu buat bonus Luck atau Speed, dari Luck I sampai Swift III dan Fortune. Hasil enchant bisa dipilih dulu: Pakai atau Buang. Biayanya makin mahal buat rod yang lebih bagus.
 - **v2.2 - Reel tap-tap ala Fish It**: Sistem TAHAN dan TARIK dihapus, sekarang cukup tap terus. Bar terisi tiap tap dan turun sendiri kalau berhenti. Penuh berarti ikan naik, kosong berarti ikan lepas. Ikan yang lebih langka dan lebih berat bikin bar turun lebih cepat. Rod yang lebih bagus ngisi bar lebih banyak per tap. Tali nggak bisa putus lagi. Ikan yang kelewat berat buat rod lu tetap bakal lepas.
 - **v2.2 - Auto Mancing**: Auto tap terus sampai ikan naik, tapi ikan langka butuh rod yang cukup bagus. Ikan Rahasia tetap harus manual.
 - **v2.0 - Mekanik mancing ala Fish It**: luck meter saat lempar dengan zona Good, Amazing, dan Perfect yang ngasih bonus Luck. Ikan sekarang punya berat dan tiap rod punya batas berat, jadi ikan yang kelewat berat bikin tali putus.
