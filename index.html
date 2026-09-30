@@ -350,7 +350,7 @@
   <div id="loadingLabel">Memuat...</div>
 </div>
 
-<div id="versionBadge">v2.8</div>
+<div id="versionBadge">v2.9</div>
 
 <div id="startScreen" style="display:none;">
   <div id="startTitle"><svg class="ico" style="width:32px;height:32px;color:var(--gold);vertical-align:-6px;"><use href="#ico-rod"/></svg> Pancing Mania</div>
@@ -828,7 +828,7 @@ window.PMExt = function (C) {
     bandeng: [0.3, 2], belanak: [0.2, 1.5], baronang: [0.4, 3], kerapu: [3, 60], ubur: [0.5, 12], kuda_laut: [0.02, 0.3], penyu: [60, 400],
     layur: [0.1, 2], kembung: [0.1, 0.9], lentera: [0.2, 3], todak: [20, 180], pari_manta: [200, 1500], hiu_martil: [150, 900],
     cumi_raksasa: [500, 3000], ikan_bulan: [800, 5000], paus_biru: [8000, 80000], megalodon: [25000, 150000] };
-  const ROD_WEIGHT = { bambu: 10, kayu: 20, karbon: 400, perak: 5000, emas: 190000, legendaris: 150000 };
+  const ROD_WEIGHT = { bambu: 10, kayu: 20, karbon: 400, perak: 5000, emas: 190000, legendaris: 150000, dev: 1e9 };
   function fmtKg(w) {
     if (w < 1) return Math.round(w * 1000) + ' g';
     if (w < 100) return (Math.round(w * 10) / 10) + ' kg';
@@ -893,7 +893,7 @@ window.PMExt = function (C) {
   const RARITY_MAXGEAR = [20, 28, 28, 16, 6.5, 1.3, 0.2]; // peluang di gear paling maksimal (jumlahnya tetap 100) -- secret tetap sangat jarang walau gear full
   // boost 1 = gear paling awal, MAX_BOOST = joran+umpan paling mahal. Di antaranya interpolasi lurus,
   // biar ikan mitos tetap kerasa "langka" walau udah gear terbaik (gak sampe lebih umum dari ikan biasa).
-  const MAX_BOOST = ROD_TIERS[ROD_TIERS.length - 1].rarityBoost + BAIT_TYPES[BAIT_TYPES.length - 1].rarityBoost - 1;
+  const MAX_BOOST = 4.5 + 2.6 - 1;
   function rollRarity(boost) {
     const t = Math.max(0, Math.min(1, (boost - 1) / (MAX_BOOST - 1)));
     const shifted = RARITY_BASE.map((w, i) => w + (RARITY_MAXGEAR[i] - w) * t);
@@ -2804,7 +2804,7 @@ const PMFish = (function () {
   window.__PMC = {
     scene: scene, player: player, body: body, legL: legL, rodMesh: rodMesh, boatMesh: boatMesh, town: town,
     TOWN_SHOPS: TOWN_SHOPS, TOWN_COLLIDERS: TOWN_COLLIDERS, FISH_TABLE: FISH_TABLE, MUTATIONS: MUTATIONS,
-    RARITY_COLOR: RARITY_COLOR, RARITY_LABEL: RARITY_LABEL, RARITY_ORDER: RARITY_ORDER, ROD_TIERS: ROD_TIERS,
+    RARITY_COLOR: RARITY_COLOR, RARITY_LABEL: RARITY_LABEL, RARITY_ORDER: RARITY_ORDER, ROD_TIERS: ROD_TIERS, BAIT_TYPES: BAIT_TYPES,
     GEAR_COLORS: GEAR_COLORS, ISLAND_RADIUS: ISLAND_RADIUS, DECK_Y: DECK_Y, fmtKg: fmtKg,
     makeSignTexture: makeSignTexture, fishIconCanvas: fishIconCanvas, addXp: addXp, Sfx: Sfx, vibe: vibe,
     get save() { return save; }, persist: persistSave, refresh: refreshHud, toast: showToast,
@@ -2902,8 +2902,9 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v2.8', DATE = '2 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v2.9', DATE = '2 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v2.9", ["Perbaikan kecil dan peningkatan stabilitas."]],
     ["Update v2.8", ["Loading screen baru: ombak bergerak, pelampung, persen loading, dan tips acak.", "Halaman utama baru: matahari terbenam, ombak, gelembung, dan kartu status Level, koin, koleksi.", "Tombol MULAI lebih hidup. Animasi otomatis mati kalau HP diset kurangi gerakan."]],
     ["Update v2.7", ["Konfirmasi sebelum Jual Semua kalau ada ikan Epik ke atas atau mutasi.", "Tombol Back Android sekarang nutup menu, bukan keluar dari game.", "Pengaturan Getar ON/OFF di Menu."]],
     ["Update v2.6", ["Save otomatis tiap 15 detik dan langsung tersimpan saat app di-minimize.", "Layar tidak mati lagi saat mancing.", "Game berhenti sementara saat menu terbuka.", "Tap area gelap di luar menu buat menutupnya.", "Bonus login harian dengan streak sampai 7 hari."]],
@@ -3148,6 +3149,90 @@ const PMFish = (function () {
     upd();
     new MutationObserver(upd).observe(ss, { attributes: true, attributeFilter: ['style'] });
     setTimeout(upd, 400);
+  }
+})();
+</script>
+<script>
+(function () {
+  var C = window.__PMC; if (!C) return;
+  var HASH = 2654374871;
+  function hh(s) { var x = 2166136261; for (var i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return x >>> 0; }
+  var dev = false; try { dev = localStorage.getItem('pm_dev') === '1'; } catch (e) {}
+  var lab = null;
+
+  function label() {
+    if (lab) return;
+    var c = document.createElement('canvas'); c.width = 384; c.height = 96;
+    var g = c.getContext('2d');
+    g.fillStyle = 'rgba(10,14,24,0.8)'; g.fillRect(6, 18, 372, 60);
+    g.strokeStyle = '#ffcf4d'; g.lineWidth = 4; g.strokeRect(8, 20, 368, 56);
+    var gr = g.createLinearGradient(0, 0, 384, 0);
+    gr.addColorStop(0, '#fff2a8'); gr.addColorStop(0.5, '#ffcf4d'); gr.addColorStop(1, '#ff9e4a');
+    g.fillStyle = gr; g.font = 'bold 44px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(0,0,0,0.7)'; g.shadowBlur = 6; g.fillText('DEVELOPER', 192, 50);
+    lab = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, fog: false }));
+    lab.scale.set(1.7, 0.425, 1); lab.position.set(0, 2.4, 0); lab.renderOrder = 10;
+    C.player.add(lab);
+  }
+
+  function enable() {
+    if (!C.ROD_TIERS.some(function (r) { return r.id === 'dev'; }))
+      C.ROD_TIERS.push({ id: 'dev', name: 'Developer Rod', price: 0, biteSpeed: 6, rarityBoost: 99, castRange: 40 });
+    if (!C.BAIT_TYPES.some(function (b) { return b.id === 'dev'; }))
+      C.BAIT_TYPES.push({ id: 'dev', name: 'Developer Bait', price: 0, rarityBoost: 99, stock: 999 });
+    C.GEAR_COLORS.rod.dev = '#ff2d55'; C.GEAR_COLORS.bait.dev = '#ff2d55';
+    var s = C.save;
+    if (s.ownedRods.indexOf('dev') < 0) s.ownedRods.push('dev');
+    s.baitStock.dev = 999;
+    label();
+    var host = document.getElementById('menuPanel') || document.getElementById('hudPills');
+    if (host && !document.getElementById('btnDevOff')) {
+      var b = document.createElement('button'); b.className = 'hudPill'; b.id = 'btnDevOff'; b.textContent = 'Developer: ON';
+      b.onclick = function () { try { localStorage.removeItem('pm_dev'); } catch (e) {} location.reload(); };
+      host.appendChild(b);
+    }
+    C.persist(); C.refresh();
+  }
+
+  if (dev) enable();
+  else {
+    // pastikan save tanpa mode dev gak bawa item dev
+    var s0 = C.save;
+    s0.ownedRods = (s0.ownedRods || []).filter(function (x) { return x !== 'dev'; });
+    if (s0.rod === 'dev') s0.rod = 'bambu';
+    if (s0.bait === 'dev') s0.bait = 'biasa';
+    if (s0.baitStock) delete s0.baitStock.dev;
+  }
+
+  // peluang Secret/Mitos cuma aktif kalau Rod DAN Bait developer dipakai
+  C.hookRoll(function (orig, boost) {
+    var r = orig(boost), s = C.save;
+    if (!dev || s.rod !== 'dev' || s.bait !== 'dev') return r;
+    var x = Math.random(), rar = x < 0.15 ? 'secret' : (x < 0.50 ? 'mythical' : null);
+    if (!rar) return r;
+    var z = r.fish.zone;
+    var pool = C.FISH_TABLE.filter(function (f) { return f.rarity === rar && (!f.zone || f.zone === z); });
+    if (!pool.length) return r;
+    var f = pool[Math.floor(Math.random() * pool.length)];
+    r.fish = f; r.value = Math.round(f.value * r.mutation.mult);
+    return r;
+  });
+
+  // buka: tap badge versi 7x lalu masukkan kode
+  var badge = document.getElementById('versionBadge'), n = 0, t0 = 0;
+  if (badge) {
+    badge.style.pointerEvents = 'auto';
+    badge.addEventListener('click', function () {
+      var now = Date.now(); if (now - t0 > 3000) n = 0; t0 = now;
+      if (++n < 7) return; n = 0;
+      if (dev) { C.toast('Mode developer sudah aktif'); return; }
+      var k = prompt('Kode developer:');
+      if (k === null) return;
+      if (hh('pm-dev:' + k) === HASH) {
+        dev = true; try { localStorage.setItem('pm_dev', '1'); } catch (e) {}
+        enable(); C.toast('Mode developer aktif');
+      } else C.toast('Kode salah');
+    });
   }
 })();
 </script>
