@@ -476,8 +476,28 @@
     { id: 'mutiara', name: 'Ikan Mutiara', rarity: 'legendary', value: 1700 },
     { id: 'leviathan', name: 'Leviathan', rarity: 'mythical', value: 5500 },
     { id: 'kraken_purba', name: 'Kraken Purba', rarity: 'secret', value: 50000 },
+    { id: 'bandeng', name: 'Ikan Bandeng', rarity: 'common', value: 6, zone: 'dangkal' },
+    { id: 'belanak', name: 'Ikan Belanak', rarity: 'common', value: 9, zone: 'dangkal' },
+    { id: 'baronang', name: 'Ikan Baronang', rarity: 'uncommon', value: 28, zone: 'dangkal' },
+    { id: 'kerapu', name: 'Ikan Kerapu', rarity: 'rare', value: 95, zone: 'dangkal' },
+    { id: 'ubur', name: 'Ubur-ubur Bening', rarity: 'rare', value: 80, zone: 'dangkal' },
+    { id: 'kuda_laut', name: 'Kuda Laut Kristal', rarity: 'epic', value: 380, zone: 'dangkal' },
+    { id: 'penyu', name: 'Penyu Hijau', rarity: 'legendary', value: 1500, zone: 'dangkal' },
+    { id: 'layur', name: 'Ikan Layur', rarity: 'common', value: 8, zone: 'dalam' },
+    { id: 'kembung', name: 'Ikan Kembung', rarity: 'common', value: 6, zone: 'dalam' },
+    { id: 'lentera', name: 'Ikan Lentera', rarity: 'uncommon', value: 45, zone: 'dalam' },
+    { id: 'todak', name: 'Ikan Todak', rarity: 'rare', value: 140, zone: 'dalam' },
+    { id: 'pari_manta', name: 'Pari Manta', rarity: 'epic', value: 520, zone: 'dalam' },
+    { id: 'hiu_martil', name: 'Hiu Martil', rarity: 'epic', value: 680, zone: 'dalam' },
+    { id: 'cumi_raksasa', name: 'Cumi Raksasa', rarity: 'legendary', value: 2400, zone: 'dalam' },
+    { id: 'ikan_bulan', name: 'Ikan Bulan', rarity: 'legendary', value: 3200, zone: 'dalam' },
+    { id: 'paus_biru', name: 'Paus Biru', rarity: 'mythical', value: 9500, zone: 'dalam' },
+    { id: 'megalodon', name: 'Megalodon', rarity: 'secret', value: 120000, zone: 'dalam' },
   ];
-  const FISH_WEIGHT = { teri: [0.05, 0.3], mujair: [0.3, 1.2], lele: [0.8, 3], nila: [1, 6], kakap: [3, 15], tenggiri: [8, 40], tuna: [30, 250], hiu_kecil: [100, 800], marlin: [250, 1500], naga_laut: [800, 6000], mutiara: [500, 4000], leviathan: [5000, 60000], kraken_purba: [20000, 140000] };
+  const FISH_WEIGHT = { teri: [0.05, 0.3], mujair: [0.3, 1.2], lele: [0.8, 3], nila: [1, 6], kakap: [3, 15], tenggiri: [8, 40], tuna: [30, 250], hiu_kecil: [100, 800], marlin: [250, 1500], naga_laut: [800, 6000], mutiara: [500, 4000], leviathan: [5000, 60000], kraken_purba: [20000, 140000],
+    bandeng: [0.3, 2], belanak: [0.2, 1.5], baronang: [0.4, 3], kerapu: [3, 60], ubur: [0.5, 12], kuda_laut: [0.02, 0.3], penyu: [60, 400],
+    layur: [0.1, 2], kembung: [0.1, 0.9], lentera: [0.2, 3], todak: [20, 180], pari_manta: [200, 1500], hiu_martil: [150, 900],
+    cumi_raksasa: [500, 3000], ikan_bulan: [800, 5000], paus_biru: [8000, 80000], megalodon: [25000, 150000] };
   const ROD_WEIGHT = { bambu: 10, kayu: 20, karbon: 400, perak: 5000, emas: 190000, legendaris: 150000 };
   function fmtKg(w) {
     if (w < 1) return Math.round(w * 1000) + ' g';
@@ -487,8 +507,9 @@
   function assignWeight(c) {
     const wr = FISH_WEIGHT[c.fish.id] || [1, 2];
     const cap = ROD_WEIGHT[currentRod().id] || 10;
-    let w = wr[0] + Math.pow(Math.random(), 1.5) * (wr[1] - wr[0]);
-    c.tooHeavy = wr[0] > cap;
+    const wm = (c.mutation && c.mutation.wmult) || 1;
+    let w = (wr[0] + Math.pow(Math.random(), 1.5) * (wr[1] - wr[0])) * wm;
+    c.tooHeavy = wr[0] * wm > cap;
     if (!c.tooHeavy) w = Math.min(w, cap);
     c.weight = Math.round(w * 100) / 100;
   }
@@ -507,10 +528,15 @@
   const FISH_BY_RARITY = {};
   FISH_TABLE.forEach(f => { (FISH_BY_RARITY[f.rarity] = FISH_BY_RARITY[f.rarity] || []).push(f); });
   const MUTATIONS = [
-    { id: 'normal', name: '', mult: 1, chance: 0.85, tint: null },
-    { id: 'emas', name: 'Emas', mult: 4, chance: 0.10, tint: [255, 213, 74] },
-    { id: 'pelangi', name: 'Pelangi', mult: 8, chance: 0.05, tint: 'rainbow' },
+    { id: 'normal', name: '', mult: 1, chance: 0.86, tint: null },
+    { id: 'emas', name: 'Emas', mult: 4, chance: 0.06, tint: [255, 213, 74] },
+    { id: 'pelangi', name: 'Pelangi', mult: 8, chance: 0.02, tint: 'rainbow' },
+    { id: 'big', name: 'Besar', mult: 2.5, chance: 0.04, tint: null, wmult: 1.6 },
+    { id: 'ghost', name: 'Hantu', mult: 6, chance: 0.02, tint: [196, 224, 255] },
   ];
+  const SHINY_CHANCE = 0.04; // roll sendiri, bisa nempel ke mutasi lain
+  const DEEP_R = 56;         // batas Laut Dalam (jarak dari pusat pulau)
+  let castZone = 'dangkal';
 
   // ================= DATA JORAN & UMPAN =================
   const ROD_TIERS = [
@@ -547,13 +573,25 @@
     return RARITY_ORDER[0];
   }
   function rollMutation() {
-    let r = Math.random(), acc = 0;
-    for (const m of MUTATIONS) { acc += m.chance; if (r <= acc) return m; }
-    return MUTATIONS[0];
+    let r = Math.random(), acc = 0, base = MUTATIONS[0];
+    for (const m of MUTATIONS) { acc += m.chance; if (r <= acc) { base = m; break; } }
+    if (Math.random() < SHINY_CHANCE) {
+      const sh = Object.assign({}, base);
+      delete sh.chance;
+      sh.id = base.id === 'normal' ? 'shiny' : 'shiny_' + base.id;
+      sh.name = 'Shiny' + (base.name ? ' ' + base.name : '');
+      sh.mult = base.mult * 3; sh.shiny = true;
+      if (!base.tint) sh.tint = [120, 255, 240];
+      return sh;
+    }
+    return base;
   }
   function rollFish(boost) {
-    const rarity = rollRarity(boost);
-    const pool = FISH_BY_RARITY[rarity] || FISH_BY_RARITY.common;
+    const deep = castZone === 'dalam';
+    const rarity = rollRarity(boost + (deep ? 0.4 : 0));
+    const all = FISH_BY_RARITY[rarity] || FISH_BY_RARITY.common;
+    let pool = all.filter(f => !f.zone || f.zone === castZone);
+    if (!pool.length) pool = all;
     const fish = pool[Math.floor(Math.random() * pool.length)];
     const mutation = rollMutation();
     return { fish, mutation, value: Math.round(fish.value * mutation.mult) };
@@ -591,7 +629,12 @@
     let need = xpForLevel(save.level);
     while (save.xp >= need) { save.xp -= need; save.level++; need = xpForLevel(save.level); showToast('Naik ke Level ' + save.level + '!'); Sfx.levelUp(); vibe([40, 30, 40]); }
   }
-  function currentRod() { return ROD_TIERS.find(r => r.id === save.rod) || ROD_TIERS[0]; }
+  function currentRod() {
+    const r = ROD_TIERS.find(x => x.id === save.rod) || ROD_TIERS[0];
+    const en = save.enchants && save.enchants[r.id];
+    if (!en) return r;
+    return Object.assign({}, r, { rarityBoost: r.rarityBoost + (en.luck || 0), biteSpeed: r.biteSpeed * (1 + (en.speed || 0)) });
+  }
   function currentBait() { return BAIT_TYPES.find(b => b.id === save.bait) || BAIT_TYPES[0]; }
   function totalBoost() { return currentRod().rarityBoost + currentBait().rarityBoost - 1; }
 
@@ -773,6 +816,14 @@
     g.moveTo(60, 40); g.lineTo(76, 24); g.lineTo(76, 56); g.closePath(); g.fill();
     g.fillStyle = 'rgba(0,0,0,0.55)';
     g.beginPath(); g.arc(20, 36, 3.2, 0, Math.PI * 2); g.fill();
+    if (mutation && mutation.shiny) {
+      g.fillStyle = '#fff';
+      [[58, 16, 6], [16, 62, 4.5], [68, 60, 5]].forEach(function (q) {
+        const x = q[0], y = q[1], r = q[2], k = r * 0.3;
+        g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + k, y - k); g.lineTo(x + r, y); g.lineTo(x + k, y + k);
+        g.lineTo(x, y + r); g.lineTo(x - k, y + k); g.lineTo(x - r, y); g.lineTo(x - k, y - k); g.closePath(); g.fill();
+      });
+    }
     return c.toDataURL();
   }
 
@@ -829,6 +880,9 @@
   const water = new THREE.Mesh(waterGeo, waterMat);
   water.position.y = -0.35;
   scene.add(water);
+  const deepRing = new THREE.Mesh(new THREE.RingGeometry(DEEP_R, 296, 64), new THREE.MeshBasicMaterial({ color: 0x06203a, transparent: true, opacity: 0.42, depthWrite: false, side: THREE.DoubleSide }));
+  deepRing.rotation.x = -Math.PI / 2; deepRing.position.y = -0.33;
+  scene.add(deepRing);
 
   // ================= POHON KELAPA (dekorasi) =================
   const trunkGeo = new THREE.CylinderGeometry(0.18, 0.26, 3.2, 10);
@@ -1022,6 +1076,108 @@
   addCrate(12.3, 27.2, 0.3); addCrate(-6.9, 19.5, 0.6); addCrate(-7.7, 20.2, -0.2); addCrate(12.6, 18.4, 0.1);
   const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.09, 10, 20), new THREE.MeshLambertMaterial({ color: 0xe8432f }));
   ring.position.set(2.16, DECK_Y + 0.55, 36.5); ring.rotation.y = Math.PI / 2; town.add(ring);
+
+  // ================= ALTAR ENCHANT =================
+  const altar = new THREE.Group();
+  const stoneMat = new THREE.MeshLambertMaterial({ color: 0x8b8fa3 });
+  const altBase1 = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.7, 0.35, 16), stoneMat); altBase1.position.y = 0.17; altar.add(altBase1);
+  const altBase2 = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.2, 0.3, 16), stoneMat); altBase2.position.y = 0.5; altar.add(altBase2);
+  for (let k = 0; k < 4; k++) {
+    const a = k * Math.PI / 2 + Math.PI / 4;
+    const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 1.7, 8), stoneMat);
+    pil.position.set(Math.cos(a) * 1.3, 1.05, Math.sin(a) * 1.3); altar.add(pil);
+  }
+  const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.42), new THREE.MeshBasicMaterial({ color: 0xc58bff }));
+  crystal.position.y = 1.65; altar.add(crystal);
+  const altGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeGlowTexture(), color: 0xb56bff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
+  altGlow.scale.set(2.8, 2.8, 1); altGlow.position.y = 1.65; altar.add(altGlow);
+  const altSign = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeSignTexture('ENCHANT', '#5a2a8a'), fog: false }));
+  altSign.scale.set(2.6, 0.65, 1); altSign.position.y = 3.0; altar.add(altSign);
+  altar.position.set(-10.5, DECK_Y, 19.5);
+  town.add(altar);
+  TOWN_COLLIDERS.push({ x: -10.5, z: 19.5, r: 1.8 });
+  const _uta = updateTownAnim;
+  updateTownAnim = function (t) {
+    _uta(t);
+    crystal.rotation.y = t * 0.9;
+    crystal.position.y = 1.65 + Math.sin(t * 1.6) * 0.12;
+    altGlow.position.y = crystal.position.y;
+  };
+
+  const ENCHANTS = [
+    { id: 'luck1', name: 'Luck I', luck: 0.10, speed: 0, w: 26, c: '#9fb4bd' },
+    { id: 'swift1', name: 'Swift I', luck: 0, speed: 0.10, w: 26, c: '#9fb4bd' },
+    { id: 'luck2', name: 'Luck II', luck: 0.20, speed: 0, w: 14, c: '#4aa8ff' },
+    { id: 'swift2', name: 'Swift II', luck: 0, speed: 0.20, w: 14, c: '#4aa8ff' },
+    { id: 'fortune', name: 'Fortune', luck: 0.15, speed: 0.15, w: 10, c: '#b56bff' },
+    { id: 'luck3', name: 'Luck III', luck: 0.35, speed: 0, w: 5, c: '#ffc233' },
+    { id: 'swift3', name: 'Swift III', luck: 0, speed: 0.35, w: 5, c: '#ffc233' }
+  ];
+  function enchDesc(e) {
+    const q = [];
+    if (e.luck) q.push('Luck +' + Math.round(e.luck * 100) + '%');
+    if (e.speed) q.push('Speed +' + Math.round(e.speed * 100) + '%');
+    return q.join(' • ');
+  }
+  function enchColor(id) { const e = ENCHANTS.find(x => x.id === id); return e ? e.c : '#9fb4bd'; }
+  function rollEnchant() {
+    let tot = 0; ENCHANTS.forEach(e => { tot += e.w; });
+    let r = Math.random() * tot;
+    for (const e of ENCHANTS) { if (r < e.w) return e; r -= e.w; }
+    return ENCHANTS[0];
+  }
+  function getPendingEnchant() {
+    const pp = save.pendingEnchant; if (!pp) return null;
+    const e = ENCHANTS.find(x => x.id === pp.id);
+    return e ? { rodId: pp.rodId, ench: e } : null;
+  }
+  function enchantCost(rod) { return 200 * (1 + ROD_TIERS.indexOf(rod)); }
+
+  const ovE = document.createElement('div');
+  ovE.className = 'modalOverlay'; ovE.id = 'modalEnchant';
+  ovE.innerHTML = '<div class="modalBox"><div class="modalHead"><h2>Altar Enchant</h2><button class="modalClose" data-close="modalEnchant">✕</button></div><div class="modalBody" id="enBody"></div><div class="modalFoot"><span>Koin: <b id="enCoins">0</b></span><span></span></div></div>';
+  document.body.appendChild(ovE);
+
+  function renderEnchant() {
+    save.enchants = save.enchants || {};
+    const rod = ROD_TIERS.find(r => r.id === save.rod) || ROD_TIERS[0];
+    const cur = save.enchants[rod.id];
+    const cost = enchantCost(rod);
+    const pend = getPendingEnchant();
+    let h = '<div class="rowItem"><div class="rowIcon" style="' + gearIconStyle('rod', rod.id) + '"></div><div class="rowInfo"><div class="rowName">' + rod.name + '</div><div class="rowSub">' +
+      (cur ? 'Enchant: <b style="color:' + enchColor(cur.id) + '">' + cur.name + '</b> • ' + enchDesc(cur) : 'Belum di-enchant') + '</div></div></div>';
+    if (pend) {
+      const pr = ROD_TIERS.find(r => r.id === pend.rodId);
+      h += '<div class="rowItem" style="border-color:' + pend.ench.c + ';"><div class="rowInfo"><div class="rowName" style="color:' + pend.ench.c + '">Hasil: ' + pend.ench.name + '</div><div class="rowSub">' + enchDesc(pend.ench) + ' • untuk ' + (pr ? pr.name : '?') + '</div></div><div class="rowBtns"><button class="rowBtn" data-en="accept">Pakai</button><button class="rowBtn" data-en="reject">Buang</button></div></div>';
+    }
+    h += '<button class="rowBtn" data-en="roll" ' + ((pend || save.coins < cost) ? 'disabled' : '') + ' style="width:100%;">Enchant ' + rod.name + ' (' + cost + ' koin)</button>';
+    h += '<div class="rowSub" style="text-align:center;">Pilih Pakai buat ganti enchant lama. Luck III dan Swift III cuma 5%.</div>';
+    document.getElementById('enBody').innerHTML = h;
+    document.getElementById('enCoins').textContent = save.coins;
+  }
+  document.getElementById('enBody').addEventListener('click', function (ev) {
+    const b = ev.target.closest('[data-en]'); if (!b || b.disabled) return;
+    const act = b.dataset.en;
+    save.enchants = save.enchants || {};
+    const pend = getPendingEnchant();
+    if (act === 'roll') {
+      const rod = ROD_TIERS.find(r => r.id === save.rod) || ROD_TIERS[0];
+      const cost = enchantCost(rod);
+      if (pend || save.coins < cost) return;
+      save.coins -= cost;
+      save.pendingEnchant = { rodId: rod.id, id: rollEnchant().id };
+      Sfx.sell(); vibe(30);
+    } else if (act === 'accept' && pend) {
+      save.enchants[pend.rodId] = { id: pend.ench.id, name: pend.ench.name, luck: pend.ench.luck, speed: pend.ench.speed };
+      save.pendingEnchant = null;
+      showToast('Enchant ' + pend.ench.name + ' terpasang!'); Sfx.levelUp(); vibe([40, 30, 40]);
+    } else if (act === 'reject' && pend) {
+      save.pendingEnchant = null; showToast('Hasil enchant dibuang');
+    }
+    persistSave(); refreshHud(); renderEnchant();
+  });
+  function openEnchant() { renderEnchant(); ovE.classList.add('show'); }
+  TOWN_SHOPS.push({ id: 'altar', name: 'ALTAR', label: 'Buka Altar Enchant', x: -10.5, z: 19.5, action: openEnchant });
 
   // perahu kecil di samping dermaga
   const boatMesh = new THREE.Group();
@@ -1724,6 +1880,8 @@ const PMFish = (function () {
     castAng = camYaw + Math.PI;
     rodTip(tipV); bobberStart.copy(tipV);
     bobberTarget.set(player.position.x + Math.sin(castAng) * castDist, wy() + 0.02, player.position.z + Math.cos(castAng) * castDist);
+    castZone = Math.hypot(bobberTarget.x, bobberTarget.z) >= DEEP_R ? 'dalam' : 'dangkal';
+    if (castZone === 'dalam') showToast('Melempar ke Laut Dalam!');
     flightT = 0; flightDur = 0.55 + castDist * 0.045; arcH = 1.0 + castDist * 0.11;
     bobber.position.copy(bobberStart); bobber.visible = true;
     setFishBtnLabel('...', false);
@@ -1901,6 +2059,7 @@ const PMFish = (function () {
     const h = Math.min(1, (currentCatch.weight || 0) / (ROD_WEIGHT[rod.id] || 10));
     reelGain = 0.07 * Math.sqrt(rod.biteSpeed) * (1.15 - 0.5 * h);
     reelDrain = (0.22 + 0.06 * fIdx) * (1 + 0.5 * h);
+    if (castZone === 'dalam') reelDrain *= 1.15;
     if (currentCatch.tooHeavy) reelGain *= 0.25;
     reelProg = 0.25; reelGrace = 0.8;
     fStart = Math.max(2.5, Math.hypot(bobber.position.x - player.position.x, bobber.position.z - player.position.z));
@@ -2056,7 +2215,7 @@ const PMFish = (function () {
     for (const f of sorted) {
       const known = !!disc[f.id]; if (known) got++;
       const row = document.createElement('div'); row.className = 'rowItem';
-      row.innerHTML = `<img class="rowIcon" src="${fishIconCanvas(f, null, !known)}"><div class="rowInfo"><div class="rowName" style="color:${known ? RARITY_COLOR[f.rarity] : '#7f98a3'}">${known ? f.name : '???'}</div><div class="rowSub">${RARITY_LABEL[f.rarity]}${known ? ' • ' + f.value + ' koin/ekor' : ' • Belum ditemukan'}</div></div>`;
+      row.innerHTML = `<img class="rowIcon" src="${fishIconCanvas(f, null, !known)}"><div class="rowInfo"><div class="rowName" style="color:${known ? RARITY_COLOR[f.rarity] : '#7f98a3'}">${known ? f.name : '???'}</div><div class="rowSub">${RARITY_LABEL[f.rarity]}${f.zone ? ' • ' + (f.zone === 'dalam' ? 'Laut Dalam' : 'Perairan Dangkal') : ''}${known ? ' • ' + f.value + ' koin/ekor' : ' • Belum ditemukan'}</div></div>`;
       list.appendChild(row);
     }
     document.getElementById('indexCount').textContent = got + '/' + FISH_TABLE.length + ' terkumpul';
@@ -2174,7 +2333,7 @@ const PMFish = (function () {
     document.getElementById('coinsVal').textContent = save.coins;
     document.getElementById('levelVal').textContent = save.level;
     document.getElementById('xpFill').style.width = Math.min(100, (save.xp / xpForLevel(save.level)) * 100) + '%';
-    document.getElementById('rodVal').textContent = currentRod().name; document.getElementById('rodChip').style.setProperty('--rc', GEAR_COLORS.rod[save.rod] || '#9fb4bd');
+    document.getElementById('rodVal').textContent = currentRod().name + (save.enchants && save.enchants[save.rod] ? ' ✦' : ''); document.getElementById('rodChip').style.setProperty('--rc', GEAR_COLORS.rod[save.rod] || '#9fb4bd');
     document.getElementById('xpText').textContent = save.xp + '/' + xpForLevel(save.level);
     const _rd = currentRod();
     document.getElementById('statsRow').innerHTML = '<span class="st stL">Luck +' + Math.round((totalBoost() - 1) * 100) + '%</span><span class="st stS">Speed +' + Math.round((_rd.biteSpeed - 1) * 100) + '%</span><span class="st stW">Weight ' + fmtKg(ROD_WEIGHT[_rd.id] || 10) + '</span>';
