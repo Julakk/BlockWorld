@@ -287,6 +287,9 @@
 .fishCard .fcMut { position: absolute; top: 6px; right: 8px; font-size: 9px; font-weight: 900; color: #4a2600; background: linear-gradient(160deg, #ffe27a, #e0982a); border-radius: 8px; padding: 1px 6px; }
 .fishCard .rowBtn { width: 100%; padding: 7px 6px; font-size: 11px; }
 </style>
+<style>/* v2.3 fix interact */
+#interactBtn { bottom: 215px; }
+</style>
 </head>
 <body>
 
@@ -1092,7 +1095,7 @@
   const altGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeGlowTexture(), color: 0xb56bff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
   altGlow.scale.set(2.8, 2.8, 1); altGlow.position.y = 1.65; altar.add(altGlow);
   const altSign = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeSignTexture('ENCHANT', '#5a2a8a'), fog: false }));
-  altSign.scale.set(2.6, 0.65, 1); altSign.position.y = 3.0; altar.add(altSign);
+  altSign.scale.set(2.0, 0.5, 1); altSign.position.y = 2.9; altar.add(altSign);
   altar.position.set(-10.5, DECK_Y, 19.5);
   town.add(altar);
   TOWN_COLLIDERS.push({ x: -10.5, z: 19.5, r: 1.8 });
