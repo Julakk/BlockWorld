@@ -785,6 +785,7 @@ window.PMExt = function (C) {
   }, 12000);
 })();
 </script>
+
 <!-- MULTIPLAYER -->
 <script>
 (function () {
@@ -800,7 +801,7 @@ window.PMExt = function (C) {
     var T = THREE, $ = function (i) { return document.getElementById(i); };
     var profile = null; try { profile = JSON.parse(LS('pm_profile') || 'null'); } catch (e) {}
     var devToken = LS('pm_dev_token');
-    var ws = null, myId = null, retry = 0, started = false, blocked = false, remotes = {}, selfG = null;
+    var isDev = false, ws = null, myId = null, retry = 0, started = false, blocked = false, remotes = {}, selfG = null;
     var sendT = 0, keepT = 0, lx = 0, lz = 0, lry = 0, lt = 0, gender = null, taps = 0, tapT = 0;
 
     var st = document.createElement('style');
@@ -811,6 +812,7 @@ window.PMExt = function (C) {
       '#mpSetup input{padding:12px 14px;border-radius:12px;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff;font-size:16px;text-align:center;width:min(260px,80vw)}' +
       '#mpSetup #mpGo{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#052730;border:none}#mpMsg{min-height:18px;color:var(--danger);font-size:13px}' +
       '#mpBadge{position:fixed;left:8px;bottom:8px;z-index:25;font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.45);display:none}';
+    st.textContent += '#mpDevBtn{position:fixed;left:8px;bottom:34px;z-index:26;width:38px;height:38px;border-radius:50%;border:2px solid var(--gold);background:rgba(0,0,0,.55);font-size:18px;display:none}#mpDevPanel{position:fixed;inset:0;z-index:46;display:none;align-items:center;justify-content:center;background:rgba(2,8,14,.7);padding:12px}#mpDevPanel .mpBox{width:min(92vw,380px);max-height:86vh;overflow:auto;background:var(--panel);border:1px solid var(--panel-border-strong);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}#mpDevPanel h3{margin:0}.mpP{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1)}.mpSm{font-size:12px;color:var(--text-dim)}.mpRow{display:flex;gap:6px}.mpRow input{flex:1;min-width:0;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff}#mpDevPanel button{padding:7px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-weight:700;margin-left:4px}';
     document.head.appendChild(st);
     var ov = document.createElement('div'); ov.id = 'mpSetup';
     ov.innerHTML = '<h2 id="mpTitle">Buat Karakter</h2><div class="row"><button id="mpM">♂ Cowok</button><button id="mpF">♀ Cewek</button></div>' +
@@ -843,6 +845,31 @@ window.PMExt = function (C) {
     new MutationObserver(needSetup).observe(ss, { attributes: true, attributeFilter: ['style'] }); needSetup();
     $('startBtn').addEventListener('click', function () { started = true; badge.style.display = 'block'; setBadge(false); open(); });
 
+    // ---------- panel developer (cuma muncul kalau server nganggep lo developer) ----------
+    var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+    var pb = document.createElement('button'); pb.id = 'mpDevBtn'; pb.textContent = '🛠'; document.body.appendChild(pb);
+    var pn = document.createElement('div'); pn.id = 'mpDevPanel';
+    pn.innerHTML = '<div class="mpBox"><h3>🛠 Panel Developer</h3><div id="mpDevList"></div><div class="mpRow"><input id="mpSay" maxlength="120" placeholder="Pengumuman ke semua player"><button id="mpSayGo">Kirim</button></div><button id="mpDevX">Tutup</button></div>';
+    document.body.appendChild(pn);
+    var lastH = '';
+    function renderPanel() {
+      var ids = Object.keys(remotes), h = '<div class="mpSm">Online: ' + (ids.length + 1) + ' (termasuk lo)</div>';
+      ids.forEach(function (id) { var r = remotes[id];
+        h += '<div class="mpP"><span>' + (r.gender === 'f' ? '♀ ' : '♂ ') + esc(r.name) + '</span><span><button data-a="tp" data-id="' + id + '">TP</button><button data-a="kick" data-id="' + id + '">Kick</button><button data-a="ban" data-id="' + id + '">Ban</button></span></div>'; });
+      if (!ids.length) h += '<div class="mpSm">Belum ada player lain.</div>';
+      if (h !== lastH) { lastH = h; $('mpDevList').innerHTML = h; }
+    }
+    pb.onclick = function () { pn.style.display = 'flex'; renderPanel(); };
+    $('mpDevX').onclick = function () { pn.style.display = 'none'; };
+    setInterval(function () { if (pn.style.display === 'flex') renderPanel(); }, 1000);
+    $('mpDevList').onclick = function (e) {
+      var b = e.target, a = b.getAttribute && b.getAttribute('data-a'), id = b.getAttribute && b.getAttribute('data-id'), r = remotes[id];
+      if (!a || !r) return;
+      if (a === 'tp') { C.player.position.set(r.g.position.x + 1, r.g.position.y, r.g.position.z + 1); pn.style.display = 'none'; }
+      else if (confirm((a === 'ban' ? 'Ban ' : 'Kick ') + r.name + '?')) send({ t: a, id: +id });
+    };
+    $('mpSayGo').onclick = function () { var v = $('mpSay').value.trim(); if (v) { send({ t: 'say', text: v }); $('mpSay').value = ''; } };
+
     // ---------- koneksi ----------
     function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
     function open() {
@@ -851,18 +878,21 @@ window.PMExt = function (C) {
       var me = ws;
       me.onopen = function () { retry = 0; send({ t: 'join', name: profile && profile.name, gender: profile && profile.gender, token: devToken || undefined }); };
       me.onmessage = function (ev) { var m; try { m = JSON.parse(ev.data); } catch (e) { return; } handle(m); };
-      me.onclose = function () { if (ws === me) ws = null; myId = null; clearRemotes(); setBadge(false); later(); };
+      me.onclose = function () { if (ws === me) ws = null; myId = null; clearRemotes(); setBadge(false); pb.style.display = 'none'; later(); };
       me.onerror = function () {};
     }
     function later() { if (!started || blocked) return; retry++; setTimeout(open, Math.min(15000, 1500 * retry)); }
     function handle(m) {
-      if (m.t === 'welcome') { myId = m.id; dressSelf(m.you); m.players.forEach(addRemote); setBadge(true, m.n); }
+      if (m.t === 'welcome') { myId = m.id; isDev = !!m.you.dev; pb.style.display = isDev ? 'block' : 'none'; dressSelf(m.you); m.players.forEach(addRemote); setBadge(true, m.n); }
       else if (m.t === 'join') { addRemote(m.p); setBadge(true, m.n); }
       else if (m.t === 'leave') { removeRemote(m.id); setBadge(true, m.n); }
       else if (m.t === 'state') m.s.forEach(function (a) { var r = remotes[a[0]]; if (r) { r.x = a[1]; r.y = a[2]; r.z = a[3]; r.ry = a[4]; r.mv = a[5]; } });
+      else if (m.t === 'say') C.toast('📢 ' + m.text);
+      else if (m.t === 'kicked') { blocked = true; C.toast(m.msg); }
       else if (m.t === 'err') {
         if (m.code === 'bad_token') { devToken = null; LS('pm_dev_token', null); }
         if (m.code === 'bad_token' || m.code === 'bad_name' || m.code === 'name_taken') { blocked = true; if (m.code !== 'bad_token') { profile = null; LS('pm_profile', null); } showSetup(m.msg); }
+        if (m.code === 'banned') blocked = true;
         C.toast(m.msg);
       }
     }
@@ -908,7 +938,7 @@ window.PMExt = function (C) {
     function addRemote(p) {
       if (p.id === myId || remotes[p.id]) return;
       var g = avatar(p); g.position.set(p.x, p.y, p.z); g.rotation.y = p.ry; C.scene.add(g);
-      remotes[p.id] = { g: g, x: p.x, y: p.y, z: p.z, ry: p.ry, mv: 0, ph: 0 };
+      remotes[p.id] = { name: p.name, gender: p.gender, g: g, x: p.x, y: p.y, z: p.z, ry: p.ry, mv: 0, ph: 0 };
     }
     function removeRemote(id) { var r = remotes[id]; if (r) { C.scene.remove(r.g); delete remotes[id]; } }
     function clearRemotes() { Object.keys(remotes).forEach(removeRemote); }

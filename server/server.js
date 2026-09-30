@@ -5,7 +5,7 @@ const PORT = +process.env.PORT || 3000, MAX = +process.env.MAX_PLAYERS || 40;
 const DEV_TOKEN = process.env.DEV_TOKEN || '', DEV_NAME = process.env.DEV_NAME || 'Developer';
 const RESERVED = ['admin', 'moderator', 'mod', 'staff', 'owner', 'dev', 'developer', 'server', 'system', DEV_NAME.toLowerCase()];
 const BAD = ['anjing', 'bangsat', 'kontol', 'memek', 'bajingan', 'ngentot', 'jancok', 'fuck', 'shit', 'bitch', 'pepek', 'asu'];
-const players = new Map(); let nextId = 0;
+const players = new Map(), banned = new Set(); let nextId = 0; // ban hilang kalau server di-restart
 const sha = s => crypto.createHash('sha256').update(String(s)).digest();
 const isDevToken = t => DEV_TOKEN && typeof t === 'string' && crypto.timingSafeEqual(sha(t), sha(DEV_TOKEN));
 const norm = s => s.toLowerCase().replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/_/g, '');
@@ -42,6 +42,7 @@ wss.on('connection', ws => {
         if (!gender || !/^[A-Za-z0-9_]{3,16}$/.test(name)) return fail('bad_name', 'Username 3-16 karakter (huruf/angka/_) & pilih karakter');
         if (RESERVED.includes(name.toLowerCase()) || BAD.some(b => norm(name).includes(b))) return fail('bad_name', 'Username ini nggak boleh dipakai');
       }
+      if (banned.has(name.toLowerCase())) return fail('banned', 'Kamu di-ban dari server ini');
       if (players.size >= MAX && !dev) return fail('full', 'Server penuh, coba lagi nanti');
       for (const p of players.values()) {
         if (p.name.toLowerCase() !== name.toLowerCase()) continue;
@@ -56,6 +57,12 @@ wss.on('connection', ws => {
     } else if (m.t === 'pos' && me) {
       if (![m.x, m.y, m.z, m.ry].every(Number.isFinite)) return;
       me.x = clamp(m.x, 600); me.y = clamp(m.y, 100); me.z = clamp(m.z, 600); me.ry = m.ry; me.mv = m.mv ? 1 : 0; me.dirty = 1;
+    } else if (me && me.dev && (m.t === 'kick' || m.t === 'ban')) { // perintah developer, dicek di server
+      const t = players.get(+m.id); if (!t || t.dev) return;
+      if (m.t === 'ban') banned.add(t.name.toLowerCase());
+      send(t.ws, { t: 'kicked', msg: m.t === 'ban' ? 'Kamu di-ban dari server' : 'Kamu di-kick oleh developer' }); t.ws.close();
+    } else if (me && me.dev && m.t === 'say') {
+      const text = String(m.text || '').slice(0, 120); if (text) broadcast({ t: 'say', text });
     }
   });
   ws.on('close', () => {
