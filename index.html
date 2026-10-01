@@ -787,6 +787,7 @@ window.PMExt = function (C) {
 </script>
 
 
+
 <!-- MULTIPLAYER -->
 <script>
 (function () {
@@ -802,7 +803,7 @@ window.PMExt = function (C) {
     var T = THREE, $ = function (i) { return document.getElementById(i); };
     var profile = null; try { profile = JSON.parse(LS('pm_profile') || 'null'); } catch (e) {}
     var devToken = LS('pm_dev_token');
-    var isDev = false, ws = null, myId = null, retry = 0, started = false, blocked = false, remotes = {}, selfG = null;
+    var isDev = false, why = '', ws = null, myId = null, retry = 0, started = false, blocked = false, remotes = {}, selfG = null;
     var sendT = 0, keepT = 0, lx = 0, lz = 0, lry = 0, lt = 0, gender = null, taps = 0, tapT = 0;
 
     var st = document.createElement('style');
@@ -823,7 +824,7 @@ window.PMExt = function (C) {
     var badge = document.createElement('div'); badge.id = 'mpBadge'; document.body.appendChild(badge);
     function msg(t) { $('mpMsg').textContent = t || ''; }
     function showSetup(t) { msg(t); ov.style.display = 'flex'; }
-    function setBadge(on, n) { badge.textContent = on ? '🟢 Online: ' + n : '⚪ Offline'; }
+    function setBadge(on, n) { badge.textContent = on ? '🟢 Online: ' + n : '⚪ Offline · b' + BUILD + (why ? ' · ' + why : ''); }
 
     function pick(g) { gender = g; $('mpM').className = g === 'm' ? 'sel' : ''; $('mpF').className = g === 'f' ? 'sel' : ''; }
     $('mpM').onclick = function () { pick('m'); }; $('mpF').onclick = function () { pick('f'); };
@@ -922,12 +923,13 @@ window.PMExt = function (C) {
     // ---------- koneksi ----------
     function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
     function open() {
-      if (ws || blocked || (!profile && !devToken)) return;
-      try { ws = new WebSocket(LS('pm_server') || DEFAULT_SERVER); } catch (e) { ws = null; return later(); }
+      if (ws || blocked) return;
+      if (!profile && !devToken) { why = 'belum ada profil'; return setBadge(false); }
+      try { why = 'menyambung ' + (LS('pm_server') || DEFAULT_SERVER).replace(/^wss?:\/\//, ''); setBadge(false); ws = new WebSocket(LS('pm_server') || DEFAULT_SERVER); } catch (e) { ws = null; why = 'error ' + e.message; setBadge(false); return later(); }
       var me = ws;
       me.onopen = function () { retry = 0; send({ t: 'join', name: profile && profile.name, gender: profile && profile.gender, token: devToken || undefined }); };
       me.onmessage = function (ev) { var m; try { m = JSON.parse(ev.data); } catch (e) { return; } handle(m); };
-      me.onclose = function () { if (ws === me) ws = null; myId = null; clearRemotes(); setBadge(false); pb.style.display = 'none'; cb.style.display = 'none'; cr.style.display = 'none'; later(); };
+      me.onclose = function (ev) { why = 'putus (' + (ev && ev.code) + ')'; if (ws === me) ws = null; myId = null; clearRemotes(); setBadge(false); pb.style.display = 'none'; cb.style.display = 'none'; cr.style.display = 'none'; later(); };
       me.onerror = function () {};
     }
     function later() { if (!started || blocked) return; retry++; setTimeout(open, Math.min(15000, 1500 * retry)); }
