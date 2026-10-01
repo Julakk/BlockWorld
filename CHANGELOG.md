@@ -2,6 +2,13 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-02
+
+- **v3.2 - Logo baru**: logo Pancing Mania dipakai di ikon aplikasi (launcher), splash screen, ikon web, layar loading, dan layar awal.
+- **v3.2 - Grafis HD realistis**: tone mapping ACES Filmic, tekstur pulau resolusi tinggi dengan bump (rumput berbercak, pasir berombak, pantai basah), air bergelombang dengan kilau matahari, air dangkal tosca, dan buih ombak. Cuma aktif di mode Grafis: HD, dan otomatis mati kalau FPS drop.
+- **v3.2 - Server publik**: game langsung tersambung ke `wss://game.ahmadfivem.my.id` tanpa pemain perlu ngisi alamat server.
+- **v3.2 - Nama APK**: hasil build sekarang `PancingMania-v<versi>.apk` (bukan `app-debug.apk`), artifact bernama `PancingMania-apk`, dan nama Release ikut versi game.
+
 ## 2026-09-30
 
 - **Fix build & APK**: Three.js sekarang disimpan lokal (`three.min.js`) dan ikut di dalam APK, jadi game jalan tanpa internet (CDN cuma jadi cadangan). `versionCode` otomatis naik tiap build dan `versionName` ngikutin versi game, jadi APK baru bisa nimpa yang lama. Game dan audio otomatis pause saat app di-minimize. Workflow pakai JDK 17. `sw.js` dan workflow auto-bump dihapus karena nggak dipakai, `www/index.html` sekarang di-gitignore.
