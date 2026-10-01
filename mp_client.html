@@ -1,0 +1,231 @@
+<!-- MULTIPLAYER -->
+<script>
+(function () {
+  var DEFAULT_SERVER = 'wss://GANTI-DENGAN-ALAMAT-SERVER-LO'; // alamat server buat player publik (wajib wss://)
+  var prev = window.PMExt;
+  window.PMExt = function (C) {
+    if (prev) { try { prev(C); } catch (e) { console.warn('PMExt lama gagal:', e); } }
+    try { init(C); } catch (e) { console.warn('Multiplayer gagal:', e); }
+  };
+  function LS(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return null; }
+
+  function init(C) {
+    var T = THREE, $ = function (i) { return document.getElementById(i); };
+    var profile = null; try { profile = JSON.parse(LS('pm_profile') || 'null'); } catch (e) {}
+    var devToken = LS('pm_dev_token');
+    var isDev = false, why = '', ws = null, myId = null, retry = 0, started = false, blocked = false, remotes = {}, selfG = null;
+    var sendT = 0, keepT = 0, lx = 0, lz = 0, lry = 0, lt = 0, gender = null, taps = 0, tapT = 0;
+
+    var st = document.createElement('style');
+    st.textContent = '#mpSetup{position:fixed;inset:0;z-index:45;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(2,8,14,.88);padding:16px;text-align:center}' +
+      '#mpSetup h2{margin:0;font-size:20px}#mpSetup .row{display:flex;gap:10px}' +
+      '#mpSetup button{padding:12px 22px;border-radius:14px;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:15px}' +
+      '#mpSetup button.sel{border-color:var(--gold);background:rgba(255,207,77,.22)}' +
+      '#mpSetup input{padding:12px 14px;border-radius:12px;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff;font-size:16px;text-align:center;width:min(260px,80vw)}' +
+      '#mpSetup #mpGo{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#052730;border:none}#mpMsg{min-height:18px;color:var(--danger);font-size:13px}' +
+      '#mpBadge{position:fixed;left:8px;bottom:8px;z-index:25;font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.45);display:none}';
+    st.textContent += '#mpDevBtn{position:fixed;left:8px;bottom:34px;z-index:26;width:38px;height:38px;border-radius:50%;border:2px solid var(--gold);background:rgba(0,0,0,.55);font-size:18px;display:none}#mpDevPanel{position:fixed;inset:0;z-index:46;display:none;align-items:center;justify-content:center;background:rgba(2,8,14,.7);padding:12px}#mpDevPanel .mpBox{width:min(92vw,380px);max-height:86vh;overflow:auto;background:var(--panel);border:1px solid var(--panel-border-strong);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}#mpDevPanel h3{margin:0}.mpP{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1)}.mpSm{font-size:12px;color:var(--text-dim)}.mpRow{display:flex;gap:6px}.mpRow input{flex:1;min-width:0;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff}#mpDevPanel button{padding:7px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-weight:700;margin-left:4px}';
+    st.textContent += '#mpChatBtn{position:fixed;left:8px;top:158px;z-index:26;width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.55);font-size:18px;display:none}#mpChatRow{position:fixed;left:54px;top:158px;z-index:27;display:none;gap:6px;width:min(66vw,320px)}#mpChatRow input{flex:1;min-width:0;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.6);color:#fff;font-size:14px}#mpChatRow button{padding:8px 12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#052730;font-weight:700}#mpChatLog{position:fixed;left:8px;top:204px;z-index:24;width:min(62vw,300px);pointer-events:none;font-size:12px;text-shadow:0 1px 2px #000;display:flex;flex-direction:column;gap:2px}.mpC{background:rgba(0,0,0,.35);border-radius:8px;padding:2px 8px;color:#fff;word-break:break-word}#mpGate{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(2,8,14,.95);padding:20px;text-align:center}#mpGate h2{margin:0;font-size:22px}#mpGate .row{display:flex;gap:10px}#mpGate button{padding:12px 22px;border-radius:14px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#052730;font-weight:700;font-size:15px}';
+    document.head.appendChild(st);
+    var ov = document.createElement('div'); ov.id = 'mpSetup';
+    ov.innerHTML = '<h2 id="mpTitle">Buat Karakter</h2><div class="row"><button id="mpM">♂ Cowok</button><button id="mpF">♀ Cewek</button></div>' +
+      '<input id="mpName" maxlength="16" placeholder="Username (3-16 huruf/angka/_)" autocomplete="off"><div id="mpMsg"></div><button id="mpGo">Lanjut</button>';
+    document.body.appendChild(ov);
+    var badge = document.createElement('div'); badge.id = 'mpBadge'; document.body.appendChild(badge);
+    function msg(t) { $('mpMsg').textContent = t || ''; }
+    function showSetup(t) { msg(t); ov.style.display = 'flex'; }
+    function setBadge(on, n) { badge.textContent = on ? '🟢 Online: ' + n : '⚪ Offline · b' + BUILD + (why ? ' · ' + why : ''); }
+
+    function pick(g) { gender = g; $('mpM').className = g === 'm' ? 'sel' : ''; $('mpF').className = g === 'f' ? 'sel' : ''; }
+    $('mpM').onclick = function () { pick('m'); }; $('mpF').onclick = function () { pick('f'); };
+    $('mpGo').onclick = function () {
+      var n = $('mpName').value.trim();
+      if (!gender) return msg('Pilih cowok atau cewek dulu');
+      if (!/^[A-Za-z0-9_]{3,16}$/.test(n)) return msg('Username 3-16 karakter: huruf, angka, _');
+      profile = { name: n, gender: gender }; LS('pm_profile', JSON.stringify(profile));
+      ov.style.display = 'none'; resume();
+    };
+    $('mpTitle').onclick = function () { // rahasia developer: tap judul 7x
+      var now = Date.now(); taps = now - tapT > 10000 ? 1 : taps + 1; tapT = now;
+      if (taps < 7) return; taps = 0;
+      var tok = prompt('Kode developer:'); if (tok) { devToken = tok.trim(); LS('pm_dev_token', devToken); }
+      var sv = prompt('Alamat server (kosongkan = default):', LS('pm_server') || DEFAULT_SERVER); if (sv) LS('pm_server', sv.trim());
+      if (devToken) { ov.style.display = 'none'; resume(); }
+    };
+    function resume() { blocked = false; if (started && !ws) open(); }
+    var ss = $('startScreen');
+    function needSetup() { if (!profile && !devToken && ss.style.display === 'flex') showSetup(); }
+    new MutationObserver(needSetup).observe(ss, { attributes: true, attributeFilter: ['style'] }); needSetup();
+    $('startBtn').addEventListener('click', function () { started = true; badge.style.display = 'block'; setBadge(false); open(); });
+
+    // ---------- gerbang maintenance / update ----------
+    var BUILD = parseInt('__PM_BUILD__', 10) || 0; // diisi otomatis oleh workflow GitHub
+    var DL = 'https://github.com/Julakk/BlockWorld/releases/latest/download/app-debug.apk';
+    var gate = document.createElement('div'); gate.id = 'mpGate'; document.body.appendChild(gate);
+    function showGate(k, title, text, btns) {
+      gate.innerHTML = '<h2></h2><div class="mpSm"></div><div class="row"></div>'; gate.dataset.k = k;
+      gate.children[0].textContent = title; gate.children[1].textContent = text || '';
+      btns.forEach(function (b) { var e = document.createElement('button'); e.textContent = b[0]; e.onclick = b[1]; gate.children[2].appendChild(e); });
+      gate.style.display = 'flex';
+    }
+    function hideGate() { gate.style.display = 'none'; }
+    function checkStatus() {
+      var c = new AbortController(), to = setTimeout(function () { c.abort(); }, 5000);
+      var url = (LS('pm_server') || DEFAULT_SERVER).replace(/^ws/, 'http').replace(/\/+$/, '') + '/status';
+      fetch(url, { signal: c.signal }).then(function (r) { return r.json(); }).then(function (s) {
+        clearTimeout(to);
+        if (s.maint && !devToken) return showGate('m', '🔧 Sedang maintenance', s.msg || 'Server lagi diperbaiki, coba lagi sebentar lagi.', [['Coba lagi', function () { hideGate(); checkStatus(); }]]);
+        if (BUILD && s.latest > BUILD) {
+          var force = s.min > BUILD;
+          showGate('u', '⬆ Update tersedia', 'Versi baru (build ' + s.latest + ') sudah ada.' + (force ? ' Update dulu supaya bisa main.' : ''),
+            [['Download', function () { location.href = DL; }]].concat(force ? [] : [['Nanti', hideGate]]));
+        }
+      }).catch(function () { clearTimeout(to); });
+    }
+    checkStatus();
+
+    // ---------- chat ----------
+    var cb = document.createElement('button'); cb.id = 'mpChatBtn'; cb.textContent = '💬'; document.body.appendChild(cb);
+    var cr = document.createElement('div'); cr.id = 'mpChatRow'; document.body.appendChild(cr);
+    cr.innerHTML = '<input id="mpChatIn" maxlength="100" placeholder="Ketik pesan..." autocomplete="off"><button id="mpChatGo">Kirim</button>';
+    var cl = document.createElement('div'); cl.id = 'mpChatLog'; document.body.appendChild(cl);
+    cb.onclick = function () { cr.style.display = cr.style.display === 'flex' ? 'none' : 'flex'; if (cr.style.display === 'flex') $('mpChatIn').focus(); };
+    function sendChat() { var v = $('mpChatIn').value.trim(); if (v && ws) { send({ t: 'chat', text: v }); $('mpChatIn').value = ''; } }
+    $('mpChatGo').onclick = sendChat;
+    $('mpChatIn').onkeydown = function (e) { e.stopPropagation(); if (e.key === 'Enter') sendChat(); };
+    function addChat(m) {
+      var d = document.createElement('div'); d.className = 'mpC';
+      var n = document.createElement('b'); n.textContent = (m.dev ? '★ ' : '') + m.name + ': '; if (m.dev) n.style.color = '#ffcf4d';
+      var t = document.createElement('span'); t.textContent = m.text; d.appendChild(n); d.appendChild(t); cl.appendChild(d);
+      while (cl.children.length > 6) cl.removeChild(cl.firstChild);
+      setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 15000);
+    }
+    var maintOn = false;
+    function setMaintBtn() { $('mpMaint').textContent = 'Maint: ' + (maintOn ? 'ON' : 'OFF'); }
+
+    // ---------- panel developer (cuma muncul kalau server nganggep lo developer) ----------
+    var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+    var pb = document.createElement('button'); pb.id = 'mpDevBtn'; pb.textContent = '🛠'; document.body.appendChild(pb);
+    var pn = document.createElement('div'); pn.id = 'mpDevPanel';
+    pn.innerHTML = '<div class="mpBox"><h3>🛠 Panel Developer</h3><div id="mpDevList"></div><div class="mpRow"><input id="mpSay" maxlength="120" placeholder="Pengumuman ke semua player"><button id="mpSayGo">Kirim</button></div><div class="mpRow"><input id="mpMsg2" maxlength="120" placeholder="Pesan maintenance"><button id="mpMaint">Maint: OFF</button></div><button id="mpDevX">Tutup</button></div>';
+    document.body.appendChild(pn);
+    var lastH = '';
+    function renderPanel() {
+      var ids = Object.keys(remotes), h = '<div class="mpSm">Online: ' + (ids.length + 1) + ' (termasuk lo)</div>';
+      ids.forEach(function (id) { var r = remotes[id];
+        h += '<div class="mpP"><span>' + (r.gender === 'f' ? '♀ ' : '♂ ') + esc(r.name) + '</span><span><button data-a="tp" data-id="' + id + '">TP</button><button data-a="mute" data-id="' + id + '">Mute</button><button data-a="kick" data-id="' + id + '">Kick</button><button data-a="ban" data-id="' + id + '">Ban</button></span></div>'; });
+      if (!ids.length) h += '<div class="mpSm">Belum ada player lain.</div>';
+      if (h !== lastH) { lastH = h; $('mpDevList').innerHTML = h; }
+    }
+    pb.onclick = function () { pn.style.display = 'flex'; renderPanel(); };
+    $('mpDevX').onclick = function () { pn.style.display = 'none'; };
+    setInterval(function () { if (pn.style.display === 'flex') renderPanel(); }, 1000);
+    $('mpDevList').onclick = function (e) {
+      var b = e.target, a = b.getAttribute && b.getAttribute('data-a'), id = b.getAttribute && b.getAttribute('data-id'), r = remotes[id];
+      if (!a || !r) return;
+      if (a === 'tp') { C.player.position.set(r.g.position.x + 1, r.g.position.y, r.g.position.z + 1); pn.style.display = 'none'; }
+      else if (a === 'mute') send({ t: 'mute', id: +id });
+      else if (confirm((a === 'ban' ? 'Ban ' : 'Kick ') + r.name + '?')) send({ t: a, id: +id });
+    };
+    $('mpSayGo').onclick = function () { var v = $('mpSay').value.trim(); if (v) { send({ t: 'say', text: v }); $('mpSay').value = ''; } };
+    $('mpMaint').onclick = function () { send({ t: 'maint', on: !maintOn, msg: $('mpMsg2').value.trim() }); };
+
+    // ---------- koneksi ----------
+    function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
+    function open() {
+      if (ws || blocked) return;
+      if (!profile && !devToken) { why = 'belum ada profil'; return setBadge(false); }
+      try { why = 'menyambung ' + (LS('pm_server') || DEFAULT_SERVER).replace(/^wss?:\/\//, ''); setBadge(false); ws = new WebSocket(LS('pm_server') || DEFAULT_SERVER); } catch (e) { ws = null; why = 'error ' + e.message; setBadge(false); return later(); }
+      var me = ws;
+      me.onopen = function () { retry = 0; send({ t: 'join', name: profile && profile.name, gender: profile && profile.gender, token: devToken || undefined }); };
+      me.onmessage = function (ev) { var m; try { m = JSON.parse(ev.data); } catch (e) { return; } handle(m); };
+      me.onclose = function (ev) { why = 'putus (' + (ev && ev.code) + ')'; if (ws === me) ws = null; myId = null; clearRemotes(); setBadge(false); pb.style.display = 'none'; cb.style.display = 'none'; cr.style.display = 'none'; later(); };
+      me.onerror = function () {};
+    }
+    function later() { if (!started || blocked) return; retry++; setTimeout(open, Math.min(15000, 1500 * retry)); }
+    function handle(m) {
+      if (m.t === 'welcome') { myId = m.id; isDev = !!m.you.dev; pb.style.display = isDev ? 'block' : 'none'; maintOn = !!m.maint; setMaintBtn(); cb.style.display = 'block'; dressSelf(m.you); m.players.forEach(addRemote); setBadge(true, m.n); }
+      else if (m.t === 'join') { addRemote(m.p); setBadge(true, m.n); }
+      else if (m.t === 'leave') { removeRemote(m.id); setBadge(true, m.n); }
+      else if (m.t === 'state') m.s.forEach(function (a) { var r = remotes[a[0]]; if (r) { r.x = a[1]; r.y = a[2]; r.z = a[3]; r.ry = a[4]; r.mv = a[5]; } });
+      else if (m.t === 'say') C.toast('📢 ' + m.text);
+      else if (m.t === 'chat') addChat(m);
+      else if (m.t === 'maint') { maintOn = !!m.on; setMaintBtn(); if (m.on && !isDev && !devToken) showGate('m', '🔧 Sedang maintenance', m.msg || 'Server lagi maintenance.', [['Coba lagi', function () { hideGate(); checkStatus(); }]]); else if (!m.on && gate.dataset.k === 'm') hideGate(); }
+      else if (m.t === 'kicked') { blocked = true; C.toast(m.msg); }
+      else if (m.t === 'err') {
+        if (m.code === 'bad_token') { devToken = null; LS('pm_dev_token', null); }
+        if (m.code === 'bad_token' || m.code === 'bad_name' || m.code === 'name_taken') { blocked = true; if (m.code !== 'bad_token') { profile = null; LS('pm_profile', null); } showSetup(m.msg); }
+        if (m.code === 'maint') { blocked = true; showGate('m', '🔧 Sedang maintenance', m.msg, [['Coba lagi', function () { hideGate(); blocked = false; resume(); checkStatus(); }]]); }
+        if (m.code === 'banned') blocked = true;
+        C.toast(m.msg);
+      }
+    }
+
+    // ---------- tampilan karakter ----------
+    function mat(c) { return new T.MeshLambertMaterial({ color: c }); }
+    function label(name, dev) {
+      var c = document.createElement('canvas'); c.width = 320; c.height = 64; var x = c.getContext('2d');
+      x.font = 'bold 28px sans-serif'; x.textAlign = 'center'; x.lineWidth = 6; x.strokeStyle = 'rgba(0,0,0,.75)';
+      var t = (dev ? '★ ' : '') + name; x.strokeText(t, 160, 42); x.fillStyle = dev ? '#ffcf4d' : '#fff'; x.fillText(t, 160, 42);
+      var s = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(c), transparent: true, fog: false, depthWrite: false }));
+      s.scale.set(2.25, 0.45, 1); s.position.y = 2.15; return s;
+    }
+    function decor(g, p) { // aksesori: cewek (rambut panjang + gaun), developer (mahkota + jubah)
+      function add(geo, m, x, y, z) { var o = new T.Mesh(geo, m); o.position.set(x, y, z); g.add(o); return o; }
+      if (p.gender === 'f') {
+        add(new T.CylinderGeometry(0.17, 0.12, 0.55, 10), mat(0x3a2a1a), 0, 1.3, -0.16);
+        add(new T.CylinderGeometry(0.2, 0.38, 0.42, 14), mat(p.dev ? 0x7b3fe4 : 0xe8628f), 0, 0.56, 0);
+      }
+      if (p.dev) {
+        var gold = new T.MeshLambertMaterial({ color: 0xffcf4d, emissive: 0x553300 });
+        add(new T.CylinderGeometry(0.15, 0.2, 0.14, 6), gold, 0, 1.78, 0);
+        var cape = add(new T.BoxGeometry(0.5, 0.85, 0.04), new T.MeshLambertMaterial({ color: 0xd8483a, side: T.DoubleSide }), 0, 0.95, -0.2); cape.rotation.x = 0.08;
+      }
+    }
+    function dressSelf(p) {
+      if (selfG) C.player.remove(selfG);
+      selfG = new T.Group(); decor(selfG, p); selfG.add(label(p.name, p.dev)); C.player.add(selfG);
+      if (p.dev) { try { C.body.material.color.set(0x7b3fe4); } catch (e) {} }
+    }
+    function avatar(p) {
+      var g = new T.Group(), fem = p.gender === 'f', dev = p.dev;
+      var skin = mat(0xf0c299), shirt = mat(dev ? 0x7b3fe4 : fem ? 0xe8628f : 0x4ac0e0), pants = mat(dev ? 0x2a1a52 : 0x33485f);
+      function add(geo, m, x, y, z) { var o = new T.Mesh(geo, m); o.position.set(x, y, z); g.add(o); return o; }
+      add(new T.CylinderGeometry(0.25, 0.22, 0.65, 12), shirt, 0, 0.95, 0).scale.z = 0.66;
+      add(new T.SphereGeometry(0.2, 14, 10), skin, 0, 1.5, 0);
+      if (!fem) add(new T.SphereGeometry(0.21, 14, 10), mat(0x3a2a1a), 0, 1.53, -0.04);
+      var leg = function (x) { return add(new T.CylinderGeometry(0.1, 0.09, 0.54, 8).translate(0, -0.27, 0), fem ? skin : pants, x, 0.62, 0); };
+      var arm = function (x) { return add(new T.CylinderGeometry(0.07, 0.06, 0.5, 8).translate(0, -0.25, 0), shirt, x, 1.22, 0); };
+      g.userData = { l: leg(-0.13), rl: leg(0.13), al: arm(-0.32), ar: arm(0.32) };
+      decor(g, p); g.add(label(p.name, dev)); return g;
+    }
+    function addRemote(p) {
+      if (p.id === myId || remotes[p.id]) return;
+      var g = avatar(p); g.position.set(p.x, p.y, p.z); g.rotation.y = p.ry; C.scene.add(g);
+      remotes[p.id] = { name: p.name, gender: p.gender, g: g, x: p.x, y: p.y, z: p.z, ry: p.ry, mv: 0, ph: 0 };
+    }
+    function removeRemote(id) { var r = remotes[id]; if (r) { C.scene.remove(r.g); delete remotes[id]; } }
+    function clearRemotes() { Object.keys(remotes).forEach(removeRemote); }
+
+    // ---------- loop per frame ----------
+    C.hookAnim(function (t) {
+      var dt = Math.min(0.1, Math.max(0, t - lt)); lt = t; if (!dt) return;
+      var k = Math.min(1, dt * 10);
+      for (var id in remotes) {
+        var r = remotes[id], g = r.g, u = g.userData;
+        g.position.x += (r.x - g.position.x) * k; g.position.y += (r.y - g.position.y) * k; g.position.z += (r.z - g.position.z) * k;
+        var d = r.ry - g.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); g.rotation.y += d * k;
+        if (r.mv) r.ph += dt * 9;
+        u.l.rotation.x += ((r.mv ? Math.sin(r.ph) * 0.6 : 0) - u.l.rotation.x) * k;
+        u.rl.rotation.x = -u.l.rotation.x; u.al.rotation.x = -u.l.rotation.x; u.ar.rotation.x = u.l.rotation.x;
+      }
+      if (!myId || t - sendT < 0.1) return; sendT = t;
+      var p = C.player.position, ry = C.player.rotation.y, moved = Math.hypot(p.x - lx, p.z - lz);
+      if (moved < 0.02 && Math.abs(ry - lry) < 0.02 && t - keepT < 1) return;
+      var rd = function (v) { return Math.round(v * 100) / 100; };
+      send({ t: 'pos', x: rd(p.x), y: rd(p.y), z: rd(p.z), ry: rd(ry), mv: moved > 0.03 ? 1 : 0 });
+      lx = p.x; lz = p.z; lry = ry; keepT = t;
+    });
+  }
+})();
+</script>
