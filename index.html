@@ -786,10 +786,11 @@ window.PMExt = function (C) {
 })();
 </script>
 
+
 <!-- MULTIPLAYER -->
 <script>
 (function () {
-  var DEFAULT_SERVER = 'wss://game.ahmadfivem.my.id'; // alamat server buat player publik (wajib wss://)
+  var DEFAULT_SERVER = 'wss://GANTI-DENGAN-ALAMAT-SERVER-LO'; // alamat server buat player publik (wajib wss://)
   var prev = window.PMExt;
   window.PMExt = function (C) {
     if (prev) { try { prev(C); } catch (e) { console.warn('PMExt lama gagal:', e); } }
@@ -813,6 +814,7 @@ window.PMExt = function (C) {
       '#mpSetup #mpGo{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#052730;border:none}#mpMsg{min-height:18px;color:var(--danger);font-size:13px}' +
       '#mpBadge{position:fixed;left:8px;bottom:8px;z-index:25;font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.45);display:none}';
     st.textContent += '#mpDevBtn{position:fixed;left:8px;bottom:34px;z-index:26;width:38px;height:38px;border-radius:50%;border:2px solid var(--gold);background:rgba(0,0,0,.55);font-size:18px;display:none}#mpDevPanel{position:fixed;inset:0;z-index:46;display:none;align-items:center;justify-content:center;background:rgba(2,8,14,.7);padding:12px}#mpDevPanel .mpBox{width:min(92vw,380px);max-height:86vh;overflow:auto;background:var(--panel);border:1px solid var(--panel-border-strong);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}#mpDevPanel h3{margin:0}.mpP{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1)}.mpSm{font-size:12px;color:var(--text-dim)}.mpRow{display:flex;gap:6px}.mpRow input{flex:1;min-width:0;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff}#mpDevPanel button{padding:7px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-weight:700;margin-left:4px}';
+    st.textContent += '#mpChatBtn{position:fixed;left:8px;top:158px;z-index:26;width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.55);font-size:18px;display:none}#mpChatRow{position:fixed;left:54px;top:158px;z-index:27;display:none;gap:6px;width:min(66vw,320px)}#mpChatRow input{flex:1;min-width:0;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.6);color:#fff;font-size:14px}#mpChatRow button{padding:8px 12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#052730;font-weight:700}#mpChatLog{position:fixed;left:8px;top:204px;z-index:24;width:min(62vw,300px);pointer-events:none;font-size:12px;text-shadow:0 1px 2px #000;display:flex;flex-direction:column;gap:2px}.mpC{background:rgba(0,0,0,.35);border-radius:8px;padding:2px 8px;color:#fff;word-break:break-word}#mpGate{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(2,8,14,.95);padding:20px;text-align:center}#mpGate h2{margin:0;font-size:22px}#mpGate .row{display:flex;gap:10px}#mpGate button{padding:12px 22px;border-radius:14px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#052730;font-weight:700;font-size:15px}';
     document.head.appendChild(st);
     var ov = document.createElement('div'); ov.id = 'mpSetup';
     ov.innerHTML = '<h2 id="mpTitle">Buat Karakter</h2><div class="row"><button id="mpM">♂ Cowok</button><button id="mpF">♀ Cewek</button></div>' +
@@ -845,17 +847,62 @@ window.PMExt = function (C) {
     new MutationObserver(needSetup).observe(ss, { attributes: true, attributeFilter: ['style'] }); needSetup();
     $('startBtn').addEventListener('click', function () { started = true; badge.style.display = 'block'; setBadge(false); open(); });
 
+    // ---------- gerbang maintenance / update ----------
+    var BUILD = parseInt('__PM_BUILD__', 10) || 0; // diisi otomatis oleh workflow GitHub
+    var DL = 'https://github.com/Julakk/BlockWorld/releases/latest/download/app-debug.apk';
+    var gate = document.createElement('div'); gate.id = 'mpGate'; document.body.appendChild(gate);
+    function showGate(k, title, text, btns) {
+      gate.innerHTML = '<h2></h2><div class="mpSm"></div><div class="row"></div>'; gate.dataset.k = k;
+      gate.children[0].textContent = title; gate.children[1].textContent = text || '';
+      btns.forEach(function (b) { var e = document.createElement('button'); e.textContent = b[0]; e.onclick = b[1]; gate.children[2].appendChild(e); });
+      gate.style.display = 'flex';
+    }
+    function hideGate() { gate.style.display = 'none'; }
+    function checkStatus() {
+      var c = new AbortController(), to = setTimeout(function () { c.abort(); }, 5000);
+      var url = (LS('pm_server') || DEFAULT_SERVER).replace(/^ws/, 'http').replace(/\/+$/, '') + '/status';
+      fetch(url, { signal: c.signal }).then(function (r) { return r.json(); }).then(function (s) {
+        clearTimeout(to);
+        if (s.maint && !devToken) return showGate('m', '🔧 Sedang maintenance', s.msg || 'Server lagi diperbaiki, coba lagi sebentar lagi.', [['Coba lagi', function () { hideGate(); checkStatus(); }]]);
+        if (BUILD && s.latest > BUILD) {
+          var force = s.min > BUILD;
+          showGate('u', '⬆ Update tersedia', 'Versi baru (build ' + s.latest + ') sudah ada.' + (force ? ' Update dulu supaya bisa main.' : ''),
+            [['Download', function () { location.href = DL; }]].concat(force ? [] : [['Nanti', hideGate]]));
+        }
+      }).catch(function () { clearTimeout(to); });
+    }
+    checkStatus();
+
+    // ---------- chat ----------
+    var cb = document.createElement('button'); cb.id = 'mpChatBtn'; cb.textContent = '💬'; document.body.appendChild(cb);
+    var cr = document.createElement('div'); cr.id = 'mpChatRow'; document.body.appendChild(cr);
+    cr.innerHTML = '<input id="mpChatIn" maxlength="100" placeholder="Ketik pesan..." autocomplete="off"><button id="mpChatGo">Kirim</button>';
+    var cl = document.createElement('div'); cl.id = 'mpChatLog'; document.body.appendChild(cl);
+    cb.onclick = function () { cr.style.display = cr.style.display === 'flex' ? 'none' : 'flex'; if (cr.style.display === 'flex') $('mpChatIn').focus(); };
+    function sendChat() { var v = $('mpChatIn').value.trim(); if (v && ws) { send({ t: 'chat', text: v }); $('mpChatIn').value = ''; } }
+    $('mpChatGo').onclick = sendChat;
+    $('mpChatIn').onkeydown = function (e) { e.stopPropagation(); if (e.key === 'Enter') sendChat(); };
+    function addChat(m) {
+      var d = document.createElement('div'); d.className = 'mpC';
+      var n = document.createElement('b'); n.textContent = (m.dev ? '★ ' : '') + m.name + ': '; if (m.dev) n.style.color = '#ffcf4d';
+      var t = document.createElement('span'); t.textContent = m.text; d.appendChild(n); d.appendChild(t); cl.appendChild(d);
+      while (cl.children.length > 6) cl.removeChild(cl.firstChild);
+      setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 15000);
+    }
+    var maintOn = false;
+    function setMaintBtn() { $('mpMaint').textContent = 'Maint: ' + (maintOn ? 'ON' : 'OFF'); }
+
     // ---------- panel developer (cuma muncul kalau server nganggep lo developer) ----------
     var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
     var pb = document.createElement('button'); pb.id = 'mpDevBtn'; pb.textContent = '🛠'; document.body.appendChild(pb);
     var pn = document.createElement('div'); pn.id = 'mpDevPanel';
-    pn.innerHTML = '<div class="mpBox"><h3>🛠 Panel Developer</h3><div id="mpDevList"></div><div class="mpRow"><input id="mpSay" maxlength="120" placeholder="Pengumuman ke semua player"><button id="mpSayGo">Kirim</button></div><button id="mpDevX">Tutup</button></div>';
+    pn.innerHTML = '<div class="mpBox"><h3>🛠 Panel Developer</h3><div id="mpDevList"></div><div class="mpRow"><input id="mpSay" maxlength="120" placeholder="Pengumuman ke semua player"><button id="mpSayGo">Kirim</button></div><div class="mpRow"><input id="mpMsg2" maxlength="120" placeholder="Pesan maintenance"><button id="mpMaint">Maint: OFF</button></div><button id="mpDevX">Tutup</button></div>';
     document.body.appendChild(pn);
     var lastH = '';
     function renderPanel() {
       var ids = Object.keys(remotes), h = '<div class="mpSm">Online: ' + (ids.length + 1) + ' (termasuk lo)</div>';
       ids.forEach(function (id) { var r = remotes[id];
-        h += '<div class="mpP"><span>' + (r.gender === 'f' ? '♀ ' : '♂ ') + esc(r.name) + '</span><span><button data-a="tp" data-id="' + id + '">TP</button><button data-a="kick" data-id="' + id + '">Kick</button><button data-a="ban" data-id="' + id + '">Ban</button></span></div>'; });
+        h += '<div class="mpP"><span>' + (r.gender === 'f' ? '♀ ' : '♂ ') + esc(r.name) + '</span><span><button data-a="tp" data-id="' + id + '">TP</button><button data-a="mute" data-id="' + id + '">Mute</button><button data-a="kick" data-id="' + id + '">Kick</button><button data-a="ban" data-id="' + id + '">Ban</button></span></div>'; });
       if (!ids.length) h += '<div class="mpSm">Belum ada player lain.</div>';
       if (h !== lastH) { lastH = h; $('mpDevList').innerHTML = h; }
     }
@@ -866,9 +913,11 @@ window.PMExt = function (C) {
       var b = e.target, a = b.getAttribute && b.getAttribute('data-a'), id = b.getAttribute && b.getAttribute('data-id'), r = remotes[id];
       if (!a || !r) return;
       if (a === 'tp') { C.player.position.set(r.g.position.x + 1, r.g.position.y, r.g.position.z + 1); pn.style.display = 'none'; }
+      else if (a === 'mute') send({ t: 'mute', id: +id });
       else if (confirm((a === 'ban' ? 'Ban ' : 'Kick ') + r.name + '?')) send({ t: a, id: +id });
     };
     $('mpSayGo').onclick = function () { var v = $('mpSay').value.trim(); if (v) { send({ t: 'say', text: v }); $('mpSay').value = ''; } };
+    $('mpMaint').onclick = function () { send({ t: 'maint', on: !maintOn, msg: $('mpMsg2').value.trim() }); };
 
     // ---------- koneksi ----------
     function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
@@ -878,20 +927,23 @@ window.PMExt = function (C) {
       var me = ws;
       me.onopen = function () { retry = 0; send({ t: 'join', name: profile && profile.name, gender: profile && profile.gender, token: devToken || undefined }); };
       me.onmessage = function (ev) { var m; try { m = JSON.parse(ev.data); } catch (e) { return; } handle(m); };
-      me.onclose = function () { if (ws === me) ws = null; myId = null; clearRemotes(); setBadge(false); pb.style.display = 'none'; later(); };
+      me.onclose = function () { if (ws === me) ws = null; myId = null; clearRemotes(); setBadge(false); pb.style.display = 'none'; cb.style.display = 'none'; cr.style.display = 'none'; later(); };
       me.onerror = function () {};
     }
     function later() { if (!started || blocked) return; retry++; setTimeout(open, Math.min(15000, 1500 * retry)); }
     function handle(m) {
-      if (m.t === 'welcome') { myId = m.id; isDev = !!m.you.dev; pb.style.display = isDev ? 'block' : 'none'; dressSelf(m.you); m.players.forEach(addRemote); setBadge(true, m.n); }
+      if (m.t === 'welcome') { myId = m.id; isDev = !!m.you.dev; pb.style.display = isDev ? 'block' : 'none'; maintOn = !!m.maint; setMaintBtn(); cb.style.display = 'block'; dressSelf(m.you); m.players.forEach(addRemote); setBadge(true, m.n); }
       else if (m.t === 'join') { addRemote(m.p); setBadge(true, m.n); }
       else if (m.t === 'leave') { removeRemote(m.id); setBadge(true, m.n); }
       else if (m.t === 'state') m.s.forEach(function (a) { var r = remotes[a[0]]; if (r) { r.x = a[1]; r.y = a[2]; r.z = a[3]; r.ry = a[4]; r.mv = a[5]; } });
       else if (m.t === 'say') C.toast('📢 ' + m.text);
+      else if (m.t === 'chat') addChat(m);
+      else if (m.t === 'maint') { maintOn = !!m.on; setMaintBtn(); if (m.on && !isDev && !devToken) showGate('m', '🔧 Sedang maintenance', m.msg || 'Server lagi maintenance.', [['Coba lagi', function () { hideGate(); checkStatus(); }]]); else if (!m.on && gate.dataset.k === 'm') hideGate(); }
       else if (m.t === 'kicked') { blocked = true; C.toast(m.msg); }
       else if (m.t === 'err') {
         if (m.code === 'bad_token') { devToken = null; LS('pm_dev_token', null); }
         if (m.code === 'bad_token' || m.code === 'bad_name' || m.code === 'name_taken') { blocked = true; if (m.code !== 'bad_token') { profile = null; LS('pm_profile', null); } showSetup(m.msg); }
+        if (m.code === 'maint') { blocked = true; showGate('m', '🔧 Sedang maintenance', m.msg, [['Coba lagi', function () { hideGate(); blocked = false; resume(); checkStatus(); }]]); }
         if (m.code === 'banned') blocked = true;
         C.toast(m.msg);
       }

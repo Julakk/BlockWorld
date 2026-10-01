@@ -5,7 +5,8 @@ const PORT = +process.env.PORT || 3000, MAX = +process.env.MAX_PLAYERS || 40;
 const DEV_TOKEN = process.env.DEV_TOKEN || '', DEV_NAME = process.env.DEV_NAME || 'Developer';
 const RESERVED = ['admin', 'moderator', 'mod', 'staff', 'owner', 'dev', 'developer', 'server', 'system', DEV_NAME.toLowerCase()];
 const BAD = ['anjing', 'bangsat', 'kontol', 'memek', 'bajingan', 'ngentot', 'jancok', 'fuck', 'shit', 'bitch', 'pepek', 'asu'];
-const players = new Map(), banned = new Set(); let nextId = 0; // ban hilang kalau server di-restart
+const players = new Map(), banned = new Set(), maint = { on: false, msg: '' }; let nextId = 0, latest = 0;
+const MIN_BUILD = +process.env.MIN_BUILD || 0; // build di bawah ini dipaksa update // ban hilang kalau server di-restart
 const sha = s => crypto.createHash('sha256').update(String(s)).digest();
 const isDevToken = t => DEV_TOKEN && typeof t === 'string' && crypto.timingSafeEqual(sha(t), sha(DEV_TOKEN));
 const norm = s => s.toLowerCase().replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/_/g, '');
@@ -16,6 +17,7 @@ const broadcast = (o, except) => { const d = JSON.stringify(o); players.forEach(
 
 const server = http.createServer((req, res) => {
   if (req.url === '/health') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: true, players: players.size })); }
+  if (req.url === '/status') { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify({ maint: maint.on, msg: maint.msg, latest, min: MIN_BUILD, players: players.size })); }
   res.writeHead(404); res.end();
 });
 const wss = new WebSocketServer({ server, maxPayload: 1024 });
@@ -43,6 +45,7 @@ wss.on('connection', ws => {
         if (RESERVED.includes(name.toLowerCase()) || BAD.some(b => norm(name).includes(b))) return fail('bad_name', 'Username ini nggak boleh dipakai');
       }
       if (banned.has(name.toLowerCase())) return fail('banned', 'Kamu di-ban dari server ini');
+      if (maint.on && !dev) return fail('maint', maint.msg || 'Server sedang maintenance');
       if (players.size >= MAX && !dev) return fail('full', 'Server penuh, coba lagi nanti');
       for (const p of players.values()) {
         if (p.name.toLowerCase() !== name.toLowerCase()) continue;
@@ -51,7 +54,7 @@ wss.on('connection', ws => {
       }
       me = { id: ++nextId, name, gender, dev, x: 0, y: 1, z: 21.5, ry: 0, mv: 0, dirty: 0, ws };
       clearTimeout(joinTimer);
-      send(ws, { t: 'welcome', id: me.id, you: pub(me), players: [...players.values()].map(pub), n: players.size + 1 });
+      send(ws, { t: 'welcome', id: me.id, you: pub(me), players: [...players.values()].map(pub), n: players.size + 1, maint: maint.on });
       players.set(me.id, me);
       broadcast({ t: 'join', p: pub(me), n: players.size }, me);
     } else if (m.t === 'pos' && me) {
@@ -63,6 +66,16 @@ wss.on('connection', ws => {
       send(t.ws, { t: 'kicked', msg: m.t === 'ban' ? 'Kamu di-ban dari server' : 'Kamu di-kick oleh developer' }); t.ws.close();
     } else if (me && me.dev && m.t === 'say') {
       const text = String(m.text || '').slice(0, 120); if (text) broadcast({ t: 'say', text });
+    } else if (me && m.t === 'chat') {
+      const t0 = Date.now(); if (t0 - (me.lastChat || 0) < 1000) return; me.lastChat = t0;
+      let text = String(m.text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 100); if (!text) return;
+      if (me.muted) return send(ws, { t: 'say', text: 'Kamu di-mute oleh developer' });
+      if (BAD.some(b => norm(text).includes(b))) text = '***';
+      broadcast({ t: 'chat', id: me.id, name: me.name, dev: me.dev, text });
+    } else if (me && me.dev && m.t === 'mute') {
+      const t = players.get(+m.id); if (t && !t.dev) { t.muted = !t.muted; send(ws, { t: 'say', text: t.name + (t.muted ? ' di-mute' : ' di-unmute') }); }
+    } else if (me && me.dev && m.t === 'maint') {
+      maint.on = !!m.on; maint.msg = String(m.msg || '').slice(0, 120); broadcast({ t: 'maint', on: maint.on, msg: maint.msg });
     }
   });
   ws.on('close', () => {
@@ -77,5 +90,10 @@ setInterval(() => { // kirim posisi yang berubah, 10x per detik
   if (s.length) broadcast({ t: 'state', s });
 }, 100);
 setInterval(() => wss.clients.forEach(c => { if (!c.isAlive) return c.terminate(); c.isAlive = false; c.ping(); }), 30000);
+
+async function refreshLatest() { // nomor build terbaru dari GitHub Releases
+  try { const r = await fetch('https://api.github.com/repos/Julakk/BlockWorld/releases/latest', { headers: { 'User-Agent': 'pancing-mania-server' } }); const j = await r.json(); const n = parseInt(String(j.tag_name).replace('build-', ''), 10); if (n) latest = n; } catch (e) {}
+}
+refreshLatest(); setInterval(refreshLatest, 300000);
 
 server.listen(PORT, () => console.log('Pancing Mania server jalan di port ' + PORT + (DEV_TOKEN ? '' : ' (DEV_TOKEN belum diset!)')));

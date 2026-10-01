@@ -33,6 +33,9 @@ jobs:
           mkdir -p www
           cp index.html three.min.js www/
 
+      - name: Tanam nomor build ke game
+        run: sed -i "s/__PM_BUILD__/${{ github.run_number }}/" www/index.html
+
       - name: Set versi APK (versionCode = run number, versionName = versi game)
         run: |
           VER=$(grep -oE "var VER = 'v[0-9]+(\.[0-9]+)*'" index.html | head -1 | grep -oE "[0-9]+(\.[0-9]+)*")
