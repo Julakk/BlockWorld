@@ -2,6 +2,12 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-02 (v3.5)
+
+- **HUD lebih ringkas**: baris joran/umpan dan statistik (Luck, Speed, Weight) digabung jadi satu baris dengan ikon, angka besar disingkat (19,6K%, 1B kg). Panel kiri atas jadi 2 baris.
+- **Fix teks numpuk**: label waktu/cuaca di bawah tengah tidak lagi tertimpa badge versi (label dinaikkan, area tap badge dikecilkan).
+- **Fix badge versi**: sebelumnya teks tertulis manual `v3.1`; sekarang otomatis mengikuti versi game.
+
 ## 2026-10-02 (v3.4)
 
 - **Animasi ikan Secret lebih hidup**: badan ikan meliuk (gelombang S), ekor menyabet, kraken berdenyut seperti jet, lompatan mengikuti gravitasi dengan slow-motion di puncak, dan di fase melawan muncul sirip di permukaan air dengan percikan yang makin ganas.
