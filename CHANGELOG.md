@@ -2,6 +2,12 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-02 (v3.4)
+
+- **Animasi ikan Secret lebih hidup**: badan ikan meliuk (gelombang S), ekor menyabet, kraken berdenyut seperti jet, lompatan mengikuti gravitasi dengan slow-motion di puncak, dan di fase melawan muncul sirip di permukaan air dengan percikan yang makin ganas.
+- **Pamer ikan**: ikan menggantung kepala di atas, bergoyang seperti bandul, makin lemas, air menetes. Kamera bergetar saat ikan melawan dan zoom pelan saat melompat.
+- **Notifikasi Secret**: toast pelangi muncul buat semua pemain termasuk diri sendiri, dan tampil di atas layar sinematik. Event yang dikirim saat koneksi putus diantri lalu dikirim ulang. Jeda server per pemain 30 detik jadi 4 detik.
+
 ## 2026-10-02 (v3.3)
 
 - **Animasi ikan Secret**: saat dapat ikan Secret (Kraken Purba / Megalodon) ada adegan sinematik: ikan melawan tarikan, melompat dari air dengan percikan dan cincin ombak, lalu dipamerkan karakter di bawah sorot cahaya. Kamera berpindah-pindah, bisa dilewati dengan ketuk layar.
