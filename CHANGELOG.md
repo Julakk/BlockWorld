@@ -2,6 +2,12 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-02 (v3.3)
+
+- **Animasi ikan Secret**: saat dapat ikan Secret (Kraken Purba / Megalodon) ada adegan sinematik: ikan melawan tarikan, melompat dari air dengan percikan dan cincin ombak, lalu dipamerkan karakter di bawah sorot cahaya. Kamera berpindah-pindah, bisa dilewati dengan ketuk layar.
+- **Notifikasi publik**: server mengumumkan ke semua pemain online kalau ada yang dapat ikan Secret (dibatasi 1x per 30 detik per pemain, cuma ID ikan Secret yang diterima).
+- **Chat publik 2 tab**: Live Chat dan Info Secret. Riwayat 30 Info Secret terakhir disimpan di server dan dikirim ke pemain yang baru masuk.
+
 ## 2026-10-02
 
 - **v3.2 - Logo baru**: logo Pancing Mania dipakai di ikon aplikasi (launcher), splash screen, ikon web, layar loading, dan layar awal.

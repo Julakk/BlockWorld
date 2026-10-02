@@ -5,6 +5,7 @@ const PORT = +process.env.PORT || 3000, MAX = +process.env.MAX_PLAYERS || 40;
 const DEV_TOKEN = process.env.DEV_TOKEN || '', DEV_NAME = process.env.DEV_NAME || 'Developer';
 const RESERVED = ['admin', 'moderator', 'mod', 'staff', 'owner', 'dev', 'developer', 'server', 'system', DEV_NAME.toLowerCase()];
 const BAD = ['anjing', 'bangsat', 'kontol', 'memek', 'bajingan', 'ngentot', 'jancok', 'fuck', 'shit', 'bitch', 'pepek', 'asu'];
+const SECRET_FISH = new Map([['kraken_purba', 'Kraken Purba'], ['megalodon', 'Megalodon']]), secrets = []; // riwayat 30 ikan Secret terakhir
 const players = new Map(), banned = new Set(), maint = { on: false, msg: '' }; let nextId = 0, latest = 0;
 const MIN_BUILD = +process.env.MIN_BUILD || 0; // build di bawah ini dipaksa update // ban hilang kalau server di-restart
 const sha = s => crypto.createHash('sha256').update(String(s)).digest();
@@ -54,7 +55,7 @@ wss.on('connection', ws => {
       }
       me = { id: ++nextId, name, gender, dev, x: 0, y: 1, z: 21.5, ry: 0, mv: 0, dirty: 0, ws };
       clearTimeout(joinTimer);
-      send(ws, { t: 'welcome', id: me.id, you: pub(me), players: [...players.values()].map(pub), n: players.size + 1, maint: maint.on });
+      send(ws, { t: 'welcome', id: me.id, you: pub(me), players: [...players.values()].map(pub), n: players.size + 1, maint: maint.on, secrets });
       players.set(me.id, me);
       broadcast({ t: 'join', p: pub(me), n: players.size }, me);
     } else if (m.t === 'pos' && me) {
@@ -72,6 +73,14 @@ wss.on('connection', ws => {
       if (me.muted) return send(ws, { t: 'say', text: 'Kamu di-mute oleh developer' });
       if (BAD.some(b => norm(text).includes(b))) text = '***';
       broadcast({ t: 'chat', id: me.id, name: me.name, dev: me.dev, text });
+    } else if (me && m.t === 'secret') { // pemain dapat ikan Secret -> umumkan ke semua
+      const fish = typeof m.id === 'string' ? SECRET_FISH.get(m.id) : null, t0 = Date.now();
+      if (!fish || t0 - (me.lastSecret || 0) < 30000) return; me.lastSecret = t0;
+      const mut = typeof m.mut === 'string' ? m.mut.replace(/[^A-Za-z0-9 ]/g, '').trim().slice(0, 20) : '';
+      const w = Number.isFinite(m.w) ? Math.round(Math.max(0, Math.min(m.w, 99999)) * 10) / 10 : 0;
+      const ev = { t: 'secret', id: me.id, name: me.name, dev: me.dev, fish, mut, w, ts: t0 };
+      secrets.push(ev); if (secrets.length > 30) secrets.shift();
+      broadcast(ev);
     } else if (me && me.dev && m.t === 'mute') {
       const t = players.get(+m.id); if (t && !t.dev) { t.muted = !t.muted; send(ws, { t: 'say', text: t.name + (t.muted ? ' di-mute' : ' di-unmute') }); }
     } else if (me && me.dev && m.t === 'maint') {
