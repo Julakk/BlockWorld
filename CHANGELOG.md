@@ -2,6 +2,13 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-02 (v3.7)
+
+- **Cek kecepatan gerak di server**: jalan kaki 4,2 u/s dikasih ruang 1,5x ditambah cadangan 20 unit buat lag. Gerak yang melebihi itu ditahan, 10 pelanggaran dalam 10 dtk = peringatan ke developer, 25 = pemain di-kick. Developer dikecualikan. Titik dermaga/perahu/spawn boleh dituju (naik-turun perahu), posisi pertama tiap sesi diterima apa adanya (reconnect).
+- **Tahan restart**: daftar ban, riwayat Info Secret, dan status maintenance disimpan di `server/data.json` (bisa diubah lewat env `DATA_FILE`). File ini di-gitignore.
+- **Endpoint admin baru**: `/admin/bans` (daftar) dan `/admin/unban?name=...` (lepas ban), pakai header `x-dev-token`.
+- **Layar maintenance**: latar penuh, pesan lebih besar, dicek otomatis tiap 10 dtk dan hilang sendiri saat server buka lagi.
+
 ## 2026-10-02 (v3.6)
 
 - **Anti-curang Secret**: server mengecek event Secret (butuh event `cast` sebelumnya, jeda 3 dtk sampai 10 menit, mutasi dan berat sesuai tabel ikan, maks 12 per jam). Yang ditolak dicatat di log dan 3x tolak = pemain ditandai dan developer dapat peringatan. Klien lama (tanpa `cv`) tetap dicek mutasi/berat/jam tapi tidak wajib `cast`.

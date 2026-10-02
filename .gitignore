@@ -7,3 +7,5 @@ server/node_modules/
 *.keystore
 *.jks
 server/server.log
+server/data.json
+server/data.json.tmp

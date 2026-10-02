@@ -29,6 +29,43 @@ function checkSecret(p, id, mut, w, now) {
   p.sec.push(now); return '';
 }
 const alertDevs = text => players.forEach(p => { if (p.dev) send(p.ws, { t: 'say', text }); });
+
+// ---- simpan ban, riwayat Secret, dan status maintenance ke file biar tahan restart
+const fs = require('fs'), path = require('path');
+const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
+let saveT = null;
+function saveData() {
+  clearTimeout(saveT);
+  saveT = setTimeout(() => {
+    try { const tmp = DATA_FILE + '.tmp'; fs.writeFileSync(tmp, JSON.stringify({ v: 1, banned: [...banned], secrets, maint })); fs.renameSync(tmp, DATA_FILE); }
+    catch (e) { console.log('data.json gagal ditulis:', e.message); }
+  }, 400);
+}
+(function loadData() {
+  try {
+    const d = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    (d.banned || []).forEach(n => { if (typeof n === 'string') banned.add(n.toLowerCase()); });
+    (d.secrets || []).slice(-30).forEach(e => { if (e && typeof e === 'object') secrets.push(e); });
+    if (d.maint) { maint.on = !!d.maint.on; maint.msg = String(d.maint.msg || '').slice(0, 120); }
+    console.log('data.json dimuat:', banned.size, 'ban,', secrets.length, 'secret, maintenance', maint.on ? 'NYALA' : 'mati');
+  } catch (e) { if (e.code !== 'ENOENT') console.log('data.json gagal dibaca:', e.message); }
+})();
+
+// ---- cek kecepatan gerak (jalan kaki 4.2 u/s; dikasih ruang 1.5x + cadangan 20 unit buat lag)
+const MOVE_RATE = 6.3, MOVE_BURST = 20, SAFE_SPOTS = [[0, 36], [-3.4, 38], [0, 21.5]]; // dermaga/perahu/spawn: pindah ke sana boleh (naik-turun perahu)
+function moveCheck(p, nx, nz, now) {
+  if (p.pt === undefined) { p.pt = now; p.al = MOVE_BURST; return [nx, nz]; } // posisi pertama = titik awal sesi (misal habis reconnect)
+  const dt = Math.min((now - p.pt) / 1000, 5); p.pt = now;
+  p.al = Math.min(MOVE_BURST, p.al + MOVE_RATE * dt);
+  if (SAFE_SPOTS.some(s => Math.hypot(nx - s[0], nz - s[1]) < 4)) { p.al = MOVE_BURST; return [nx, nz]; }
+  const dx = nx - p.x, dz = nz - p.z, d = Math.hypot(dx, dz);
+  if (d <= p.al) { p.al -= d; return [nx, nz]; }
+  const k = p.al / d; p.al = 0; // terlalu jauh: ditahan di batas wajar
+  p.vl = (p.vl || []).filter(t => now - t < 10000); p.vl.push(now);
+  if (p.vl.length === 10 && now - (p.vAlert || 0) > 60000) { p.vAlert = now; console.log(new Date().toISOString(), 'GERAK TIDAK WAJAR', p.name); alertDevs('⚠ ' + p.name + ' gerak nggak wajar (kemungkinan speed hack)'); }
+  if (p.vl.length >= 25) p.kick = true;
+  return [p.x + dx * k, p.z + dz * k];
+}
 const send = (ws, o) => { if (ws.readyState === 1) ws.send(JSON.stringify(o)); };
 const broadcast = (o, except) => { const d = JSON.stringify(o); players.forEach(p => { if (p !== except && p.ws.readyState === 1) p.ws.send(d); }); };
 
@@ -38,9 +75,15 @@ const server = http.createServer((req, res) => {
   if (req.url.startsWith('/admin/maint')) { // curl -H "x-dev-token: TOKEN" "http://localhost:PORT/admin/maint?on=1&msg=Lagi%20update"
     if (!isDevToken(req.headers['x-dev-token'])) { res.writeHead(403); return res.end('forbidden'); }
     const q = new URL(req.url, 'http://x').searchParams;
-    maint.on = q.get('on') === '1'; maint.msg = String(q.get('msg') || '').slice(0, 120);
+    maint.on = q.get('on') === '1'; maint.msg = String(q.get('msg') || '').slice(0, 120); saveData();
     broadcast({ t: 'maint', on: maint.on, msg: maint.msg });
     res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: true, maint: maint.on, msg: maint.msg }));
+  }
+  if (req.url.startsWith('/admin/bans') || req.url.startsWith('/admin/unban')) { // daftar ban / lepas ban (butuh token developer)
+    if (!isDevToken(req.headers['x-dev-token'])) { res.writeHead(403); return res.end('forbidden'); }
+    const q = new URL(req.url, 'http://x').searchParams;
+    if (req.url.startsWith('/admin/unban')) { const n = String(q.get('name') || '').trim().toLowerCase(); if (banned.delete(n)) saveData(); }
+    res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: true, banned: [...banned] }));
   }
   res.writeHead(404); res.end();
 });
@@ -83,10 +126,13 @@ wss.on('connection', ws => {
       broadcast({ t: 'join', p: pub(me), n: players.size }, me);
     } else if (m.t === 'pos' && me) {
       if (![m.x, m.y, m.z, m.ry].every(Number.isFinite)) return;
-      me.x = clamp(m.x, 600); me.y = clamp(m.y, 100); me.z = clamp(m.z, 600); me.ry = m.ry; me.mv = m.mv ? 1 : 0; me.dirty = 1;
+      let nx = clamp(m.x, 600), nz = clamp(m.z, 600);
+      if (!me.dev) { const r = moveCheck(me, nx, nz, Date.now()); nx = r[0]; nz = r[1]; }
+      me.x = nx; me.y = clamp(m.y, 100); me.z = nz; me.ry = m.ry; me.mv = m.mv ? 1 : 0; me.dirty = 1;
+      if (me.kick) { console.log(new Date().toISOString(), 'KICK speed hack', me.name); send(ws, { t: 'kicked', msg: 'Terdeteksi gerak nggak wajar (speed hack)' }); ws.close(); }
     } else if (me && me.dev && (m.t === 'kick' || m.t === 'ban')) { // perintah developer, dicek di server
       const t = players.get(+m.id); if (!t || t.dev) return;
-      if (m.t === 'ban') banned.add(t.name.toLowerCase());
+      if (m.t === 'ban') { banned.add(t.name.toLowerCase()); saveData(); }
       send(t.ws, { t: 'kicked', msg: m.t === 'ban' ? 'Kamu di-ban dari server' : 'Kamu di-kick oleh developer' }); t.ws.close();
     } else if (me && me.dev && m.t === 'say') {
       const text = String(m.text || '').slice(0, 120); if (text) broadcast({ t: 'say', text });
@@ -111,12 +157,12 @@ wss.on('connection', ws => {
       }
       me.lastSecret = t0; me.castOpen = false;
       const ev = { t: 'secret', id: me.id, name: me.name, dev: me.dev, fish, mut, w, ts: t0 };
-      secrets.push(ev); if (secrets.length > 30) secrets.shift();
+      secrets.push(ev); if (secrets.length > 30) secrets.shift(); saveData();
       broadcast(ev);
     } else if (me && me.dev && m.t === 'mute') {
       const t = players.get(+m.id); if (t && !t.dev) { t.muted = !t.muted; send(ws, { t: 'say', text: t.name + (t.muted ? ' di-mute' : ' di-unmute') }); }
     } else if (me && me.dev && m.t === 'maint') {
-      maint.on = !!m.on; maint.msg = String(m.msg || '').slice(0, 120); broadcast({ t: 'maint', on: maint.on, msg: maint.msg });
+      maint.on = !!m.on; maint.msg = String(m.msg || '').slice(0, 120); saveData(); broadcast({ t: 'maint', on: maint.on, msg: maint.msg });
     }
   });
   ws.on('close', () => {
