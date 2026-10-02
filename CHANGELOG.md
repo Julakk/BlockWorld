@@ -2,6 +2,14 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-02 (v3.6)
+
+- **Anti-curang Secret**: server mengecek event Secret (butuh event `cast` sebelumnya, jeda 3 dtk sampai 10 menit, mutasi dan berat sesuai tabel ikan, maks 12 per jam). Yang ditolak dicatat di log dan 3x tolak = pemain ditandai dan developer dapat peringatan. Klien lama (tanpa `cv`) tetap dicek mutasi/berat/jam tapi tidak wajib `cast`.
+- **Fix tombol Download update**: link lama `app-debug.apk` sudah tidak ada sejak APK diganti nama; sekarang server mengirim link APK asli dari release lewat `/status`.
+- **Cek status berkala**: update/maintenance dicek tiap 3 menit dan saat app kembali dibuka; tombol "Nanti" tidak nagih lagi untuk build yang sama.
+- **Maintenance dari terminal**: `curl -H "x-dev-token: TOKEN" "http://localhost:3010/admin/maint?on=1&msg=Teks"` (on=0 untuk mematikan).
+- Kontras label waktu/cuaca, nomor versi, dan FPS. Batas berat Secret 99.999 kg di server dihapus.
+
 ## 2026-10-02 (v3.5)
 
 - **HUD lebih ringkas**: baris joran/umpan dan statistik (Luck, Speed, Weight) digabung jadi satu baris dengan ikon, angka besar disingkat (19,6K%, 1B kg). Panel kiri atas jadi 2 baris.

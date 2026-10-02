@@ -6,19 +6,42 @@ const DEV_TOKEN = process.env.DEV_TOKEN || '', DEV_NAME = process.env.DEV_NAME |
 const RESERVED = ['admin', 'moderator', 'mod', 'staff', 'owner', 'dev', 'developer', 'server', 'system', DEV_NAME.toLowerCase()];
 const BAD = ['anjing', 'bangsat', 'kontol', 'memek', 'bajingan', 'ngentot', 'jancok', 'fuck', 'shit', 'bitch', 'pepek', 'asu'];
 const SECRET_FISH = new Map([['kraken_purba', 'Kraken Purba'], ['megalodon', 'Megalodon']]), secrets = []; // riwayat 30 ikan Secret terakhir
-const players = new Map(), banned = new Set(), maint = { on: false, msg: '' }; let nextId = 0, latest = 0;
+const players = new Map(), banned = new Set(), maint = { on: false, msg: '' }; let nextId = 0, latest = 0, latestUrl = '', latestName = '';
 const MIN_BUILD = +process.env.MIN_BUILD || 0; // build di bawah ini dipaksa update // ban hilang kalau server di-restart
 const sha = s => crypto.createHash('sha256').update(String(s)).digest();
 const isDevToken = t => DEV_TOKEN && typeof t === 'string' && crypto.timingSafeEqual(sha(t), sha(DEV_TOKEN));
 const norm = s => s.toLowerCase().replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/_/g, '');
 const pub = p => ({ id: p.id, name: p.name, gender: p.gender, dev: p.dev, x: p.x, y: p.y, z: p.z, ry: p.ry });
 const clamp = (v, a) => Math.max(-a, Math.min(a, v));
+// ---- cek ikan Secret. Gacha-nya jalan di HP pemain, jadi server cuma bisa cek yang masuk akal:
+// ada lemparan, jeda waktunya wajar, mutasi & berat sesuai tabel ikan, dan dibatasi per jam.
+const SECRET_W = { kraken_purba: [20000, 140000], megalodon: [25000, 150000] }, MUT_WORDS = new Set(['Shiny', 'Emas', 'Pelangi', 'Besar', 'Hantu']);
+function checkSecret(p, id, mut, w, now) {
+  const words = mut ? mut.split(' ') : [];
+  if (words.length > 2 || !words.every(x => MUT_WORDS.has(x))) return 'mutasi tidak dikenal: ' + mut;
+  const r = SECRET_W[id]; if (!r) return 'ikan tidak dikenal';
+  if (!(w >= r[0] * 0.99 && w <= r[1] * 1.6 * 1.01)) return 'berat di luar batas: ' + w;
+  if (p.cv >= 2) { // klien baru wajib kirim 'cast' dulu
+    if (!p.castOpen) return 'tanpa lemparan';
+    const dt = now - p.castAt; if (dt < 3000 || dt > 600000) return 'jeda lemparan aneh: ' + dt + 'ms';
+  }
+  p.sec = p.sec.filter(t => now - t < 3600000); if (p.sec.length >= 12) return 'terlalu banyak per jam';
+  p.sec.push(now); return '';
+}
+const alertDevs = text => players.forEach(p => { if (p.dev) send(p.ws, { t: 'say', text }); });
 const send = (ws, o) => { if (ws.readyState === 1) ws.send(JSON.stringify(o)); };
 const broadcast = (o, except) => { const d = JSON.stringify(o); players.forEach(p => { if (p !== except && p.ws.readyState === 1) p.ws.send(d); }); };
 
 const server = http.createServer((req, res) => {
   if (req.url === '/health') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: true, players: players.size })); }
-  if (req.url === '/status') { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify({ maint: maint.on, msg: maint.msg, latest, min: MIN_BUILD, players: players.size })); }
+  if (req.url === '/status') { res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify({ maint: maint.on, msg: maint.msg, latest, min: MIN_BUILD, url: latestUrl, name: latestName, players: players.size })); }
+  if (req.url.startsWith('/admin/maint')) { // curl -H "x-dev-token: TOKEN" "http://localhost:PORT/admin/maint?on=1&msg=Lagi%20update"
+    if (!isDevToken(req.headers['x-dev-token'])) { res.writeHead(403); return res.end('forbidden'); }
+    const q = new URL(req.url, 'http://x').searchParams;
+    maint.on = q.get('on') === '1'; maint.msg = String(q.get('msg') || '').slice(0, 120);
+    broadcast({ t: 'maint', on: maint.on, msg: maint.msg });
+    res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: true, maint: maint.on, msg: maint.msg }));
+  }
   res.writeHead(404); res.end();
 });
 const wss = new WebSocketServer({ server, maxPayload: 1024 });
@@ -53,7 +76,7 @@ wss.on('connection', ws => {
         if (!dev) return fail('name_taken', 'Username sudah dipakai, ganti yang lain');
         players.delete(p.id); p.ws.terminate(); broadcast({ t: 'leave', id: p.id, n: players.size }); // dev reconnect
       }
-      me = { id: ++nextId, name, gender, dev, x: 0, y: 1, z: 21.5, ry: 0, mv: 0, dirty: 0, ws };
+      me = { id: ++nextId, name, gender, dev, x: 0, y: 1, z: 21.5, ry: 0, mv: 0, dirty: 0, ws, cv: +m.cv || 0, strikes: 0, sec: [] };
       clearTimeout(joinTimer);
       send(ws, { t: 'welcome', id: me.id, you: pub(me), players: [...players.values()].map(pub), n: players.size + 1, maint: maint.on, secrets });
       players.set(me.id, me);
@@ -73,11 +96,20 @@ wss.on('connection', ws => {
       if (me.muted) return send(ws, { t: 'say', text: 'Kamu di-mute oleh developer' });
       if (BAD.some(b => norm(text).includes(b))) text = '***';
       broadcast({ t: 'chat', id: me.id, name: me.name, dev: me.dev, text });
+    } else if (me && m.t === 'cast') { // pemain melempar pancing
+      const t0 = Date.now(); if (t0 - (me.castAt || 0) < 600) return; me.castAt = t0; me.castOpen = true;
     } else if (me && m.t === 'secret') { // pemain dapat ikan Secret -> umumkan ke semua
       const fish = typeof m.id === 'string' ? SECRET_FISH.get(m.id) : null, t0 = Date.now();
-      if (!fish || t0 - (me.lastSecret || 0) < 4000) return; me.lastSecret = t0;
+      if (!fish || me.flagged || t0 - (me.lastSecret || 0) < 4000) return;
       const mut = typeof m.mut === 'string' ? m.mut.replace(/[^A-Za-z0-9 ]/g, '').trim().slice(0, 20) : '';
-      const w = Number.isFinite(m.w) ? Math.round(Math.max(0, Math.min(m.w, 99999)) * 10) / 10 : 0;
+      const w = Number.isFinite(m.w) ? Math.round(Math.max(0, Math.min(m.w, 1e10)) * 10) / 10 : 0;
+      const why = me.dev ? '' : checkSecret(me, m.id, mut, w, t0);
+      if (why) {
+        console.log(new Date().toISOString(), 'SECRET DITOLAK', me.name, m.id, why);
+        if (++me.strikes >= 3) { me.flagged = true; alertDevs('⚠ ' + me.name + ' dicurigai curang (Secret palsu 3x: ' + why + ')'); }
+        return;
+      }
+      me.lastSecret = t0; me.castOpen = false;
       const ev = { t: 'secret', id: me.id, name: me.name, dev: me.dev, fish, mut, w, ts: t0 };
       secrets.push(ev); if (secrets.length > 30) secrets.shift();
       broadcast(ev);
@@ -101,7 +133,7 @@ setInterval(() => { // kirim posisi yang berubah, 10x per detik
 setInterval(() => wss.clients.forEach(c => { if (!c.isAlive) return c.terminate(); c.isAlive = false; c.ping(); }), 30000);
 
 async function refreshLatest() { // nomor build terbaru dari GitHub Releases
-  try { const r = await fetch('https://api.github.com/repos/Julakk/BlockWorld/releases/latest', { headers: { 'User-Agent': 'pancing-mania-server' } }); const j = await r.json(); const n = parseInt(String(j.tag_name).replace('build-', ''), 10); if (n) latest = n; } catch (e) {}
+  try { const r = await fetch('https://api.github.com/repos/Julakk/BlockWorld/releases/latest', { headers: { 'User-Agent': 'pancing-mania-server' } }); const j = await r.json(); const n = parseInt(String(j.tag_name).replace('build-', ''), 10); if (n) { latest = n; latestName = String(j.name || ''); const a = (j.assets || []).find(x => /\.apk$/i.test(x.name)); latestUrl = a ? a.browser_download_url : ''; } } catch (e) {}
 }
 refreshLatest(); setInterval(refreshLatest, 300000);
 
