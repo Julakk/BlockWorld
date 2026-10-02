@@ -6,3 +6,4 @@ www/three.min.js
 server/node_modules/
 *.keystore
 *.jks
+server/server.log
