@@ -2635,6 +2635,12 @@ window.PMExt = function (C) {
       const now = performance.now(), raw = (now - last) / 1000; last = now;
       const dt = Math.min(0.1, raw);
       PMHD.tick(raw); PMQ.adapt(raw);
+      /* PM_V39B cahaya bulan */
+      if (!window.PM_MOON) {
+        window.PM_MOON = new THREE.AmbientLight(0x7a92d8, 0);
+        window.PM_MOONFOG = new THREE.Color(0x2a3b63);
+        scene.add(window.PM_MOON);
+      }
       tDay = (tDay + dt / CYCLE) % 1;
   
       const ns = now / 1000;
@@ -2646,14 +2652,16 @@ window.PMExt = function (C) {
   
       sample(tDay);
       ['top', 'mid', 'hor', 'fog', 'sun', 'hs'].forEach(k => wet(cur[k], rainLevel));
-      sunLight.color.copy(cur.sun); sunLight.intensity = si * (1 - 0.45 * rainLevel);
-      hemiLight.color.copy(cur.hs); hemiLight.groundColor.copy(cur.hg); hemiLight.intensity = hi * (1 - 0.2 * rainLevel);
+      sunLight.color.copy(cur.sun); sunLight.intensity = si * (1 - 0.25 * rainLevel);
+      hemiLight.color.copy(cur.hs); hemiLight.groundColor.copy(cur.hg); hemiLight.intensity = hi * (1 - 0.08 * rainLevel);
       scene.fog.color.copy(cur.fog);
       scene.fog.near = fogNear * (1 - 0.4 * rainLevel); scene.fog.far = fogFar * (1 - 0.35 * rainLevel);
   
       const night = Math.max(0, Math.min(1, (0.75 - hi) / 0.4));
       glowMat.opacity = 0.35 + 0.65 * night;
       starMat.opacity = night * (1 - rainLevel); stars.visible = starMat.opacity > 0.02;
+      window.PM_MOON.intensity = night * (1.0 + 0.3 * rainLevel);
+      scene.fog.color.lerp(window.PM_MOONFOG, night * 0.3);
       stars.position.copy(camera.position);
   
       skyAcc += dt; if (skyAcc > 0.4) { skyAcc = 0; drawSky(); }
@@ -4180,6 +4188,7 @@ const PMFish = (function () {
       "Tampilan ikan tangkapan dikecilkan dan dipindah ke atas, jadi karakter dan joran tetap kelihatan.",
       "Altar Enchant tampil lebih HD: batu lebih detail, lingkaran rune bercahaya yang berputar, kristal berkilau, serpihan melayang, dan partikel cahaya.",
       "Mode Grafis HD lebih ringan: resolusi menyesuaikan FPS secara otomatis, bayangan lebih hemat, dan filter tekstur dibatasi di HP.",
+      "Malam dan hujan sekarang lebih terang: ada cahaya bulan, redaman saat hujan dikurangi, dan kabut malam tidak sepekat dulu.",
       "Info Update lama dihapus, sekarang hanya menampilkan update terbaru."
     ]]
   ];
