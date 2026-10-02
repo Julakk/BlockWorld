@@ -75,7 +75,7 @@ wss.on('connection', ws => {
       broadcast({ t: 'chat', id: me.id, name: me.name, dev: me.dev, text });
     } else if (me && m.t === 'secret') { // pemain dapat ikan Secret -> umumkan ke semua
       const fish = typeof m.id === 'string' ? SECRET_FISH.get(m.id) : null, t0 = Date.now();
-      if (!fish || t0 - (me.lastSecret || 0) < 30000) return; me.lastSecret = t0;
+      if (!fish || t0 - (me.lastSecret || 0) < 4000) return; me.lastSecret = t0;
       const mut = typeof m.mut === 'string' ? m.mut.replace(/[^A-Za-z0-9 ]/g, '').trim().slice(0, 20) : '';
       const w = Number.isFinite(m.w) ? Math.round(Math.max(0, Math.min(m.w, 99999)) * 10) / 10 : 0;
       const ev = { t: 'secret', id: me.id, name: me.name, dev: me.dev, fish, mut, w, ts: t0 };

@@ -149,7 +149,7 @@
   #reelTapHint { font-size: 13px; font-weight: 900; color: #04303c; background: #ffe066; border: 2px solid #fff; padding: 5px 10px; border-radius: 999px; box-shadow: 0 3px 0 rgba(120,70,0,0.35); min-width: 46px; text-align: center; }
 
   /* ================= TOAST ================= */
-  #toastWrap { position: fixed; top: 92px; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; flex-direction: column; align-items: center; gap: 7px; pointer-events: none; }
+  #toastWrap { position: fixed; top: 92px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 7px; pointer-events: none; }
   .toast { background: linear-gradient(160deg, rgba(16,34,46,0.94), rgba(8,18,26,0.9)); border: 2.5px solid rgba(255,255,255,0.85); border-radius: 999px; padding: 8px 18px; font-size: 13px; font-weight: 700; box-shadow: 0 4px 0 rgba(0,0,0,0.32), 0 8px 18px rgba(0,0,0,0.4); animation: toastIn 0.25s ease, toastOut 0.4s ease 2.1s forwards; white-space: nowrap; }
   @keyframes toastIn { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
   @keyframes toastOut { to { opacity: 0; transform: translateY(-10px); } }
@@ -964,7 +964,7 @@ window.PMExt = function (C) {
       if (silent) return;
       if (isOpen() && tab === 'sec') renderFeed();
       else { unread++; syncUI(); }
-      if (m.id !== myId) C.toast('🌟 ' + m.name + ' dapat ' + (m.mut ? m.mut + ' ' : '') + m.fish + '!');
+      C.toast('🌟 ' + (m.id === myId ? 'Kamu' : m.name) + ' dapat ' + (m.mut ? m.mut + ' ' : '') + m.fish + (m.w ? ' (' + m.w + ' kg)' : '') + '!', 'secret');
     }
     function sendChat() { var v = $('mpChatIn').value.trim(); if (v && ws) { send({ t: 'chat', text: v }); $('mpChatIn').value = ''; } }
     $('mpChatGo').onclick = sendChat;
@@ -1025,7 +1025,7 @@ window.PMExt = function (C) {
     }
     function later() { if (!started || blocked) return; retry++; setTimeout(open, Math.min(15000, 1500 * retry)); }
     function handle(m) {
-      if (m.t === 'welcome') { myId = m.id; isDev = !!m.you.dev; pb.style.display = isDev ? 'block' : 'none'; maintOn = !!m.maint; setMaintBtn(); cb.style.display = 'block'; dressSelf(m.you); m.players.forEach(addRemote); (m.secrets || []).forEach(function (x) { addSecret(x, true); }); setBadge(true, m.n); }
+      if (m.t === 'welcome') { myId = m.id; isDev = !!m.you.dev; pb.style.display = isDev ? 'block' : 'none'; maintOn = !!m.maint; setMaintBtn(); cb.style.display = 'block'; dressSelf(m.you); m.players.forEach(addRemote); (m.secrets || []).forEach(function (x) { addSecret(x, true); }); setBadge(true, m.n); flushSec(); }
       else if (m.t === 'join') { addRemote(m.p); setBadge(true, m.n); }
       else if (m.t === 'leave') { removeRemote(m.id); setBadge(true, m.n); }
       else if (m.t === 'state') m.s.forEach(function (a) { var r = remotes[a[0]]; if (r) { r.x = a[1]; r.y = a[2]; r.z = a[3]; r.ry = a[4]; r.mv = a[5]; } });
@@ -1043,7 +1043,12 @@ window.PMExt = function (C) {
       }
     }
 
-    window.PMNet = { secret: function (o) { send({ t: 'secret', id: o.id, w: Math.round((+o.w || 0) * 10) / 10, mut: o.mut ? String(o.mut).slice(0, 20) : '' }); } };
+    var pendSec = [];
+    function flushSec() { while (pendSec.length && ws && ws.readyState === 1) send(pendSec.shift()); }
+    window.PMNet = { secret: function (o) {
+      var p = { t: 'secret', id: o.id, w: Math.round((+o.w || 0) * 10) / 10, mut: o.mut ? String(o.mut).slice(0, 20) : '' };
+      if (ws && ws.readyState === 1) send(p); else { pendSec.push(p); if (pendSec.length > 3) pendSec.shift(); }
+    } };
 
     // ---------- tampilan karakter ----------
     function mat(c) { return new T.MeshLambertMaterial({ color: c }); }
@@ -2776,7 +2781,7 @@ window.PMExt = function (C) {
       return g;
     }
     function animateModel(time, open) {
-      if (parts.tail) parts.tail.rotation.y = Math.sin(time * 8) * 0.5;
+      if (parts.tail) parts.tail.rotation.y = Math.sin(time * 13) * 0.55;
       if (parts.jaw) parts.jaw.rotation.x = open;
       if (parts.tent) parts.tent.forEach((segs, k) => segs.forEach((s, i) => {
         s.rotation.x = Math.sin(time * 4 + k * 0.8 + i * 0.7) * 0.28 + 0.12; s.rotation.y = Math.cos(time * 3.2 + k + i * 0.6) * 0.22;
@@ -2881,14 +2886,14 @@ window.PMExt = function (C) {
       if (!erupted) erupt();
       fpPrev.copy(fish.position);
       fish.visible = true; shadow.visible = false;
-      fish.position.set(lerp(A.x, H.x, e), lerp(wy, H.y, e) + Math.sin(Math.PI * u) * 2.4, lerp(A.z, H.z, e));
+      fish.position.set(lerp(A.x, H.x, u), lerp(wy, H.y, u) + 4 * (kind === 'kraken' ? 2.6 : 3.2) * u * (1 - u), lerp(A.z, H.z, u));
       tmp.copy(fish.position).sub(fpPrev);
       if (tmp.lengthSq() > 1e-8) { tmp.normalize().multiplyScalar(2).add(fish.position); fish.lookAt(tmp); }
-      fish.rotateZ(u * Math.PI * 2 * (kind === 'kraken' ? 0.5 : 1));
-      fish.scale.setScalar(lerp(Lleap, Lhold, e));
+      fish.rotateZ(Math.sin(t * 15) * 0.32 * (1 - 0.5 * u) + (kind === 'kraken' ? 0 : Math.sin(t * 6) * 0.15));
+      fish.scale.setScalar(lerp(Lleap, Lhold, bl(u, 0.55, 1)));
       qLeap.copy(fish.quaternion);
       animateModel(t, 0.55 * Math.sin(Math.PI * u));
-      if (fish.position.y > wy) emit(fish.position.x, fish.position.y, fish.position.z, 2, 1.0, 0.5, 0.8, 0.95, 1);
+      if (fish.position.y > wy) emit(fish.position.x, fish.position.y, fish.position.z, 4, 1.4, 0.2, 0.8, 0.95, 1);
       const k = bl(u, 0.15, 0.95);
       player.rotation.x = lerp(-0.3, -0.1, e);
       player.position.set(base.x + F.x * 0.35 * (1 - e), base.y, base.z + F.z * 0.35 * (1 - e));
@@ -2905,7 +2910,7 @@ window.PMExt = function (C) {
       fish.position.set(H.x, H.y + 0.18 * Math.sin(th * 2.4) + out * 1.5, H.z);
       fish.scale.setScalar(Math.max(0.001, Lhold * (1 + 0.03 * Math.sin(th * 5)) * (1 - out)));
       eu.set(kind === 'kraken' ? -Math.PI / 2 : -0.28, th * 1.1, 0, 'YXZ'); qHold.setFromEuler(eu);
-      fish.quaternion.copy(qLeap).slerp(qHold, bl(th, 0, 0.6));
+      fish.quaternion.copy(qLeap).slerp(qHold, bl(th, 0, 0.6)); fish.rotateZ(Math.sin(th * 9) * 0.22 * (1 - u));
       animateModel(t, 0.12 + 0.1 * Math.sin(th * 3));
       player.rotation.x = -0.05;
       player.position.set(base.x, base.y + Math.abs(Math.sin(th * 4.5)) * 0.12 * (1 - u * 0.5), base.z);
@@ -2913,7 +2918,7 @@ window.PMExt = function (C) {
       legL.rotation.x *= 0.8; legR.rotation.x *= 0.8;
       pTick -= dt;
       if (pTick <= 0 && out < 0.9) {
-        pTick = 0.035; const c = Math.random() < 0.5;
+        pTick = 0.035; if (Math.random() < 0.6) emit(fish.position.x + (Math.random() - 0.5) * 0.8, fish.position.y - 0.4, fish.position.z + (Math.random() - 0.5) * 0.8, 1, 0.25, 0, 0.7, 0.9, 1); const c = Math.random() < 0.5;
         emit(H.x + (Math.random() - 0.5) * 1.4, H.y + (Math.random() - 0.2) * 1.2, H.z + (Math.random() - 0.5) * 1.4, 2, 1.2, 1.6, c ? 1 : 0.4, c ? 0.85 : 0.95, c ? 0.35 : 1);
       }
       beam.visible = true; beam.material.opacity = 0.3 * bl(th, 0, 0.8) * (1 - out) * (0.85 + 0.15 * Math.sin(th * 9));
