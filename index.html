@@ -684,6 +684,7 @@ window.PMExt = function (C) {
   /* ===== JORAN PER TIER ===== */
   var rodMat = C.rodMesh.material, lastRod = '';
   function applyRod(t) {
+    if (window.pmRodTick) { window.pmRodTick(t); return; }
     var id = S().rod, idx = C.ROD_TIERS.findIndex(function (r) { return r.id === id; });
     if (id !== lastRod) { lastRod = id; var col = id === 'bambu' ? new T.Color(0x8a5a2b) : new T.Color(C.GEAR_COLORS.rod[id] || '#9fb4bd'); rodMat.color.copy(col); rodMat.emissive.copy(col); }
     if (idx >= 5) rodMat.emissive.setHSL((t * 0.2) % 1, 0.9, 0.55);
@@ -1896,7 +1897,7 @@ function pmBuildBoat(id) {
     bandeng: [0.3, 2], belanak: [0.2, 1.5], baronang: [0.4, 3], kerapu: [3, 60], ubur: [0.5, 12], kuda_laut: [0.02, 0.3], penyu: [60, 400],
     layur: [0.1, 2], kembung: [0.1, 0.9], lentera: [0.2, 3], todak: [20, 180], pari_manta: [200, 1500], hiu_martil: [150, 900],
     cumi_raksasa: [500, 3000], ikan_bulan: [800, 5000], paus_biru: [8000, 80000], megalodon: [25000, 150000] };
-  const ROD_WEIGHT = { bambu: 10, kayu: 20, karbon: 400, perak: 5000, emas: 190000, legendaris: 150000, dev: 1e9 };
+  const ROD_WEIGHT = { bambu: 10, luckrod: 15, kayu: 20, grass: 250, karbon: 400, ice: 750, perak: 5000, midrod: 10000, steampunk: 25000, emas: 90000, legendaris: 160000, angler: 125000, dev: 1e9 };
   function hudAb(n) { // 19600 -> 19,6K ; 1000000000 -> 1B
     n = Math.round(+n) || 0;
     if (n < 10000) return String(n);
@@ -1911,12 +1912,17 @@ function pmBuildBoat(id) {
     return String(Math.round(w)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' kg';
   }
   function assignWeight(c) {
+    // v4.7: rentang berat ikan menyesuaikan kapasitas rod, dan condong ke ikan berat kalau luck rod + bait tinggi
     const wr = FISH_WEIGHT[c.fish.id] || [1, 2];
-    const cap = ROD_WEIGHT[currentRod().id] || 10;
+    const rod = currentRod(), bait = currentBait();
+    const cap = ROD_WEIGHT[rod.id] || 10;
     const wm = (c.mutation && c.mutation.wmult) || 1;
-    let w = (wr[0] + Math.pow(Math.random(), 1.5) * (wr[1] - wr[0])) * wm;
-    c.tooHeavy = wr[0] * wm > cap;
-    if (!c.tooHeavy) w = Math.min(w, cap);
+    const lo = wr[0] * wm, hi = wr[1] * wm;
+    c.tooHeavy = lo > cap;
+    const top = c.tooHeavy ? hi : Math.max(lo, Math.min(hi, cap));
+    const gp = Math.min(6, (rod.rarityBoost - 1) + (bait.rarityBoost - 1));
+    const k = Math.max(0.55, 1.5 / (1 + 0.25 * gp));
+    const w = lo + Math.pow(Math.random(), k) * (top - lo);
     c.weight = Math.round(w * 100) / 100;
   }
   function castRating(p) {
@@ -1946,21 +1952,31 @@ function pmBuildBoat(id) {
 
   // ================= DATA JORAN & UMPAN =================
   const ROD_TIERS = [
-    { id: 'bambu', name: 'Starter Rod', price: 0, biteSpeed: 1.0, rarityBoost: 1.0, castRange: 7 },
-    { id: 'kayu', name: 'Carbon Rod', price: 150, biteSpeed: 1.15, rarityBoost: 1.3, castRange: 9 },
-    { id: 'karbon', name: 'Damascus Rod', price: 600, biteSpeed: 1.3, rarityBoost: 1.8, castRange: 11 },
-    { id: 'perak', name: 'Lucky Rod', price: 2000, biteSpeed: 1.5, rarityBoost: 2.3, castRange: 13 },
-    { id: 'emas', name: 'Chrome Rod', price: 6000, biteSpeed: 1.8, rarityBoost: 3.29, castRange: 15 },
-    { id: 'legendaris', name: 'Astral Rod', price: 20000, biteSpeed: 2.2, rarityBoost: 4.5, castRange: 18 },
+    { id: 'bambu',      name: 'Starter Rod',   price: 0,     biteSpeed: 1.00, rarityBoost: 1.00, castRange: 7 },
+    { id: 'luckrod',    name: 'Luck Rod',      price: 80,    biteSpeed: 1.02, rarityBoost: 1.50, castRange: 8 },
+    { id: 'kayu',       name: 'Carbon Rod',    price: 150,   biteSpeed: 1.04, rarityBoost: 1.30, castRange: 9 },
+    { id: 'grass',      name: 'Grass Rod',     price: 400,   biteSpeed: 1.05, rarityBoost: 1.55, castRange: 10 },
+    { id: 'karbon',     name: 'Damascus Rod',  price: 600,   biteSpeed: 1.04, rarityBoost: 1.80, castRange: 11 },
+    { id: 'ice',        name: 'Ice Rod',       price: 1200,  biteSpeed: 1.07, rarityBoost: 1.60, castRange: 12 },
+    { id: 'perak',      name: 'Lucky Rod',     price: 2000,  biteSpeed: 1.07, rarityBoost: 2.40, castRange: 13 },
+    { id: 'midrod',     name: 'Midnight Rod',  price: 3500,  biteSpeed: 1.10, rarityBoost: 2.00, castRange: 14 },
+    { id: 'steampunk',  name: 'Steampunk Rod', price: 5500,  biteSpeed: 1.19, rarityBoost: 3.25, castRange: 15 },
+    { id: 'emas',       name: 'Chrome Rod',    price: 9000,  biteSpeed: 1.23, rarityBoost: 3.80, castRange: 16 },
+    { id: 'legendaris', name: 'Astral Rod',    price: 20000, biteSpeed: 1.23, rarityBoost: 4.00, castRange: 18 },
+    { id: 'angler',     name: 'Angler Rod',    price: 40000, biteSpeed: 1.43, rarityBoost: 4.80, castRange: 20 },
   ];
   const AUTOFISH_PRICE = 2500;
   const BAIT_TYPES = [
-    { id: 'biasa', name: 'Starter Bait', price: 5, rarityBoost: 1.0, stock: 999 },
-    { id: 'midnight', name: 'Midnight Bait', price: 150, rarityBoost: 1.22, stock: 0 },
-    { id: 'super', name: 'Nature Bait', price: 500, rarityBoost: 1.45, stock: 0 },
-    { id: 'chroma', name: 'Chroma Bait', price: 1800, rarityBoost: 2.0, stock: 0 },
-    { id: 'ajaib', name: 'Dark Matter Bait', price: 5000, rarityBoost: 2.6, stock: 0 },
+    { id: 'biasa',    name: 'Starter Bait',     price: 5,     rarityBoost: 1.08, stock: 999 },
+    { id: 'luck',     name: 'Luck Bait',        price: 40,    rarityBoost: 1.12, stock: 0 },
+    { id: 'midnight', name: 'Midnight Bait',    price: 150,   rarityBoost: 1.22, stock: 0 },
+    { id: 'super',    name: 'Nature Bait',      price: 500,   rarityBoost: 1.45, xp: 0.04, stock: 0 },
+    { id: 'chroma',   name: 'Chroma Bait',      price: 1800,  rarityBoost: 2.00, stock: 0 },
+    { id: 'ajaib',    name: 'Dark Matter Bait', price: 5000,  rarityBoost: 2.70, xp: 0.05, shiny: 0.05, stock: 0 },
+    { id: 'corrupt',  name: 'Corrupt Bait',     price: 12000, rarityBoost: 3.20, mut: 0.10, shiny: 0.10, stock: 0 },
+    { id: 'aether',   name: 'Aether Bait',      price: 25000, rarityBoost: 3.60, mut: 0.15, shiny: 0.05, stock: 0 },
   ];
+  function baitExtra(b) { return (b.xp ? ' \u2022 XP +' + Math.round(b.xp * 100) + '%' : '') + (b.shiny ? ' \u2022 Shiny +' + Math.round(b.shiny * 100) + '%' : '') + (b.mut ? ' \u2022 Mutasi +' + Math.round(b.mut * 100) + '%' : ''); }
 
   // ================= PELUANG RARITAS =================
   // boost gabungan dari joran x umpan. Makin gede boost, makin condong ke ikan langka.
@@ -1969,7 +1985,7 @@ function pmBuildBoat(id) {
   const RARITY_MAXGEAR = [20, 28, 28, 16, 6.5, 1.3, 0.2]; // peluang di gear paling maksimal (jumlahnya tetap 100) -- secret tetap sangat jarang walau gear full
   // boost 1 = gear paling awal, MAX_BOOST = joran+umpan paling mahal. Di antaranya interpolasi lurus,
   // biar ikan mitos tetap kerasa "langka" walau udah gear terbaik (gak sampe lebih umum dari ikan biasa).
-  const MAX_BOOST = 4.5 + 2.6 - 1;
+  const MAX_BOOST = 4.8 + 3.6 - 1;
   function rollRarity(boost) {
     const t = Math.max(0, Math.min(1, (boost - 1) / (MAX_BOOST - 1)));
     const shifted = RARITY_BASE.map((w, i) => w + (RARITY_MAXGEAR[i] - w) * t);
@@ -1979,9 +1995,10 @@ function pmBuildBoat(id) {
     return RARITY_ORDER[0];
   }
   function rollMutation() {
+    const bt = currentBait(), mx = bt.mut || 0;
     let r = Math.random(), acc = 0, base = MUTATIONS[0];
-    for (const m of MUTATIONS) { acc += m.chance; if (r <= acc) { base = m; break; } }
-    if (Math.random() < SHINY_CHANCE) {
+    for (const m of MUTATIONS) { acc += m.id === 'normal' ? Math.max(0.1, m.chance - mx) : m.chance * (1 + mx / 0.14); if (r <= acc) { base = m; break; } }
+    if (Math.random() < SHINY_CHANCE + (bt.shiny || 0)) {
       const sh = Object.assign({}, base);
       delete sh.chance;
       sh.id = base.id === 'normal' ? 'shiny' : 'shiny_' + base.id;
@@ -2005,8 +2022,8 @@ function pmBuildBoat(id) {
 
   // ================= SIMPAN / MUAT (localStorage) =================
   const GEAR_COLORS = {
-    rod: { bambu: '#9fb4bd', kayu: '#b7c4ca', karbon: '#5fd36b', perak: '#4aa8ff', emas: '#b56bff', legendaris: '#ffc233' },
-    bait: { biasa: '#9fb4bd', midnight: '#4aa8ff', super: '#b56bff', chroma: '#ffc233', ajaib: '#ff4d6d' }
+    rod: { bambu: '#c2a94a', luckrod: '#4fcf6a', kayu: '#8a929a', grass: '#5bbf3a', karbon: '#cfd6dc', ice: '#7fd8ff', perak: '#4a8aff', midrod: '#6a5aff', steampunk: '#d8883a', emas: '#b56bff', legendaris: '#ffc233', angler: '#19d3c0' },
+    bait: { biasa: '#9fb4bd', luck: '#5fd36b', midnight: '#4aa8ff', super: '#b56bff', chroma: '#ffc233', ajaib: '#ff4d6d', corrupt: '#b13cff', aether: '#7af0ff' }
   };
   const SAVE_KEY = 'pancingmania_save_v1';
   function defaultSave() {
@@ -4169,7 +4186,7 @@ function pmBuildBoat(id) {
       save.inventory[key] = save.inventory[key] || { fish: currentCatch.fish, mutation: currentCatch.mutation, count: 0 };
       save.inventory[key].count++; Quest.on('catch', currentCatch);
       save.inventory[key].maxW = Math.max(save.inventory[key].maxW || 0, currentCatch.weight || 0);
-      addXp(Math.round((Math.round(currentCatch.value / 4) + 5) * (1 + enchBonus('xp'))));
+      addXp(Math.round((Math.round(currentCatch.value / 4) + 5) * (1 + enchBonus('xp') + (currentBait().xp || 0))));
       save.discovered = save.discovered || {}; save.discovered[currentCatch.fish.id] = true;
       const label = currentCatch.mutation.name ? currentCatch.mutation.name + ' ' + currentCatch.fish.name : currentCatch.fish.name;
       if (currentCatch.fish.rarity === 'secret') {
@@ -4760,7 +4777,7 @@ const PMFish = (function () {
         const canBuy = save.coins >= rod.price;
         const row = document.createElement('div'); row.className = 'rowItem';
         const btnLabel = equipped ? 'Terpasang' : (owned ? 'Pakai' : (rod.price + ' koin'));
-        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('rod', rod.id)}"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Luck +${Math.round((rod.rarityBoost - 1) * 100)}% • Speed +${Math.round((rod.biteSpeed - 1) * 100)}% • Weight ${fmtKg(ROD_WEIGHT[rod.id])} • Range ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
+        row.innerHTML = `<div class="rowIcon" style="${(window.pmRodIcon && window.pmRodIcon(rod.id, GEAR_COLORS.rod[rod.id] || '#9fb4bd')) || gearIconStyle('rod', rod.id)}"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Luck +${Math.round((rod.rarityBoost - 1) * 100)}% • Speed +${Math.round((rod.biteSpeed - 1) * 100)}% • Weight ${fmtKg(ROD_WEIGHT[rod.id])} • Range ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
         shopList.appendChild(row);
       }
     } else if (shopTab === 'bait') {
@@ -4773,7 +4790,7 @@ const PMFish = (function () {
         if (bait.id === 'biasa') btns = `<button class="rowBtn ${equipped ? 'owned' : ''}" data-usebait="biasa" ${equipped ? 'disabled' : ''}>${equipped ? 'Dipakai' : 'Pakai'}</button>`;
         else if (stock > 0) btns = `<button class="rowBtn ${equipped ? 'owned' : ''}" data-usebait="${bait.id}" ${equipped ? 'disabled' : ''}>${equipped ? 'Dipakai' : 'Pakai'}</button>`;
         else btns = `<button class="rowBtn" data-bait="${bait.id}" ${!canBuy ? 'disabled' : ''}>${bait.price} koin</button>`;
-        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('bait', bait.id)}"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Luck +${Math.round((bait.rarityBoost - 1) * 100)}% • ${bait.id === 'biasa' || stock > 0 ? 'Dimiliki' : 'Belum dimiliki'}</div></div><div class="rowBtns">${btns}</div>`;
+        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('bait', bait.id)}"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Luck +${Math.round((bait.rarityBoost - 1) * 100)}%${baitExtra(bait)} • ${bait.id === 'biasa' || stock > 0 ? 'Dimiliki' : 'Belum dimiliki'}</div></div><div class="rowBtns">${btns}</div>`;
         shopList.appendChild(row);
       }
     } else {
@@ -5082,12 +5099,13 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.6', DATE = '4 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.7', DATE = '4 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
-    ["Update v4.6", [
-      "Semua perahu sekarang model 3D HD: Sampan, Jukung bercadik, Perahu Motor, Speedboat, dan Kapal Layar Mewah punya bentuk lambung sendiri.",
-      "Gambar perahu di Toko Pak Karto sekarang render 3D asli, bukan kotak warna lagi.",
-      "Detail baru: dayung, cadik dan layar jukung, mesin tempel, kaca depan, tiang layar, lampu, dan pagar kuningan."
+    ["Update v4.7", [
+      "12 Rod dan 8 Bait dengan stat baru: Starter, Luck, Carbon, Grass, Damascus, Ice, Lucky, Midnight, Steampunk, Chrome, Astral, Angler.",
+      "Bait baru punya efek tambahan: Bonus XP (Nature, Dark Matter), peluang Shiny, dan peluang Mutasi (Corrupt, Aether).",
+      "Rod yang dipegang karakter dan gambar di Rod Shop sekarang model 3D HD, tiap rod punya bentuk dan efek sendiri.",
+      "Berat ikan menyesuaikan kapasitas rod, dan makin berat kalau luck rod + bait tinggi."
     ]]
   ];
   var vb0 = document.getElementById('versionBadge'); if (vb0) vb0.textContent = VER; // badge versi ikut VER
@@ -5576,6 +5594,203 @@ const PMFish = (function () {
     eyes.forEach(function (e) { e.scale.y = bl; });
   });
 })();
+</script>
+<script>
+/* === ROD 3D HD v4.7 === */
+(function () {
+  if (!window.THREE) return;
+  var T = THREE, PI = Math.PI;
+  function MS(c, o) { o = o || {}; o.color = c; if (o.roughness === undefined) o.roughness = 0.5; return new T.MeshStandardMaterial(o); }
+  function put(par, geo, mat, x, y, z) { var m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; par.add(m); return m; }
+  function rs(y) { return y <= 0.55 ? 0.03 - 0.016 * (y + 0.55) / 1.1 : 0.014 - 0.006 * (y - 0.55) / 0.42; }
+  function wrap(par, y, tube, mat) { var m = put(par, new T.TorusGeometry(rs(y) + tube * 0.6, tube, 6, 16), mat, 0, y, 0); m.rotation.x = PI / 2; return m; }
+  function guides(par, ys, mat) { ys.forEach(function (y) { var m = put(par, new T.TorusGeometry(0.013, 0.0028, 6, 12), mat, 0, y, rs(y) + 0.012); m.rotation.x = PI / 2; }); }
+  function spike(par, geo, mat, y, ang, out, tilt) { var m = put(par, geo, mat, Math.sin(ang) * (rs(y) + out), y, Math.cos(ang) * (rs(y) + out)); m.rotation.set(Math.cos(ang) * tilt, 0, -Math.sin(ang) * tilt); return m; }
+
+  var LOOK = {
+    bambu: { c: 0xc2a94a, m: 0.0, r: 0.8, e: 0x000000, ei: 0, grip: 0x5a3a1e, reel: 0x44403a },
+    luckrod: { c: 0x4fcf6a, m: 0.1, r: 0.45, e: 0x1f8a3a, ei: 0.25, grip: 0x2d6a3a, reel: 0xd4a73a },
+    kayu: { c: 0x1d1f23, m: 0.35, r: 0.35, e: 0x000000, ei: 0, grip: 0x15161a, reel: 0x2a2d33 },
+    grass: { c: 0x5b8a3a, m: 0.0, r: 0.8, e: 0x2c6a1a, ei: 0.15, grip: 0x4a3420, reel: 0x6b4a26 },
+    karbon: { c: 0xcfd6dc, m: 0.85, r: 0.3, e: 0x000000, ei: 0, grip: 0x2a2018, reel: 0x8b97a1, tex: 1 },
+    ice: { c: 0xbfe9ff, m: 0.15, r: 0.12, e: 0x5ac8ff, ei: 0.45, grip: 0x3a6a8a, reel: 0xe8f7ff, glow: 'pulse' },
+    perak: { c: 0x2f6fe0, m: 0.5, r: 0.3, e: 0x1a3a8a, ei: 0.2, grip: 0x1a2a5a, reel: 0xe0b83a },
+    midrod: { c: 0x1a1f4a, m: 0.4, r: 0.3, e: 0x4a3aff, ei: 0.5, grip: 0x0e1030, reel: 0x6a6ae0, glow: 'pulse' },
+    steampunk: { c: 0xb8733a, m: 0.8, r: 0.35, e: 0x000000, ei: 0, grip: 0x3a2414, reel: 0xd4a73a },
+    emas: { c: 0xc9a0ff, m: 1.0, r: 0.08, e: 0x8a3aff, ei: 0.3, grip: 0x2a1a4a, reel: 0xe6d0ff, glow: 'pulse' },
+    legendaris: { c: 0xffd45a, m: 0.7, r: 0.25, e: 0xffa81a, ei: 0.5, grip: 0x4a2a0a, reel: 0xfff2c0, glow: 'rainbow' },
+    angler: { c: 0x0f5a6a, m: 0.3, r: 0.4, e: 0x00d0c0, ei: 0.35, grip: 0x082a33, reel: 0x1aa8a0, glow: 'pulse' }
+  };
+  var damTex = null;
+  function dam() {
+    if (damTex) return damTex;
+    var c = document.createElement('canvas'); c.width = 64; c.height = 256; var g = c.getContext('2d');
+    g.fillStyle = '#9aa4ac'; g.fillRect(0, 0, 64, 256);
+    for (var i = 0; i < 26; i++) { g.strokeStyle = i % 2 ? 'rgba(30,36,42,.55)' : 'rgba(235,240,245,.5)'; g.lineWidth = 2 + (i % 3); g.beginPath();
+      for (var y = 0; y <= 256; y += 8) { var x = (i * 2.6 + Math.sin(y * 0.09 + i * 0.7) * 7 + Math.sin(y * 0.031 + i) * 5) % 64; if (y) g.lineTo(x, y); else g.moveTo(x, y); } g.stroke(); }
+    damTex = new T.CanvasTexture(c); damTex.wrapS = damTex.wrapT = T.RepeatWrapping; return damTex;
+  }
+
+  /* dekorasi per rod. root = badan joran (y -0.55..0.55), tip = ruas ujung (y 0..0.42). Mengembalikan fungsi tick(t) kalau ada animasi */
+  function deco(id, root, tip) {
+    var steel = MS(0xcfd6dc, { metalness: 0.9, roughness: 0.25 }), brass = MS(0xd4a73a, { metalness: 0.85, roughness: 0.3 }), tick = null, i, k;
+    if (id === 'bambu') {
+      var nd = MS(0x7a6a22, { roughness: 0.8 }); [-0.4, -0.12, 0.16, 0.4].forEach(function (y) { wrap(root, y, 0.007, nd); });
+      guides(root, [0.05, 0.28, 0.48], steel);
+    } else if (id === 'luckrod') {
+      guides(root, [0.05, 0.28, 0.48], brass);
+      var lg = MS(0x2fd05a, { emissive: 0x168a38, emissiveIntensity: 0.5 }), cl = new T.Group(); cl.position.set(0, 0.13, rs(0.13) + 0.035); root.add(cl);
+      [[0.02, 0], [-0.02, 0], [0, 0.02], [0, -0.02]].forEach(function (p) { var s = put(cl, new T.SphereGeometry(0.019, 10, 8), lg, p[0], p[1], 0); s.scale.z = 0.5; });
+      put(cl, new T.CylinderGeometry(0.003, 0.003, 0.04, 5), lg, 0.012, -0.04, 0).rotation.z = 0.5;
+      wrap(root, 0.0, 0.006, brass); wrap(root, 0.36, 0.006, brass);
+    } else if (id === 'kayu') {
+      var red = MS(0xd8302a, { roughness: 0.6 }); [-0.18, 0.08, 0.34].forEach(function (y) { wrap(root, y, 0.006, red); wrap(root, y + 0.03, 0.004, red); });
+      guides(root, [0.05, 0.28, 0.48], MS(0x888f96, { metalness: 0.8, roughness: 0.3 }));
+    } else if (id === 'grass') {
+      var vm = MS(0x2f9a38, { roughness: 0.7 }), pts = [];
+      for (i = 0; i <= 36; i++) { var y = -0.15 + i * 0.0185, a = i * 0.55; pts.push(new T.Vector3(Math.sin(a) * (rs(y) + 0.007), y, Math.cos(a) * (rs(y) + 0.007))); }
+      var vine = put(root, new T.TubeGeometry(new T.CatmullRomCurve3(pts), 90, 0.0045, 5, false), vm, 0, 0, 0);
+      for (i = 2; i < 36; i += 5) { var lf = put(root, new T.SphereGeometry(0.02, 8, 6), MS(0x4ed44a, { roughness: 0.6 }), pts[i].x * 1.9, pts[i].y, pts[i].z * 1.9); lf.scale.set(1, 0.35, 1.7); lf.rotation.y = Math.atan2(pts[i].x, pts[i].z); }
+      guides(root, [0.05, 0.28, 0.48], MS(0x6b4a26));
+    } else if (id === 'karbon') {
+      [-0.2, 0.1, 0.38].forEach(function (y) { wrap(root, y, 0.008, brass); });
+      guides(root, [0.05, 0.28, 0.48], brass);
+    } else if (id === 'ice') {
+      var cm = MS(0xd8f4ff, { emissive: 0x4ab8ff, emissiveIntensity: 0.6, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.85 });
+      [[-0.1, 0], [0.0, 2.1], [0.12, 4.2], [0.24, 1.0], [0.34, 3.1], [0.44, 5.2]].forEach(function (p) { spike(root, new T.ConeGeometry(0.014, 0.09 + 0.02 * ((p[1] * 7) % 3), 5), cm, p[0], p[1], 0.02, 0.55); });
+      put(tip, new T.ConeGeometry(0.01, 0.07, 5), cm, 0, 0.43, 0);
+      guides(root, [0.05, 0.28, 0.48], MS(0xbfe9ff, { metalness: 0.5, roughness: 0.2 }));
+    } else if (id === 'perak') {
+      var hs = put(root, new T.TorusGeometry(0.03, 0.008, 6, 16, PI * 1.5), brass, 0, 0.12, rs(0.12) + 0.035); hs.rotation.z = PI * 0.75 + PI / 2 * 0; hs.rotation.z = -PI * 0.25 - PI / 2 + PI / 2;
+      for (i = 0; i < 3; i++) put(root, new T.SphereGeometry(0.004, 6, 5), steel, Math.cos(i * 0.9 - 0.9) * 0.036 * 0.0 + (i - 1) * 0.02, 0.12 - 0.028, rs(0.12) + 0.045);
+      [-0.22, 0.34].forEach(function (y) { wrap(root, y, 0.008, brass); });
+      guides(root, [0.05, 0.28, 0.48], brass);
+    } else if (id === 'midrod') {
+      var star = MS(0xffffff, { emissive: 0xbfd0ff, emissiveIntensity: 1.0 });
+      for (i = 0; i < 9; i++) { var yy = -0.2 + i * 0.07, aa = i * 2.1; put(root, new T.OctahedronGeometry(0.0085 + 0.003 * (i % 3)), star, Math.sin(aa) * (rs(yy) + 0.007), yy, Math.cos(aa) * (rs(yy) + 0.007)); }
+      var moon = put(root, new T.TorusGeometry(0.03, 0.008, 6, 16, PI * 1.5), MS(0xfff2b8, { emissive: 0xffd86a, emissiveIntensity: 0.8 }), 0, 0.2, rs(0.2) + 0.03); moon.rotation.z = PI * 0.25;
+      wrap(root, -0.3, 0.007, MS(0x8a8aff, { metalness: 0.7, roughness: 0.3 })); wrap(root, 0.4, 0.007, MS(0x8a8aff, { metalness: 0.7, roughness: 0.3 }));
+      guides(root, [0.05, 0.28, 0.48], steel);
+    } else if (id === 'steampunk') {
+      var cop = MS(0xc87a3a, { metalness: 0.85, roughness: 0.3 }), gears = [];
+      [[0.0, 0.18, 0.05, 0.05], [-0.05, 0.3, 0.07, 0.035]].forEach(function (p, n) {
+        var gr = new T.Group(); gr.position.set(p[0] * 0 + (n ? -0.04 : 0.04), p[1], rs(p[1]) + 0.02); gr.rotation.x = PI / 2; root.add(gr);
+        put(gr, new T.CylinderGeometry(p[3], p[3], 0.012, 10), brass, 0, 0, 0); put(gr, new T.CylinderGeometry(p[3] * 0.45, p[3] * 0.45, 0.016, 10), cop, 0, 0, 0); put(gr, new T.CylinderGeometry(p[3] * 1.18, p[3] * 1.18, 0.006, 5), brass, 0, 0, 0); gears.push(gr);
+      });
+      var gauge = new T.Group(); gauge.position.set(0, -0.02, rs(-0.02) + 0.03); root.add(gauge);
+      put(gauge, new T.TorusGeometry(0.027, 0.007, 8, 18), brass, 0, 0, 0); put(gauge, new T.CircleGeometry(0.026, 18), MS(0xf4efe0, { roughness: 0.6 }), 0, 0, -0.001);
+      put(gauge, new T.BoxGeometry(0.003, 0.02, 0.004), MS(0xd8302a), 0.005, 0.007, 0.004).rotation.z = -0.6;
+      var pm = [new T.Vector3(0.026, -0.3, 0.0), new T.Vector3(0.05, -0.1, 0.02), new T.Vector3(0.05, 0.1, 0.02), new T.Vector3(0.026, 0.24, 0.0)];
+      put(root, new T.TubeGeometry(new T.CatmullRomCurve3(pm), 20, 0.007, 6, false), cop, 0, 0, 0);
+      [-0.3, 0.1, 0.4].forEach(function (y) { wrap(root, y, 0.007, cop); });
+      guides(root, [0.05, 0.28, 0.48], brass);
+      tick = function (t) { gears[0].rotation.y = t * 1.4; gears[1].rotation.y = -t * 2.0; };
+    } else if (id === 'emas') {
+      var cg = MS(0xb56bff, { emissive: 0x9a3aff, emissiveIntensity: 0.9, roughness: 0.2 }), ch = MS(0xf2e8ff, { metalness: 1, roughness: 0.06 });
+      [-0.3, -0.05, 0.2, 0.42].forEach(function (y) { wrap(root, y, 0.009, cg); });
+      [0, PI * 0.66, PI * 1.33].forEach(function (a) { var f = spike(root, new T.BoxGeometry(0.004, 0.16, 0.05), ch, -0.1, a, 0.03, 0.0); f.rotation.x = Math.cos(a) * 0.25; f.rotation.z = -Math.sin(a) * 0.25; f.rotation.y = a; });
+      guides(root, [0.05, 0.28, 0.48], ch);
+    } else if (id === 'legendaris') {
+      var gold = MS(0xffd45a, { metalness: 0.9, roughness: 0.2, emissive: 0xffa81a, emissiveIntensity: 0.4 }), orb = new T.Group(), orb2 = new T.Group();
+      orb.position.set(0, 0.16, 0); orb.rotation.x = 0.5; root.add(orb); orb2.position.set(0, 0.16, 0); orb2.rotation.x = -0.5; orb2.rotation.z = 0.8; root.add(orb2);
+      put(orb, new T.TorusGeometry(0.075, 0.0035, 6, 30), gold, 0, 0, 0).rotation.x = PI / 2; put(orb2, new T.TorusGeometry(0.095, 0.0035, 6, 30), gold, 0, 0, 0).rotation.x = PI / 2;
+      var sm = MS(0xffffff, { emissive: 0xfff2a0, emissiveIntensity: 1.2 });
+      put(orb, new T.OctahedronGeometry(0.014), sm, 0.075, 0, 0); put(orb, new T.OctahedronGeometry(0.01), sm, -0.075, 0, 0); put(orb2, new T.OctahedronGeometry(0.012), sm, 0, 0, 0.095);
+      [-0.3, 0.4].forEach(function (y) { wrap(root, y, 0.009, gold); });
+      put(tip, new T.OctahedronGeometry(0.016), sm, 0, 0.44, 0);
+      guides(root, [0.05, 0.28, 0.48], gold);
+      tick = function (t) { orb.rotation.y = t * 1.3; orb2.rotation.y = -t * 1.7; };
+    } else if (id === 'angler') {
+      var dk = MS(0x0a3a46, { roughness: 0.5 }), gl = MS(0x7ffff0, { emissive: 0x00e8d0, emissiveIntensity: 1.3 });
+      [-0.3, 0.0, 0.3].forEach(function (y) { wrap(root, y, 0.008, MS(0x1aa8a0, { metalness: 0.6, roughness: 0.3 })); });
+      for (i = 0; i < 4; i++) { var fy = -0.25 + i * 0.16; var fn = put(root, new T.ConeGeometry(0.02, 0.1 - i * 0.012, 4), dk, 0, fy, -(rs(fy) + 0.03)); fn.rotation.x = -PI / 2 - 0.5; }
+      [-1, 1].forEach(function (s) { var fin = put(root, new T.BoxGeometry(0.004, 0.12, 0.07), MS(0x0f7a82, { roughness: 0.4 }), s * 0.045, -0.12, 0.0); fin.rotation.z = s * 0.35; fin.rotation.y = s * 0.2; });
+      var st = [new T.Vector3(0, 0.38, 0), new T.Vector3(0, 0.46, 0.02), new T.Vector3(0, 0.5, 0.07), new T.Vector3(0, 0.46, 0.12)];
+      put(tip, new T.TubeGeometry(new T.CatmullRomCurve3(st), 16, 0.0035, 5, false), dk, 0, 0, 0);
+      var lure = put(tip, new T.SphereGeometry(0.02, 12, 10), gl, 0, 0.46, 0.125);
+      guides(root, [0.05, 0.28, 0.48], MS(0x7ffff0, { metalness: 0.5, roughness: 0.3 }));
+      tick = function (t) { var s = 1 + 0.18 * Math.sin(t * 3.5); lure.scale.set(s, s, s); gl.emissiveIntensity = 1.0 + 0.5 * Math.sin(t * 3.5); };
+    }
+    return tick;
+  }
+
+  function lookMat(L) {
+    var m = MS(L.c, { metalness: L.m, roughness: L.r, emissive: L.e }); m.emissiveIntensity = L.ei; if (L.tex) m.map = dam(); return m;
+  }
+  /* model utuh (buat gambar di toko) */
+  window.pmRodModel = function (id) {
+    var L = LOOK[id] || LOOK.bambu, G = new T.Group(), m = lookMat(L);
+    put(G, new T.CylinderGeometry(0.014, 0.03, 1.1, 14), m, 0, 0, 0);
+    var tp = put(G, new T.CylinderGeometry(0.008, 0.014, 0.42, 10).translate(0, 0.21, 0), m, 0, 0.55, 0);
+    put(G, new T.CylinderGeometry(0.038, 0.038, 0.24, 12), MS(L.grip, { roughness: 0.9 }), 0, -0.4, 0);
+    var rl = put(G, new T.CylinderGeometry(0.055, 0.055, 0.06, 16), MS(L.reel, { metalness: 0.8, roughness: 0.3 }), 0.05, -0.2, 0); rl.rotation.z = PI / 2;
+    put(G, new T.CylinderGeometry(0.014, 0.014, 0.1, 8), MS(0x888f96, { metalness: 0.8 }), 0.105, -0.2, 0).rotation.z = PI / 2;
+    deco(id, G, tp); return G;
+  };
+
+  /* gambar 3D joran untuk Rod Shop */
+  var icons = {}, iconsDone = false;
+  function makeIcons() {
+    if (iconsDone) return; iconsDone = true;
+    try {
+      var W = 192, cv = document.createElement('canvas'); cv.width = cv.height = W;
+      var r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: true });
+      r.setPixelRatio(1); r.setSize(W, W, false); r.setClearColor(0x000000, 0);
+      if ('outputEncoding' in r && T.sRGBEncoding) r.outputEncoding = T.sRGBEncoding;
+      var sc = new T.Scene(); sc.add(new T.HemisphereLight(0xe6f4ff, 0x3b4650, 1.0));
+      var dl = new T.DirectionalLight(0xfff0d0, 1.3); dl.position.set(3, 5, 6); sc.add(dl);
+      var cam = new T.PerspectiveCamera(28, 1, 0.1, 50);
+      Object.keys(LOOK).forEach(function (id) {
+        var m = window.pmRodModel(id); m.scale.set(1.8, 1, 1.8); m.rotation.z = -0.62; m.rotation.y = -0.5; sc.add(m); m.updateMatrixWorld(true);
+        var bb = new T.Box3().setFromObject(m), c = bb.getCenter(new T.Vector3()), rad = bb.getBoundingSphere(new T.Sphere()).radius;
+        var dist = rad * 1.02 / Math.tan(PI * 14 / 180), dir = new T.Vector3(0.12, 0.1, 1).normalize();
+        cam.position.copy(c).addScaledVector(dir, dist); cam.lookAt(c);
+        r.render(sc, cam); icons[id] = cv.toDataURL('image/png');
+        sc.remove(m); m.traverse(function (o) { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map && o.material.map !== damTex) o.material.map.dispose(); o.material.dispose(); } });
+      });
+      r.dispose(); if (r.forceContextLoss) r.forceContextLoss();
+    } catch (e) { console.warn('ikon rod 3D gagal', e); }
+  }
+  window.pmRodIcon = function (id, col) {
+    makeIcons(); if (!icons[id]) return null;
+    return 'background:url(' + icons[id] + ') center/contain no-repeat,radial-gradient(circle at 50% 38%,' + col + '55,#0b1c28 75%);border:2px solid ' + col + ';box-shadow:0 0 10px ' + col + '88;width:64px;height:64px;border-radius:14px;image-rendering:auto;';
+  };
+
+  /* joran yang dipegang karakter */
+  var C = window.__PMC; if (!C || !C.rodMesh) return;
+  var rod = C.rodMesh, rodMat = rod.material, cur = '', decoG = null, tipG = null, tickFn = null, P = null, curL = null;
+  function parts() {
+    if (P) return P; P = {};
+    rod.children.forEach(function (m) {
+      var g = m.geometry; if (!g) return; var p = g.parameters || {};
+      if (g.type === 'CylinderGeometry' && p.radiusTop === 0.038) P.grip = m;
+      else if (g.type === 'CylinderGeometry' && p.radiusTop === 0.055) P.reel = m;
+      else if (g.type === 'CylinderGeometry' && p.radiusTop === 0.008) P.tip = m;
+      else if (g.type === 'OctahedronGeometry' || g.type === 'TorusGeometry') P.old = (P.old || []).concat([m]);
+    });
+    return P;
+  }
+  function setRod(id) {
+    var p = parts(), L = LOOK[id] || LOOK.bambu; curL = L; cur = id;
+    if (decoG) { rod.remove(decoG); decoG.traverse(function (o) { if (o.geometry) o.geometry.dispose(); }); decoG = null; }
+    if (tipG && p.tip) { p.tip.remove(tipG); tipG.traverse(function (o) { if (o.geometry) o.geometry.dispose(); }); tipG = null; }
+    rodMat.color.set(L.c); rodMat.metalness = L.m; rodMat.roughness = L.r; rodMat.emissive.set(L.e); rodMat.emissiveIntensity = L.ei;
+    var tx = L.tex ? dam() : null; if (rodMat.map !== tx) { rodMat.map = tx; rodMat.needsUpdate = true; }
+    if (p.grip) { if (!p.gm) { p.gm = MS(L.grip, { roughness: 0.9 }); p.grip.material = p.gm; } p.gm.color.set(L.grip); }
+    if (p.reel) { if (!p.rm) { p.rm = MS(L.reel, { metalness: 0.8, roughness: 0.3 }); p.reel.material = p.rm; } p.rm.color.set(L.reel); }
+    decoG = new T.Group(); rod.add(decoG); tipG = new T.Group(); if (p.tip) p.tip.add(tipG); else rod.add(tipG);
+    tickFn = deco(id, decoG, tipG);
+  }
+  window.pmRodTick = function (t) {
+    var id = C.save && C.save.rod; if (!id) return;
+    if (id !== cur) setRod(id);
+    var o = parts().old; if (o) o.forEach(function (m) { m.visible = false; });
+    if (curL.glow === 'rainbow') { rodMat.emissive.setHSL((t * 0.2) % 1, 0.9, 0.55); rodMat.emissiveIntensity = 0.55; }
+    else if (curL.glow === 'pulse') rodMat.emissiveIntensity = curL.ei * (0.75 + 0.25 * Math.sin(t * 3));
+    if (tickFn) tickFn(t);
+  };
+})();
+
 </script>
 </body>
 </html>

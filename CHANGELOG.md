@@ -2,6 +2,14 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-04 (v4.7)
+
+- Rod jadi 12 tier dan Bait jadi 8 tier dengan stat Luck/Speed/Weight sesuai tabel baru (Starter, Luck, Carbon, Grass, Damascus, Ice, Lucky, Midnight, Steampunk, Chrome, Astral, Angler).
+- Bait punya efek tambahan: Bonus XP (Nature +4%, Dark Matter +5%), Shiny (Dark Matter +5%, Corrupt +10%, Aether +5%), Mutasi (Corrupt +10%, Aether +15%).
+- Rod dipegang dan gambar Rod Shop jadi model 3D HD, tiap rod punya bentuk dan efek sendiri.
+- Berat ikan menyesuaikan kapasitas rod dan makin berat kalau luck rod + bait tinggi.
+- Info Update lama diganti dengan yang baru, versi naik ke v4.7.
+
 ## 2026-10-04 (v4.6)
 
 - Semua perahu dibuat model 3D HD dengan bentuk lambung, dek, dan detail masing-masing (dayung, cadik, layar, mesin tempel, tiang, lampu, pagar).
