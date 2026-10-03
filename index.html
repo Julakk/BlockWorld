@@ -894,37 +894,146 @@ window.PMExt = function (C) {
     bov.querySelectorAll('button[data-b]').forEach(function (btn) { btn.onclick = function () { pickBoat(btn.getAttribute('data-b')); }; });
   }
 
-  /* --- NPC Pak Karto di samping Rod Shop --- */
-  var NPC_X = -5.6, NPC_Z = 26.5, NPC_BASE = Math.PI / 4;
-  var npc = new T.Group();
-  function nb(w, h2, d, col, x, y, z) {
-    var m = new T.Mesh(new T.BoxGeometry(w, h2, d), new T.MeshLambertMaterial({ color: col }));
-    m.position.set(x, y, z); npc.add(m); return m;
-  }
-  nb(0.24, 0.6, 0.26, 0x2b3a55, -0.14, 0.3, 0); nb(0.24, 0.6, 0.26, 0x2b3a55, 0.14, 0.3, 0);
-  nb(0.62, 0.72, 0.34, 0x2f8f5b, 0, 0.96, 0);
-  nb(0.2, 0.62, 0.22, 0x2f8f5b, -0.42, 0.96, 0); nb(0.2, 0.62, 0.22, 0x2f8f5b, 0.42, 0.96, 0);
-  nb(0.42, 0.42, 0.42, 0xe0a97a, 0, 1.5, 0);
-  var brim = new T.Mesh(new T.CylinderGeometry(0.5, 0.5, 0.05, 12), new T.MeshLambertMaterial({ color: 0xe8d18a })); brim.position.y = 1.76; npc.add(brim);
-  var crown = new T.Mesh(new T.CylinderGeometry(0.24, 0.3, 0.2, 12), new T.MeshLambertMaterial({ color: 0xe8d18a })); crown.position.y = 1.88; npc.add(crown);
+  /* --- NPC Pak Karto: model 3D detail, berdiri di samping Rod Shop --- */
   (function () {
-    var cv = document.createElement('canvas'); cv.width = 256; cv.height = 64;
-    var g = cv.getContext('2d');
-    g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 8, 256, 48);
-    g.font = 'bold 30px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffffff'; g.fillText('Pak Karto', 128, 33);
-    var sp = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(cv), transparent: true, depthWrite: false }));
-    sp.scale.set(2.0, 0.5, 1); sp.position.y = 2.5; npc.add(sp);
+    var NPC_X = -7.6, NPC_Z = 29.7, NPC_BASE = 1.1;
+    var gh = null;
+    C.setGround(function (o, x, z) { if (!gh) gh = o; return o(x, z); });
+    var npc = new T.Group();
+
+    function mat(col, rough, extra) {
+      var o = { color: col, roughness: rough == null ? 0.7 : rough, metalness: 0 };
+      if (extra) for (var k in extra) o[k] = extra[k];
+      return new T.MeshStandardMaterial(o);
+    }
+    function tex(w, h, draw) {
+      var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      draw(cv.getContext('2d'), w, h);
+      var tx = new T.CanvasTexture(cv); tx.anisotropy = 8; return tx;
+    }
+    function add(geo, m, x, y, z, par) {
+      var o = new T.Mesh(geo, m); o.position.set(x, y, z);
+      o.castShadow = true; o.receiveShadow = true; (par || npc).add(o); return o;
+    }
+    function rr(g, x, y, w, h, r) {
+      g.beginPath(); g.moveTo(x + r, y);
+      g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+      g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+    }
+
+    /* tekstur */
+    var shirtTex = tex(256, 256, function (g, w, h) {
+      g.fillStyle = '#2d8a58'; g.fillRect(0, 0, w, h);
+      for (var i = 0; i < w; i += 32) { g.fillStyle = 'rgba(255,255,255,0.10)'; g.fillRect(i, 0, 14, h); }
+      for (var j = 0; j < 900; j++) { g.fillStyle = 'rgba(0,0,0,' + (Math.random() * 0.06) + ')'; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+    });
+    shirtTex.wrapS = T.RepeatWrapping; shirtTex.repeat.set(2, 1);
+    var pantsTex = tex(128, 128, function (g, w, h) {
+      g.fillStyle = '#2a3a58'; g.fillRect(0, 0, w, h);
+      for (var i = 0; i < 700; i++) { g.fillStyle = 'rgba(255,255,255,' + (Math.random() * 0.07) + ')'; g.fillRect(Math.random() * w, Math.random() * h, 1, 3); }
+    });
+    var strawTex = tex(256, 256, function (g, w, h) {
+      g.fillStyle = '#e6cf8c'; g.fillRect(0, 0, w, h);
+      for (var i = 0; i < h; i += 8) { g.fillStyle = (i / 8) % 2 ? 'rgba(160,120,50,0.22)' : 'rgba(255,245,200,0.18)'; g.fillRect(0, i, w, 4); }
+      for (var j = 0; j < w; j += 10) { g.fillStyle = 'rgba(120,90,40,0.12)'; g.fillRect(j, 0, 2, h); }
+    });
+    var boardTex = tex(512, 256, function (g, w, h) {
+      g.fillStyle = '#7a4a28'; g.fillRect(0, 0, w, h);
+      for (var i = 0; i < h; i += 32) { g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(0, i, w, 3); }
+      g.strokeStyle = '#3d2412'; g.lineWidth = 10; g.strokeRect(5, 5, w - 10, h - 10);
+      g.fillStyle = '#fff3c9'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = 'bold 84px sans-serif'; g.fillText('PERAHU', w / 2, 100);
+      g.font = 'bold 40px sans-serif'; g.fillStyle = '#ffd46b'; g.fillText('Toko Pak Karto', w / 2, 180);
+    });
+    var tagTex = tex(256, 64, function (g, w, h) {
+      g.fillStyle = 'rgba(10,25,40,0.72)'; rr(g, 4, 6, w - 8, h - 12, 18); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 3; g.stroke();
+      g.font = 'bold 30px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffffff'; g.fillText('Pak Karto', w / 2, h / 2 + 1);
+    });
+
+    /* material */
+    var skin = mat(0xe3ab7e, 0.55), skinD = mat(0xc98d62, 0.6), white = mat(0xffffff, 0.3), black = mat(0x1b1b1b, 0.3);
+    var gray = mat(0xd6d6d6, 0.85), brown = mat(0x5a3a22, 0.8), gold = mat(0xd9b34a, 0.3, { metalness: 0.8 }), red = mat(0xb02a2a, 0.6);
+    var pantsM = mat(0xffffff, 0.85, { map: pantsTex }), shirtM = mat(0xffffff, 0.8, { map: shirtTex }), strawM = mat(0xffffff, 0.9, { map: strawTex });
+
+    /* kaki, sepatu */
+    add(new T.CylinderGeometry(0.115, 0.1, 0.66, 14), pantsM, -0.15, 0.4, 0);
+    add(new T.CylinderGeometry(0.115, 0.1, 0.66, 14), pantsM, 0.15, 0.4, 0);
+    var shoeG = new T.SphereGeometry(1, 14, 10);
+    [-0.15, 0.15].forEach(function (sx) { var s = add(shoeG, brown, sx, 0.07, 0.07); s.scale.set(0.14, 0.09, 0.24); });
+
+    /* badan */
+    var torso = add(new T.CylinderGeometry(0.30, 0.33, 0.72, 20), shirtM, 0, 1.08, 0); torso.scale.z = 0.72;
+    var belt = add(new T.CylinderGeometry(0.335, 0.335, 0.07, 20), brown, 0, 0.77, 0); belt.scale.z = 0.72;
+    add(new T.BoxGeometry(0.1, 0.075, 0.03), gold, 0, 0.77, 0.255);
+    var collar = add(new T.TorusGeometry(0.19, 0.035, 8, 20), white, 0, 1.43, 0); collar.rotation.x = Math.PI / 2; collar.scale.y = 0.75;
+    add(new T.CylinderGeometry(0.07, 0.08, 0.12, 12), skin, 0, 1.5, 0);
+
+    /* lengan */
+    function makeArm(sx) {
+      var pv = new T.Group(); pv.position.set(sx, 1.36, 0); npc.add(pv);
+      add(new T.SphereGeometry(0.115, 14, 10), shirtM, 0, 0, 0, pv);
+      add(new T.CylinderGeometry(0.095, 0.085, 0.5, 14), shirtM, 0, -0.27, 0, pv);
+      add(new T.CylinderGeometry(0.085, 0.07, 0.12, 14), skin, 0, -0.56, 0, pv);
+      add(new T.SphereGeometry(0.085, 14, 10), skin, 0, -0.65, 0, pv);
+      return pv;
+    }
+    var armR = makeArm(0.4), armL = makeArm(-0.4);
+
+    /* kepala */
+    var head = new T.Group(); head.position.y = 1.72; npc.add(head);
+    var hs = add(new T.SphereGeometry(0.24, 24, 18), skin, 0, 0, 0, head); hs.scale.set(1, 1.08, 1);
+    [-1, 1].forEach(function (s) {
+      var ew = add(new T.SphereGeometry(0.045, 12, 10), white, s * 0.09, 0.04, 0.2, head); ew.scale.z = 0.5;
+      add(new T.SphereGeometry(0.022, 10, 8), black, s * 0.09, 0.04, 0.232, head);
+      var br = add(new T.BoxGeometry(0.09, 0.018, 0.02), gray, s * 0.09, 0.115, 0.215, head); br.rotation.z = s * 0.15;
+      var ear = add(new T.SphereGeometry(0.05, 10, 8), skin, s * 0.24, 0, 0, head); ear.scale.set(0.5, 1, 0.8);
+      var mu = add(new T.SphereGeometry(0.05, 12, 8), gray, s * 0.045, -0.08, 0.222, head); mu.scale.set(1.6, 0.7, 0.8); mu.rotation.z = -s * 0.25;
+      var sb = add(new T.SphereGeometry(0.06, 10, 8), gray, s * 0.2, -0.02, 0.03, head); sb.scale.set(0.6, 1.3, 1);
+    });
+    var nose = add(new T.SphereGeometry(0.04, 12, 10), skinD, 0, -0.02, 0.24, head); nose.scale.set(1, 1.1, 1);
+    var smile = add(new T.TorusGeometry(0.06, 0.008, 6, 16, Math.PI), red, 0, -0.1, 0.225, head); smile.rotation.z = Math.PI;
+
+    /* topi jerami */
+    var brim = add(new T.CylinderGeometry(0.46, 0.46, 0.03, 28), strawM, 0, 0.2, 0, head); brim.rotation.x = 0.05;
+    add(new T.CylinderGeometry(0.25, 0.28, 0.16, 24), strawM, 0, 0.29, 0, head);
+    var top = add(new T.SphereGeometry(0.25, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), strawM, 0, 0.37, 0, head); top.scale.y = 0.5;
+    add(new T.CylinderGeometry(0.285, 0.285, 0.05, 24), red, 0, 0.24, 0, head);
+
+    /* label nama */
+    var tag = new T.Sprite(new T.SpriteMaterial({ map: tagTex, transparent: true, depthWrite: false }));
+    tag.scale.set(1.5, 0.375, 1); tag.position.y = 2.55; npc.add(tag);
+
+    npc.position.set(NPC_X, C.DECK_Y, NPC_Z); npc.rotation.y = NPC_BASE;
+    C.town.add(npc);
+    C.TOWN_COLLIDERS.push({ x: NPC_X, z: NPC_Z, r: 0.8 });
+
+    /* papan toko di sebelahnya */
+    var board = new T.Group();
+    [-0.5, 0.5].forEach(function (sx) { add(new T.CylinderGeometry(0.045, 0.05, 1.3, 8), brown, sx, 0.65, 0, board); });
+    add(new T.BoxGeometry(1.25, 0.62, 0.06), mat(0x5a3a22, 0.8), 0, 1.05, 0, board);
+    var pl = new T.Mesh(new T.PlaneGeometry(1.17, 0.58), new T.MeshBasicMaterial({ map: boardTex }));
+    pl.position.set(0, 1.05, 0.034); board.add(pl);
+    var BX = NPC_X + 0.3, BZ = NPC_Z + 1.7;
+    board.position.set(BX, C.DECK_Y, BZ); board.rotation.y = NPC_BASE;
+    C.town.add(board);
+    C.TOWN_COLLIDERS.push({ x: BX, z: BZ, r: 0.7 });
+
+    C.TOWN_SHOPS.push({ id: 'boatnpc', name: 'PAK KARTO', label: 'Bicara dengan Pak Karto', x: NPC_X, z: NPC_Z, action: function () { if (!sailing) openBoatShop(); } });
+
+    /* animasi */
+    C.hookAnim(function (t) {
+      if (gh) { npc.position.y = gh(NPC_X, NPC_Z); board.position.y = gh(BX, BZ); }
+      var p = C.player.position, dx = p.x - NPC_X, dz = p.z - NPC_Z, near = dx * dx + dz * dz < 64;
+      var tgt = near ? Math.atan2(dx, dz) : NPC_BASE;
+      var d = Math.atan2(Math.sin(tgt - npc.rotation.y), Math.cos(tgt - npc.rotation.y));
+      npc.rotation.y += d * 0.08;
+      var br = Math.sin(t * 2.0);
+      torso.scale.y = 1 + br * 0.012; head.position.y = 1.72 + br * 0.008; head.rotation.z = Math.sin(t * 0.9) * 0.03;
+      armR.rotation.z = near ? 2.55 + Math.sin(t * 7) * 0.28 : 0.09 + Math.sin(t * 1.4) * 0.03;
+      armL.rotation.z = -0.09 - Math.sin(t * 1.4 + 1) * 0.03;
+    });
   })();
-  npc.position.set(NPC_X, C.DECK_Y, NPC_Z); npc.rotation.y = NPC_BASE;
-  C.town.add(npc);
-  C.TOWN_COLLIDERS.push({ x: NPC_X, z: NPC_Z, r: 0.8 });
-  C.TOWN_SHOPS.push({ id: 'boatnpc', name: 'PAK KARTO', label: 'Bicara dengan Pak Karto', x: NPC_X, z: NPC_Z, action: function () { if (!sailing) openBoatShop(); } });
-  C.hookAnim(function (t) {
-    var p = C.player.position, dx = p.x - NPC_X, dz = p.z - NPC_Z;
-    var tgt = (dx * dx + dz * dz < 100) ? Math.atan2(dx, dz) : NPC_BASE;
-    var d = Math.atan2(Math.sin(tgt - npc.rotation.y), Math.cos(tgt - npc.rotation.y));
-    npc.rotation.y += d * 0.1;
-  });
   C.setWalkable(function (o, x, z) { if (!sailing) return o(x, z); var d = Math.hypot(x, z); return d > C.ISLAND_RADIUS + 1 && d < 260 && !(Math.abs(x) < 2.7 && z > 27); });
   C.setNearWater(function (o) { return sailing || o(); });
   C.setGround(function (o, x, z) { return sailing ? 0.24 : o(x, z); });
@@ -4845,7 +4954,8 @@ const PMFish = (function () {
       "Perahu di dermaga dihapus. Sekarang ada NPC Pak Karto di samping Rod Shop yang menjual perahu.",
       "5 tipe perahu dengan harga dan kecepatan berbeda: Sampan, Jukung, Perahu Motor, Speedboat, dan Kapal Layar Mewah.",
       "Sampan gratis dan sudah dimiliki dari awal. Perahu yang dibeli tersimpan di akun dan bisa dinaiki lewat Pak Karto.",
-      "Kecepatan berlayar mengikuti tipe perahu yang dipakai."
+      "Kecepatan berlayar mengikuti tipe perahu yang dipakai.",
+      "Model Pak Karto dibuat 3D lebih detail dan berdiri di samping Rod Shop."
     ]]
   ];
   var vb0 = document.getElementById('versionBadge'); if (vb0) vb0.textContent = VER; // badge versi ikut VER

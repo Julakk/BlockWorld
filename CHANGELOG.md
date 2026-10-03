@@ -7,6 +7,7 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 - Perahu di dermaga dihapus, diganti NPC Pak Karto di samping Rod Shop yang menjual perahu.
 - 5 tipe perahu (Sampan, Jukung, Perahu Motor, Speedboat, Kapal Layar Mewah) dengan harga dan kecepatan berbeda. Sampan gratis.
 - Perahu yang dibeli tersimpan di save, kecepatan berlayar mengikuti tipe perahu yang dipakai.
+- Model Pak Karto dibuat 3D lebih detail dan dipindah ke samping Rod Shop.
 - Info Update lama diganti dengan yang baru, versi naik ke v4.5.
 
 ## 2026-10-03 (v4.4)
