@@ -635,7 +635,6 @@ window.PMExt = function (C) {
     s.catches++; s.byR[f.rarity] = (s.byR[f.rarity] || 0) + 1;
     if (c.mutation && c.mutation.id !== 'normal') s.mut++;
     if (c.mutation && c.mutation.shiny) s.shiny++;
-    if (f.zone === 'dalam') s.deep++;
     if (f.rarity === 'secret') s.secret++;
     if ((c.weight || 0) >= 1000) s.heavy++;
     addRecord(c); checkAch(); C.persist(); C.refresh();
@@ -4188,7 +4187,6 @@ const PMFish = (function () {
     const h = Math.min(1, (currentCatch.weight || 0) / (ROD_WEIGHT[rod.id] || 10));
     reelGain = 0.07 * Math.sqrt(rod.biteSpeed) * (1.15 - 0.5 * h);
     reelDrain = (0.22 + 0.06 * fIdx) * (1 + 0.5 * h);
-    if (castZone === 'dalam') reelDrain *= 1.15;
     if (currentCatch.tooHeavy) reelGain *= 0.25;
     reelProg = 0.25; reelGrace = 0.8;
     fStart = Math.max(2.5, Math.hypot(bobber.position.x - player.position.x, bobber.position.z - player.position.z));
