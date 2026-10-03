@@ -43,7 +43,7 @@
     KEYS.forEach(function (k) { o[k] = d && HEX.test(d[k]) ? d[k] : DEF[k]; });
     return o;
   }
-  function use(d) { KEYS.forEach(function (k) { cols[k].set(d[k]); }); on = true; }
+  function use(d) { KEYS.forEach(function (k) { cols[k].set(d[k]); }); on = true; applyLook(); }
   function applyLook() {
     if (!on) return;
     var m = mats();
@@ -160,7 +160,7 @@
   /* ---------- buka / tutup ---------- */
   var draft = null, snap = null;
   function setColor(k, c) {
-    draft[k] = c; cols[k].set(c); on = true;
+    draft[k] = c; cols[k].set(c); on = true; applyLook();
     var i = document.getElementById('pmlIn-' + k); if (i) i.value = c;
   }
   function syncInputs() {
@@ -195,6 +195,7 @@
   bCancel.onclick = function () { closePanel(false); };
   xb.onclick = function () { closePanel(false); };
 
+  window.PMLook = { open: openPanel, apply: applyLook };
   var host = document.getElementById('menuPanel') || document.getElementById('hudPills');
   if (host) {
     var mb = el('button', 'hudPill'); mb.textContent = 'Warna Karakter';

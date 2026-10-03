@@ -2,6 +2,18 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## v4.10 - 4 Okt 2026
+
+- Layar utama dirombak: preview karakter 3D di kiri, kartu Hadiah Harian dan Misi Harian di kanan.
+- Hadiah Harian punya tombol Klaim dan penanda streak 7 hari. Kalau lupa klaim, otomatis diklaim saat masuk game.
+- Tombol utama berubah jadi LANJUTKAN kalau sudah punya save.
+- Baris tombol cepat di layar utama: Peringkat, Suara, Getar, Backup, dan Info Update.
+- Badge Discord ditambahkan di layar utama dan di Menu. Gabung komunitasnya langsung dari game.
+- Menu dalam game dapat tombol Peringkat, jadi tidak perlu ke papan di samping Akuarium.
+- Status server tampil di layar utama: online, maintenance, dan pengumuman kalau ada.
+- Warna karakter langsung terlihat di preview, termasuk dari layar utama.
+- Tips jadi satu baris setelah pertama dibaca. Matahari digeser, dan langit mengikuti jam perangkat (pagi, siang, senja, malam).
+
 ## v4.9 - 4 Okt 2026
 
 - Menu baru Warna Karakter: ganti warna rambut, baju, celana, dan kulit pakai pilihan cepat atau color picker.
