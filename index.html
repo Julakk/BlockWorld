@@ -595,7 +595,6 @@ window.PMExt = function (C) {
     ['Kolektor', 'Temukan 15 jenis ikan', 15, 500, D],
     ['Ensiklopedia', 'Lengkapi Koleksi', C.FISH_TABLE.length, 8000, D],
     ['Raksasa', 'Tangkap ikan 1.000 kg+', 1, 1000, function () { return st().heavy; }],
-    ['Penjelajah', '10 ikan dari Laut Dalam', 10, 700, function () { return st().deep; }],
     ['Master Level', 'Capai Level 20', 20, 1500, function () { return S().level; }],
     ['Sultan Joran', 'Miliki Astral Rod', 1, 2000, function () { return (S().ownedRods || []).indexOf('legendaris') >= 0 ? 1 : 0; }],
     ['Aquarist', 'Pajang 6 ikan di Akuarium', 6, 600, function () { return (S().aqua || []).length; }],
@@ -606,7 +605,6 @@ window.PMExt = function (C) {
     ['Kolektor Mitos', 'Tangkap 5 ikan Mitos', 5, 10000, function () { return rc(5); }],
     ['Pemburu Rahasia', 'Tangkap 3 ikan Rahasia', 3, 40000, function () { return st().secret; }],
     ['Ahli Mutasi', 'Tangkap 100 ikan mutasi', 100, 5000, function () { return st().mut; }],
-    ['Penjelajah Samudra', 'Tangkap 50 ikan Laut Dalam', 50, 3000, function () { return st().deep; }],
     ['Level 40', 'Capai Level 40', 40, 5000, function () { return S().level; }],
     ['Level 60', 'Capai Level 60', 60, 12000, function () { return S().level; }],
     ['Kaya Raya', 'Punya 100.000 koin', 100000, 5000, function () { return S().coins; }],
@@ -820,7 +818,7 @@ window.PMExt = function (C) {
   var boat = C.boatMesh, sailing = false, dock = { x: boat.position.x, z: boat.position.z, r: boat.rotation.y };
   var boatE = { id: 'boat', name: 'PERAHU', label: 'Naik Perahu', x: -3.4, z: 38, action: function () {
     var p = C.player.position;
-    if (!sailing) { sailing = true; p.x = dock.x; p.z = dock.z; boatE.label = 'Turun ke Dermaga'; C.toast('Berlayar! Joystick buat jalan, Laut Dalam terbuka.'); }
+    if (!sailing) { sailing = true; p.x = dock.x; p.z = dock.z; boatE.label = 'Turun ke Dermaga'; C.toast('Berlayar! Joystick buat jalan.'); }
     else { sailing = false; p.x = 0; p.z = 36; boat.position.x = dock.x; boat.position.z = dock.z; boat.rotation.y = dock.r; boatE.x = -3.4; boatE.z = 38; boatE.label = 'Naik Perahu'; C.toast('Kembali ke dermaga'); }
     $('interactBtn').textContent = boatE.label;
   } };
@@ -1546,23 +1544,21 @@ window.PMExt = function (C) {
     { id: 'mutiara', name: 'Ikan Mutiara', rarity: 'legendary', value: 1700 },
     { id: 'leviathan', name: 'Leviathan', rarity: 'mythical', value: 5500 },
     { id: 'kraken_purba', name: 'Kraken Purba', rarity: 'secret', value: 50000 },
-    { id: 'bandeng', name: 'Ikan Bandeng', rarity: 'common', value: 6, zone: 'dangkal' },
-    { id: 'belanak', name: 'Ikan Belanak', rarity: 'common', value: 9, zone: 'dangkal' },
-    { id: 'baronang', name: 'Ikan Baronang', rarity: 'uncommon', value: 28, zone: 'dangkal' },
-    { id: 'kerapu', name: 'Ikan Kerapu', rarity: 'rare', value: 95, zone: 'dangkal' },
-    { id: 'ubur', name: 'Ubur-ubur Bening', rarity: 'rare', value: 80, zone: 'dangkal' },
-    { id: 'kuda_laut', name: 'Kuda Laut Kristal', rarity: 'epic', value: 380, zone: 'dangkal' },
-    { id: 'penyu', name: 'Penyu Hijau', rarity: 'legendary', value: 1500, zone: 'dangkal' },
-    { id: 'layur', name: 'Ikan Layur', rarity: 'common', value: 8, zone: 'dalam' },
-    { id: 'kembung', name: 'Ikan Kembung', rarity: 'common', value: 6, zone: 'dalam' },
-    { id: 'lentera', name: 'Ikan Lentera', rarity: 'uncommon', value: 45, zone: 'dalam' },
-    { id: 'todak', name: 'Ikan Todak', rarity: 'rare', value: 140, zone: 'dalam' },
-    { id: 'pari_manta', name: 'Pari Manta', rarity: 'epic', value: 520, zone: 'dalam' },
-    { id: 'hiu_martil', name: 'Hiu Martil', rarity: 'epic', value: 680, zone: 'dalam' },
-    { id: 'cumi_raksasa', name: 'Cumi Raksasa', rarity: 'legendary', value: 2400, zone: 'dalam' },
-    { id: 'ikan_bulan', name: 'Ikan Bulan', rarity: 'legendary', value: 3200, zone: 'dalam' },
-    { id: 'paus_biru', name: 'Paus Biru', rarity: 'mythical', value: 9500, zone: 'dalam' },
-    { id: 'megalodon', name: 'Megalodon', rarity: 'secret', value: 120000, zone: 'dalam' },
+    { id: 'u_sepat', name: 'Ikan Sepat', rarity: 'common', value: 6, zone: 'umum' },
+    { id: 'u_mas', name: 'Ikan Mas', rarity: 'common', value: 7, zone: 'umum' },
+    { id: 'u_nila', name: 'Ikan Nila', rarity: 'common', value: 8, zone: 'umum' },
+    { id: 'u_lele', name: 'Ikan Lele', rarity: 'common', value: 9, zone: 'umum' },
+    { id: 'u_mujair', name: 'Ikan Mujair', rarity: 'common', value: 10, zone: 'umum' },
+    { id: 'u_tawes', name: 'Ikan Tawes', rarity: 'uncommon', value: 24, zone: 'umum' },
+    { id: 'u_gabus', name: 'Ikan Gabus', rarity: 'uncommon', value: 28, zone: 'umum' },
+    { id: 'u_gurame', name: 'Ikan Gurame', rarity: 'uncommon', value: 32, zone: 'umum' },
+    { id: 'u_patin', name: 'Ikan Patin', rarity: 'uncommon', value: 36, zone: 'umum' },
+    { id: 'u_toman', name: 'Ikan Toman', rarity: 'rare', value: 85, zone: 'umum' },
+    { id: 'u_belida', name: 'Ikan Belida', rarity: 'rare', value: 95, zone: 'umum' },
+    { id: 'u_jelawat', name: 'Ikan Jelawat', rarity: 'rare', value: 110, zone: 'umum' },
+    { id: 'u_arwana', name: 'Arwana Super Red', rarity: 'epic', value: 380, zone: 'umum' },
+    { id: 'u_semah', name: 'Ikan Semah', rarity: 'epic', value: 450, zone: 'umum' },
+    { id: 'u_arapaima', name: 'Arapaima Emas', rarity: 'legendary', value: 1500, zone: 'umum' },
   ];
   const FISH_WEIGHT = { teri: [0.05, 0.3], mujair: [0.3, 1.2], lele: [0.8, 3], nila: [1, 6], kakap: [3, 15], tenggiri: [8, 40], tuna: [30, 250], hiu_kecil: [100, 800], marlin: [250, 1500], naga_laut: [800, 6000], mutiara: [500, 4000], leviathan: [5000, 60000], kraken_purba: [20000, 140000],
     bandeng: [0.3, 2], belanak: [0.2, 1.5], baronang: [0.4, 3], kerapu: [3, 60], ubur: [0.5, 12], kuda_laut: [0.02, 0.3], penyu: [60, 400],
@@ -1614,7 +1610,7 @@ window.PMExt = function (C) {
   ];
   const SHINY_CHANCE = 0.04; // roll sendiri, bisa nempel ke mutasi lain
   const DEEP_R = 56;         // batas Laut Dalam (jarak dari pusat pulau)
-  let castZone = 'dangkal';
+  let castZone = 'umum';
 
   // ================= DATA JORAN & UMPAN =================
   const ROD_TIERS = [
@@ -1665,7 +1661,7 @@ window.PMExt = function (C) {
     return base;
   }
   function rollFish(boost) {
-    const deep = castZone === 'dalam';
+    const deep = false;
     const rarity = rollRarity(boost + (deep ? 0.4 : 0));
     const all = FISH_BY_RARITY[rarity] || FISH_BY_RARITY.common;
     let pool = all.filter(f => !f.zone || f.zone === castZone);
@@ -2242,9 +2238,6 @@ window.PMExt = function (C) {
   const water = new THREE.Mesh(waterGeo, waterMat);
   water.position.y = -0.35;
   scene.add(water);
-  const deepRing = new THREE.Mesh(new THREE.RingGeometry(DEEP_R, 296, 64), new THREE.MeshBasicMaterial({ color: 0x06203a, transparent: true, opacity: 0.42, depthWrite: false, side: THREE.DoubleSide }));
-  deepRing.rotation.x = -Math.PI / 2; deepRing.position.y = -0.33;
-  scene.add(deepRing);
 
   // ================= POHON KELAPA (dekorasi) =================
   const trunkGeo = new THREE.CylinderGeometry(0.18, 0.26, 3.2, 10);
@@ -4016,8 +4009,8 @@ const PMFish = (function () {
     castAng = camYaw + Math.PI;
     rodTip(tipV); bobberStart.copy(tipV);
     bobberTarget.set(player.position.x + Math.sin(castAng) * castDist, wy() + 0.02, player.position.z + Math.cos(castAng) * castDist);
-    castZone = Math.hypot(bobberTarget.x, bobberTarget.z) >= DEEP_R ? 'dalam' : 'dangkal';
-    if (castZone === 'dalam') showToast('Melempar ke Laut Dalam!');
+    castZone = 'umum';
+    
     flightT = 0; flightDur = 0.55 + castDist * 0.045; arcH = 1.0 + castDist * 0.11;
     bobber.position.copy(bobberStart); bobber.visible = true;
     setFishBtnLabel('...', false);
@@ -4345,8 +4338,7 @@ const PMFish = (function () {
   // ================= UI: INDEKS IKAN (PM_V44) =================
   const FX_LOC = [
     { k: 'umum', n: 'Perairan Umum', bg: 'linear-gradient(135deg,#e9c27a,#5fb3a6 55%,#2b7fb8)', t: f => !f.zone },
-    { k: 'dangkal', n: 'Perairan Dangkal', bg: 'linear-gradient(135deg,#6fe0d0,#2aa7c9 60%,#1c6fa8)', t: f => f.zone === 'dangkal' },
-    { k: 'dalam', n: 'Laut Dalam', bg: 'linear-gradient(135deg,#1f4f8a,#0f2a52 55%,#070f26)', t: f => f.zone === 'dalam' },
+    { k: 'umum', n: 'Perairan Umum', bg: 'linear-gradient(135deg,#6fe0d0,#2aa7c9 60%,#1c6fa8)', t: f => f.zone === 'umum' },
   ];
   let fxSel = 'umum';
   function renderIndex() {
@@ -4980,7 +4972,7 @@ const PMFish = (function () {
       'Ikan Rahasia harus ditarik manual, Auto Mancing gak bisa.',
       'Pajang ikan langka di Akuarium biar gak ikut kejual.',
       'Cek Pasar tiap hari, harga ikan berubah-ubah.',
-      'Lempar jauh dari ujung dermaga buat masuk Laut Dalam.'];
+      'Lempar kail ke air buat mulai mancing.'];
     var tip = document.createElement('div'); tip.id = 'loadingTip';
     tip.textContent = 'Tips: ' + tips[Math.floor(Math.random() * tips.length)];
     var pct = document.createElement('div'); pct.id = 'loadingPct'; pct.textContent = '0%';
