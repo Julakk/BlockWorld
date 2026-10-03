@@ -2,6 +2,38 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-03 (v4.2)
+
+- Peringkat Online: pemain dengan tangkapan terbanyak, ikan terberat, dan prestise tertinggi.
+- Boss Fish: boss raksasa muncul berkala untuk semua pemain online. Hadiah dibagi sesuai jumlah serangan dan MVP dapat bonus.
+- Pasar Pemain: jual-beli ikan antar pemain, biaya pasar 5%, maksimal 5 listing per pemain, barang disimpan di server sampai terjual.
+
+## 2026-10-03 (v4.1)
+
+- Akuarium menghasilkan koin pasif, tersimpan sampai 8 jam, diambil lewat tombol di Akuarium.
+- 16 trofi baru dan gelar berdasarkan jumlah trofi.
+
+## 2026-10-03 (v4.0)
+
+- Rebirth: reset level dan progres untuk bonus permanen Luck, Speed, Harga Jual, dan XP, plus gelar baru.
+- Pet pendamping: Telur Pet, 6 jenis pet, bonus naik bintang kalau dapat duplikat, slot ke-2 terbuka di Rebirth 3.
+- Nama pulau di atas pulau dan pesan selamat datang saat tiba. Pulau pertama bernama Pulau Utama.
+
+## 2026-10-03 (v3.9)
+
+- Tampilan ikan tangkapan dikecilkan dan dipindah ke atas.
+- Altar Enchant tampil lebih HD: tekstur batu, lingkaran rune berputar, kristal berkilau, serpihan, dan partikel.
+- Mode Grafis HD lebih ringan: resolusi menyesuaikan FPS otomatis, bayangan lebih hemat.
+- Malam dan hujan lebih terang: ada cahaya bulan, redaman hujan dikurangi.
+- Info Update lama dihapus, hanya menampilkan update terbaru.
+
+## 2026-10-03 (v3.8)
+
+- Altar Enchant dirombak: 14 enchant dengan 5 tier (Common, Rare, Epic, Legendary, Mythic).
+- Efek baru Harga Jual dan XP, enchant Mythic Tycoon, Godhand, dan Omniscient.
+- Animasi undian enchant, sistem Pity tiap 20 roll, dan Roll Kunci Tier.
+- Peluang tiap tier ditampilkan langsung di altar.
+
 ## 2026-10-02 (v3.7)
 
 - **Cek kecepatan gerak di server**: jalan kaki 4,2 u/s dikasih ruang 1,5x ditambah cadangan 20 unit buat lag. Gerak yang melebihi itu ditahan, 10 pelanggaran dalam 10 dtk = peringatan ke developer, 25 = pemain di-kick. Developer dikecualikan. Titik dermaga/perahu/spawn boleh dituju (naik-turun perahu), posisi pertama tiap sesi diterima apa adanya (reconnect).
