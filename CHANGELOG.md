@@ -2,6 +2,13 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-03 (v4.3)
+
+- Akuarium: koin pasif dihitung server pakai jam server, ambil koin butuh online.
+- Pasar Pemain: batas listing per username, nggak bisa beli barang sendiri, kotak surat penuh nggak buang barang.
+- Boss Fish: batas serangan token bucket (rata-rata 6/dtk), pemain yang ditandai curang nggak dihitung.
+- Peringkat: berat ikan dicek ke tabel ikan, laporan maksimal sekali per 20 detik, nilai awal pemain baru dibatasi.
+
 ## 2026-10-03 (v4.2)
 
 - Peringkat Online: pemain dengan tangkapan terbanyak, ikan terberat, dan prestise tertinggi.

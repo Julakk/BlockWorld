@@ -741,17 +741,19 @@ window.PMExt = function (C) {
   }
   /* PM_V41 akuarium pasif */
   var AQ_RATE = 0.005, AQ_CAP_MIN = 480;
+  /* PM_V43 bank akuarium dihitung server (jam server) */
+  var aqSrv = { ok: false, rate: 0, bank: 0, cap: 0, at: 0 }, aqBusy = 0;
+  function aqPush() { if (netUp()) netSend({ t: 'aqset', u: UID, rate: aqRate() }); }
   function aqRate() { var r = 0; (S().aqua || []).forEach(function (e) { r += Math.max(1, Math.round(e.fish.value * ((e.mutation && e.mutation.mult) || 1) * AQ_RATE)); }); return r; }
   function aqAccrue() {
-    var s = S(), now = Date.now(), rate = aqRate(), cap = rate * AQ_CAP_MIN, bank = s.aquaBank || 0;
-    if (!s.aquaT || s.aquaT > now) s.aquaT = now;
-    var el = (now - s.aquaT) / 60000; s.aquaT = now;
-    s.aquaBank = bank + Math.max(0, Math.min(rate * el, cap - bank));
-    return { rate: rate, cap: cap, bank: Math.floor(s.aquaBank) };
+    var rate = aqRate();
+    if (!aqSrv.ok) return { rate: rate, cap: rate * AQ_CAP_MIN, bank: 0, off: true };
+    var el = (Date.now() - aqSrv.at) / 60000, bank = aqSrv.bank + Math.max(0, Math.min(aqSrv.rate * el, aqSrv.cap - aqSrv.bank));
+    return { rate: rate, cap: aqSrv.cap, bank: Math.floor(bank) };
   }
   function aqHtml() {
     var a = aqAccrue();
-    return '<div class="rowItem"><div class="rowInfo"><div class="rowName">Pemasukan Akuarium</div><div class="rowSub">' + a.rate + ' koin/menit • Tersimpan ' + a.bank + '/' + a.cap + ' (maks 8 jam)</div></div><button class="rowBtn" data-collect="1"' + (a.bank < 1 ? ' disabled' : '') + '>Ambil ' + a.bank + '</button></div>';
+    return '<div class="rowItem"><div class="rowInfo"><div class="rowName">Pemasukan Akuarium</div><div class="rowSub">' + a.rate + ' koin/menit • Tersimpan ' + a.bank + '/' + a.cap + ' (maks 8 jam)' + (a.off ? ' • butuh online' : '') + '</div></div><button class="rowBtn" data-collect="1"' + (a.bank < 1 || a.off ? ' disabled' : '') + '>Ambil ' + a.bank + '</button></div>';
   }
   var mA = mkModal('modalAqua', 'Akuarium');
   function icon(e) { return '<img class="rowIcon" src="' + C.fishIconCanvas(e.fish, e.mutation) + '">'; }
@@ -771,16 +773,17 @@ window.PMExt = function (C) {
   mA.body.addEventListener('click', function (ev) {
     var b = ev.target.closest('button'); if (!b || b.disabled) return; var s = S(); aqAccrue();
     if (b.dataset.collect) {
-      var g = Math.floor(s.aquaBank || 0); if (g < 1) return;
-      s.aquaBank -= g; s.coins += g; s.aquaEarned = (s.aquaEarned || 0) + g;
-      C.Sfx.sell(); C.toast('+' + g + ' koin dari Akuarium'); C.persist(); C.refresh(); renderA(); checkAch(); return;
+      if (!netUp()) { C.toast('Butuh koneksi server buat ambil koin Akuarium'); return; }
+      if (aqBusy && Date.now() - aqBusy < 5000) return; aqBusy = Date.now();
+      netSend({ t: 'aqclaim', rid: 'aq' + aqBusy, u: UID }); return;
     }
     if (b.dataset.put) { var e = s.inventory[b.dataset.put]; if (!e || e.count <= 0 || s.aqua.length >= AQ.max) return; e.count--; s.aqua.push({ fish: e.fish, mutation: e.mutation }); }
     else if (b.dataset.take) { var x = s.aqua.splice(+b.dataset.take, 1)[0]; if (!x) return; var k = x.fish.id + '|' + x.mutation.id; s.inventory[k] = s.inventory[k] || { fish: x.fish, mutation: x.mutation, count: 0 }; s.inventory[k].count++; }
     else return;
-    C.Sfx.tap(); C.persist(); C.refresh(); renderA(); checkAch();
+    aqPush(); C.Sfx.tap(); C.persist(); C.refresh(); renderA(); checkAch();
   });
-  C.TOWN_SHOPS.push({ id: 'aqua', name: 'AKUARIUM', label: 'Buka Akuarium', x: AQ.x, z: AQ.z, action: function () { renderA(); mA.open(); } });
+  C.TOWN_SHOPS.push({ id: 'aqua', name: 'AKUARIUM', label: 'Buka Akuarium', x: AQ.x, z: AQ.z, action: function () { aqPush(); renderA(); mA.open(); } });
+  setInterval(function () { if (mA.ov && mA.ov.classList.contains('show')) renderA(); }, 5000);
 
   /* ===== PERAHU ===== */
   var boat = C.boatMesh, sailing = false, dock = { x: boat.position.x, z: boat.position.z, r: boat.rotation.y };
@@ -885,6 +888,7 @@ window.PMExt = function (C) {
   function openLB() { netSend({ t: 'lbget' }); renderLB(); }
   function lbReport() {
     if (!netUp()) return;
+    aqPush();
     var s = S(), t = st(), best = (s.rec || [])[0], tr = 0;
     Object.keys(s.ach || {}).forEach(function (k) { if (s.ach[k]) tr++; });
     netSend({ t: 'stat', c: t.catches, w: best ? best.w : 0, wf: best ? best.n : '', rb: s.rebirth || 0, lv: s.level || 1, tr: tr });
@@ -1002,6 +1006,14 @@ window.PMExt = function (C) {
     else if (m.t === 'bossr') {
       s.coins += Math.max(0, Math.min(+m.coins || 0, 100000)); C.persist(); C.refresh(); C.Sfx.sell();
       C.toast((m.win ? 'Hadiah Boss: +' : 'Hadiah hiburan: +') + fmt(m.coins) + ' koin (' + m.hits + ' serangan)' + (m.mvp ? ' • MVP!' : ''));
+    }
+    else if (m.t === 'aqs') { aqSrv = { ok: true, rate: +m.rate || 0, bank: +m.bank || 0, cap: +m.cap || 0, at: Date.now() }; if (mA.ov.classList.contains('show')) renderA(); }
+    else if (m.t === 'aqpay') {
+      aqBusy = 0; aqSrv = { ok: true, rate: +m.rate || 0, bank: +m.bank || 0, cap: +m.cap || 0, at: Date.now() };
+      var ag = Math.max(0, Math.min(+m.coins || 0, 1e9));
+      if (ag > 0) { s.coins += ag; s.aquaEarned = (s.aquaEarned || 0) + ag; C.Sfx.sell(); C.toast('+' + fmt(ag) + ' koin dari Akuarium'); C.persist(); C.refresh(); checkAch(); }
+      else C.toast('Belum ada koin yang bisa diambil');
+      if (mA.ov.classList.contains('show')) renderA();
     }
     else if (m.t === 'mlist') { mkData = m; if (mM.ov.classList.contains('show')) renderMK(); }
     else if (m.t === 'mok') { delete pend[m.rid]; busy = false; C.toast('Barang dipasang di pasar'); netSend({ t: 'mget', u: UID }); }
@@ -1300,7 +1312,7 @@ window.PMExt = function (C) {
       else if (m.t === 'say') C.toast('📢 ' + m.text);
       else if (m.t === 'chat') addChat(m);
       else if (m.t === 'secret') addSecret(m);
-      else if (/^(lb|boss|bossr|mlist|mok|mfail|mbought|mcancelled|mpay|msold)$/.test(m.t)) { if (window.PMLB) window.PMLB.on(m); }
+      else if (/^(lb|boss|bossr|mlist|mok|mfail|mbought|mcancelled|mpay|msold|aqs|aqpay)$/.test(m.t)) { if (window.PMLB) window.PMLB.on(m); }
       else if (m.t === 'maint') { maintOn = !!m.on; setMaintBtn(); if (m.on && !isDev && !devToken) showGate('m', '🔧 Sedang maintenance', m.msg || 'Server lagi maintenance.', [['Coba lagi', function () { hideGate(); checkStatus(); }]]); else if (!m.on && gate.dataset.k === 'm') hideGate(); }
       else if (m.t === 'kicked') { blocked = true; C.toast(m.msg); }
       else if (m.t === 'err') {
@@ -4605,18 +4617,13 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.2', DATE = '3 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.3', DATE = '3 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
-    ["Update v4.2", [
-      "Rebirth: reset level dan progres untuk bonus permanen Luck, Speed, Harga Jual, dan XP, plus gelar baru. Tombolnya ada di Menu.",
-      "Pet pendamping: beli Telur Pet, ada 6 jenis, bonusnya naik bintang kalau dapat duplikat. Slot ke-2 terbuka di Rebirth 3.",
-      "Nama pulau tampil di atas pulau dan muncul pesan selamat datang saat tiba. Pulau pertama bernama Pulau Utama.",
-      "Akuarium sekarang menghasilkan koin pasif, tersimpan sampai 8 jam. Ambil lewat tombol di Akuarium.",
-      "16 trofi baru dan gelar berdasarkan jumlah trofi, tampil di bagian bawah Trofi.",
-      "Peringkat Online: pemain dengan tangkapan terbanyak, ikan terberat, dan prestise tertinggi.",
-      "Boss Fish: boss raksasa muncul berkala untuk semua pemain online. Tap SERANG bareng-bareng, hadiah dibagi sesuai jumlah serangan dan MVP dapat bonus.",
-      "Pasar Pemain: jual-beli ikan antar pemain, biaya pasar 5%, maksimal 5 listing per pemain.",
-      "Malam dan hujan lebih terang, mode Grafis HD lebih ringan, dan altar enchant tampil lebih HD."
+    ["Update v4.3", [
+      "Akuarium sekarang dihitung pakai jam server, jadi koin pasif nggak bisa dimajukan lewat jam HP. Ambil koin Akuarium butuh koneksi online.",
+      "Pasar Pemain: batas listing dihitung per username dan nggak bisa beli barang sendiri.",
+      "Boss Fish: batas serangan lebih ketat, pemain yang dicurigai curang nggak dihitung.",
+      "Peringkat: berat ikan dicek ke tabel ikan dan laporan dibatasi sekali per 20 detik."
     ]]
   ];
   var vb0 = document.getElementById('versionBadge'); if (vb0) vb0.textContent = VER; // badge versi ikut VER
