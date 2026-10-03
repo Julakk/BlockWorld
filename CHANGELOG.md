@@ -2,6 +2,12 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-04 (v4.6)
+
+- Semua perahu dibuat model 3D HD dengan bentuk lambung, dek, dan detail masing-masing (dayung, cadik, layar, mesin tempel, tiang, lampu, pagar).
+- Gambar perahu di Toko Pak Karto diganti render 3D asli (dibuat otomatis saat toko dibuka).
+- Info Update lama diganti dengan yang baru, versi naik ke v4.6.
+
 ## 2026-10-04 (v4.5)
 
 - Perahu di dermaga dihapus, diganti NPC Pak Karto di samping Rod Shop yang menjual perahu.
