@@ -10,3 +10,4 @@ server/server.log
 server/data.json
 server/data.json.tmp
 index.html.bak
+bump-version.py

@@ -2,6 +2,14 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## v4.9 - 4 Okt 2026
+
+- Menu baru Warna Karakter: ganti warna rambut, baju, celana, dan kulit pakai pilihan cepat atau color picker.
+- Ada preview karakter 3D yang berputar di panel itu, bisa digeser buat muter manual.
+- Warna tersimpan di save, jadi ikut Backup dan tetap ada setelah update.
+- Layar Buat Karakter sekarang punya tombol Atur Warna Karakter.
+- Username dicek langsung saat diketik: kelihatan tersedia atau sudah dipakai sebelum menekan Lanjut.
+
 ## 2026-10-04 (v4.8)
 
 - Tombol Grafis (Mode HD) di Menu dihapus. HD selalu aktif, dan turun otomatis ke Normal kalau FPS drop (cuma selama sesi itu).
