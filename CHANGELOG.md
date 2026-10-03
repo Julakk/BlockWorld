@@ -2,6 +2,14 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-04 (v4.8)
+
+- Tombol Grafis (Mode HD) di Menu dihapus. HD selalu aktif, dan turun otomatis ke Normal kalau FPS drop (cuma selama sesi itu).
+- Karakter duduk di perahu dan menghadap sesuai arah perahu. Di Sampan karakter mendayung dengan dayung yang ikut bergerak, di perahu lain duduk sambil pegang kemudi.
+- Tiap perahu punya titik duduk sendiri (Jukung dan Speedboat dapat bangku baru).
+- Joran disimpan waktu berlayar, keluar lagi pas perahu berhenti.
+- Info Update lama diganti dengan yang baru, versi naik ke v4.8.
+
 ## 2026-10-04 (v4.7)
 
 - Rod jadi 12 tier dan Bait jadi 8 tier dengan stat Luck/Speed/Weight sesuai tabel baru (Starter, Luck, Carbon, Grass, Damascus, Ice, Lucky, Midnight, Steampunk, Chrome, Astral, Angler).
