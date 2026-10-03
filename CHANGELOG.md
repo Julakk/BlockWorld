@@ -2,6 +2,19 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## 2026-10-04 (v4.5)
+
+- Perahu di dermaga dihapus, diganti NPC Pak Karto di samping Rod Shop yang menjual perahu.
+- 5 tipe perahu (Sampan, Jukung, Perahu Motor, Speedboat, Kapal Layar Mewah) dengan harga dan kecepatan berbeda. Sampan gratis.
+- Perahu yang dibeli tersimpan di save, kecepatan berlayar mengikuti tipe perahu yang dipakai.
+- Info Update lama diganti dengan yang baru, versi naik ke v4.5.
+
+## 2026-10-03 (v4.4)
+
+- Papan Peringkat baru di samping Akuarium, menu Peringkat dihapus.
+- Indeks Ikan didesain ulang: pilih lokasi di kiri, kartu ikan di kanan, plus bar progres.
+- Fitur Boss Raja Laut dihapus.
+
 ## 2026-10-03 (v4.3)
 
 - Akuarium: koin pasif dihitung server pakai jam server, ambil koin butuh online.
