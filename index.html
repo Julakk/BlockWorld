@@ -1543,21 +1543,8 @@ window.PMExt = function (C) {
     { id: 'mutiara', name: 'Ikan Mutiara', rarity: 'legendary', value: 1700 },
     { id: 'leviathan', name: 'Leviathan', rarity: 'mythical', value: 5500 },
     { id: 'kraken_purba', name: 'Kraken Purba', rarity: 'secret', value: 50000 },
-    { id: 'u_sepat', name: 'Ikan Sepat', rarity: 'common', value: 6, zone: 'umum' },
-    { id: 'u_mas', name: 'Ikan Mas', rarity: 'common', value: 7, zone: 'umum' },
-    { id: 'u_nila', name: 'Ikan Nila', rarity: 'common', value: 8, zone: 'umum' },
-    { id: 'u_lele', name: 'Ikan Lele', rarity: 'common', value: 9, zone: 'umum' },
-    { id: 'u_mujair', name: 'Ikan Mujair', rarity: 'common', value: 10, zone: 'umum' },
-    { id: 'u_tawes', name: 'Ikan Tawes', rarity: 'uncommon', value: 24, zone: 'umum' },
-    { id: 'u_gabus', name: 'Ikan Gabus', rarity: 'uncommon', value: 28, zone: 'umum' },
-    { id: 'u_gurame', name: 'Ikan Gurame', rarity: 'uncommon', value: 32, zone: 'umum' },
-    { id: 'u_patin', name: 'Ikan Patin', rarity: 'uncommon', value: 36, zone: 'umum' },
-    { id: 'u_toman', name: 'Ikan Toman', rarity: 'rare', value: 85, zone: 'umum' },
-    { id: 'u_belida', name: 'Ikan Belida', rarity: 'rare', value: 95, zone: 'umum' },
-    { id: 'u_jelawat', name: 'Ikan Jelawat', rarity: 'rare', value: 110, zone: 'umum' },
-    { id: 'u_arwana', name: 'Arwana Super Red', rarity: 'epic', value: 380, zone: 'umum' },
-    { id: 'u_semah', name: 'Ikan Semah', rarity: 'epic', value: 450, zone: 'umum' },
-    { id: 'u_arapaima', name: 'Arapaima Emas', rarity: 'legendary', value: 1500, zone: 'umum' },
+    { id: 'u_gabus', name: 'Ikan Gabus', rarity: 'uncommon', value: 28 },
+    { id: 'u_toman', name: 'Ikan Toman', rarity: 'rare', value: 85 },
   ];
   const FISH_WEIGHT = { teri: [0.05, 0.3], mujair: [0.3, 1.2], lele: [0.8, 3], nila: [1, 6], kakap: [3, 15], tenggiri: [8, 40], tuna: [30, 250], hiu_kecil: [100, 800], marlin: [250, 1500], naga_laut: [800, 6000], mutiara: [500, 4000], leviathan: [5000, 60000], kraken_purba: [20000, 140000],
     bandeng: [0.3, 2], belanak: [0.2, 1.5], baronang: [0.4, 3], kerapu: [3, 60], ubur: [0.5, 12], kuda_laut: [0.02, 0.3], penyu: [60, 400],
@@ -4336,7 +4323,6 @@ const PMFish = (function () {
   // ================= UI: INDEKS IKAN (PM_V44) =================
   const FX_LOC = [
     { k: 'umum', n: 'Perairan Umum', bg: 'linear-gradient(135deg,#e9c27a,#5fb3a6 55%,#2b7fb8)', t: f => !f.zone },
-    { k: 'umum', n: 'Perairan Umum', bg: 'linear-gradient(135deg,#6fe0d0,#2aa7c9 60%,#1c6fa8)', t: f => f.zone === 'umum' },
   ];
   let fxSel = 'umum';
   function renderIndex() {
