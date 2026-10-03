@@ -428,7 +428,7 @@ canvas.cfxShake { animation: cfxShake .8s ease-in-out; }
   </div>
   <div id="hudPills">
     <button class="hudPill" id="btnSellHud">Jual Semua</button>
-    <button class="hudPill" id="btnIndex">Koleksi</button>
+    <button class="hudPill" id="btnIndex">Indeks Ikan</button>
     <button class="hudPill" id="btnAuto">Auto: OFF</button>
     <button class="hudPill" id="btnSound">Suara: ON</button>
   </div>
@@ -506,9 +506,40 @@ canvas.cfxShake { animation: cfxShake .8s ease-in-out; }
 </div>
 
 <div class="modalOverlay" id="modalIndex">
-  <div class="modalBox">
-    <div class="modalHead"><h2>Koleksi Ikan</h2><button class="modalClose" data-close="modalIndex">✕</button></div>
-    <div class="modalBody" id="indexList"></div>
+  <style>
+    #modalIndex .modalBox.fxBox{width:min(96vw,800px);max-height:90vh;max-height:90dvh;background:#0d1c27;border:4px solid #05090d;border-radius:14px;overflow:hidden;padding:0}
+    .fxTop{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0a1620;border-bottom:3px solid #05090d}
+    .fxTitle{font-size:26px;font-weight:900;color:#fff;text-shadow:0 3px 0 #000,0 0 10px rgba(0,0,0,.6);white-space:nowrap}
+    .fxProg{flex:1;min-width:0;background:rgba(0,0,0,.45);border:2px solid #05090d;border-radius:8px;padding:4px 10px 6px}
+    .fxProg span{display:block;font-size:13px;font-weight:800;color:#fff;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fxBar{height:10px;border-radius:5px;background:#111;overflow:hidden}
+    .fxBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#17e6a5,#3df08b);box-shadow:0 0 8px rgba(40,240,160,.6);transition:width .25s}
+    .fxMain{display:flex;min-height:0;flex:1;overflow:hidden}
+    .fxLoc{flex:none;width:170px;background:#070f16;border-right:3px solid #05090d;overflow-y:auto;padding:0 0 6px}
+    .fxLocH{padding:8px 10px;font-size:15px;font-weight:900;color:#fff;background:#111c26;border-bottom:3px solid #05090d}
+    .fxLocI{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;height:76px;border:0;border-bottom:3px solid #05090d;color:#fff;font-weight:900;font-size:17px;text-shadow:0 2px 0 #000,0 0 6px #000;cursor:pointer;width:100%;opacity:.7}
+    .fxLocI small{font-size:11px;font-weight:800;opacity:.95}
+    .fxLocI.on{opacity:1;box-shadow:inset 0 0 0 3px #fff}
+    .fxRight{flex:1;min-width:0;overflow-y:auto;padding:10px 12px 14px}
+    .fxZone{font-size:34px;font-weight:900;color:#fff;text-shadow:0 3px 0 #000;padding:6px 14px;margin-bottom:12px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.1))}
+    .fxGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+    .fxCard{position:relative;aspect-ratio:1/1.02;border:3px solid #fff;border-radius:6px;background:linear-gradient(180deg,#2c3f4d,#16222c);box-shadow:inset 0 0 0 3px #05090d,0 3px 8px rgba(0,0,0,.5);overflow:hidden;display:flex;align-items:center;justify-content:center}
+    .fxCard img{width:82%;height:82%;object-fit:contain;image-rendering:auto;margin-top:12%;filter:drop-shadow(0 4px 4px rgba(0,0,0,.5))}
+    .fxCard .fxN{position:absolute;top:4px;left:4px;right:4px;text-align:center;font-size:13px;font-weight:900;line-height:1.1;color:#fff;-webkit-text-stroke:2.5px #000;paint-order:stroke fill;text-shadow:0 2px 0 #000}
+    .fxCard .fxR{position:absolute;left:0;right:0;bottom:0;padding:2px 0;text-align:center;font-size:10px;font-weight:900;color:#fff;text-shadow:0 1px 0 #000;background:rgba(0,0,0,.45)}
+    .fxCard.un{border-color:#9aa7ae}
+    .fxCard.un .fxN{color:#d0dae0}
+    @media (max-width:560px){
+      .fxMain{flex-direction:column}
+      .fxLoc{width:auto;display:flex;border-right:0;border-bottom:3px solid #05090d;overflow-x:auto;overflow-y:hidden;padding:0}
+      .fxLocH{display:none}
+      .fxLocI{flex:none;width:132px;height:58px;border-bottom:0;border-right:3px solid #05090d}
+      .fxZone{font-size:24px}.fxTitle{font-size:19px}
+    }
+  </style>
+  <div class="modalBox fxBox">
+    <div class="fxTop"><div class="fxTitle">Indeks Ikan</div><div class="fxProg"><span id="fxProgTxt"></span><div class="fxBar"><i id="fxBarFill"></i></div></div><button class="modalClose" data-close="modalIndex">✕</button></div>
+    <div class="fxMain"><div class="fxLoc" id="fxLoc"></div><div class="fxRight"><div class="fxZone" id="fxZone"></div><div class="fxGrid" id="indexList"></div></div></div>
     <div class="modalFoot"><span id="indexCount">0/0</span><span></span></div>
   </div>
 </div>
@@ -853,20 +884,25 @@ window.PMExt = function (C) {
   }
   var css42 = document.createElement('style');
   css42.textContent = [
-    '#pm42Boss{position:fixed;top:calc(120px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:56;width:min(78vw,300px);display:none;text-align:center;color:#fff;padding:8px 12px 10px;border-radius:16px;border:3px solid #ff4d6d;background:linear-gradient(160deg,#4a1020,#1a0610);box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 22px rgba(255,77,109,.55)}',
-    '#pm42BName{font-weight:900;font-size:15px;letter-spacing:.5px;text-shadow:0 2px 0 rgba(0,0,0,.5)}',
-    '#pm42BBar{height:14px;border-radius:8px;background:rgba(0,0,0,.55);margin:6px 0;overflow:hidden}',
-    '#pm42BFill{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff4d6d,#ff8a3d);transition:width .25s}',
-    '#pm42BHit{width:100%;padding:12px;border:0;border-radius:12px;font-weight:900;font-size:16px;color:#2a0a00;background:linear-gradient(90deg,#ffc233,#ff8a3d)}',
-    '#pm42BHit:active{transform:scale(.97)}',
-    '#pm42BSub{font-size:11px;opacity:.85;margin-top:5px}',
     '.pm42Tabs{display:flex;gap:6px;margin-bottom:8px}'
   ].join('');
   document.head.appendChild(css42);
 
   /* --- peringkat --- */
   var mLB = mkModal('modalLB', 'Peringkat Online'), lbData = null, lbTab = 'c';
-
+  /* PM_V44: papan peringkat kayu (modal + papan 3D di samping Akuarium) */
+  function fmtC(n) {
+    n = +n || 0;
+    var a = [[1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
+    for (var i = 0; i < a.length; i++) if (n >= a[i][0]) return (n / a[i][0]).toFixed(2) + a[i][1];
+    return String(Math.round(n));
+  }
+  function lbHue(name) { return hash(String(name)) % 360; }
+  function lbAv(name) {
+    var h = lbHue(name), ch = String(name).charAt(0).toUpperCase() || '?';
+    return '<div class="lbAv" style="background:linear-gradient(145deg,hsl(' + h + ',72%,62%),hsl(' + ((h + 40) % 360) + ',70%,30%))">' + escH(ch) + '</div>';
+  }
+  var LB_FISH = '<svg viewBox="0 0 64 40" width="54" height="34" aria-hidden="true"><defs><linearGradient id="lbFg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8f7ff"/><stop offset="1" stop-color="#1aa3e8"/></linearGradient></defs><path d="M4 20C14 4 36 2 48 16L62 6L58 20L62 34L48 24C36 38 14 36 4 20Z" fill="url(#lbFg)" stroke="#0a5d8f" stroke-width="2.5" stroke-linejoin="round"/><circle cx="16" cy="17" r="3" fill="#06324d"/><circle cx="15" cy="16" r="1" fill="#fff"/><path d="M24 12C28 20 28 20 24 28" stroke="#0a5d8f" stroke-width="2" fill="none" opacity=".6"/></svg>';
   var cssLB = document.createElement('style');
   cssLB.textContent = [
     '#modalLB .modalBox{background:repeating-linear-gradient(92deg,rgba(0,0,0,.06) 0 2px,rgba(255,255,255,.035) 2px 6px),linear-gradient(180deg,#bd8148,#8d5b30 45%,#6c4222);border:4px solid #3f2713;border-radius:18px;box-shadow:0 16px 44px rgba(0,0,0,.7),inset 0 2px 0 rgba(255,255,255,.28),inset 0 -8px 16px rgba(0,0,0,.4);color:#fff}',
@@ -895,29 +931,13 @@ window.PMExt = function (C) {
     '.lbMsg{text-align:center;padding:16px;font-size:13px;color:#f1d9b4}'
   ].join('');
   document.head.appendChild(cssLB);
-  /* PM_LB_HD: papan peringkat kayu realistis (vektor, tajam di layar HD) */
-  function fmtC(n) {
-    n = +n || 0;
-    var a = [[1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
-    for (var i = 0; i < a.length; i++) if (n >= a[i][0]) return (n / a[i][0]).toFixed(2) + a[i][1];
-    return String(Math.round(n));
-  }
-  function lbAv(name) {
-    var h = hash(String(name)) % 360, ch = String(name).charAt(0).toUpperCase() || '?';
-    return '<div class="lbAv" style="background:linear-gradient(145deg,hsl(' + h + ',72%,62%),hsl(' + ((h + 40) % 360) + ',70%,30%))">' + escH(ch) + '</div>';
-  }
-  var LB_FISH = '<svg viewBox="0 0 64 40" width="54" height="34" aria-hidden="true"><defs><linearGradient id="lbFg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8f7ff"/><stop offset="1" stop-color="#1aa3e8"/></linearGradient></defs><path d="M4 20C14 4 36 2 48 16L62 6L58 20L62 34L48 24C36 38 14 36 4 20Z" fill="url(#lbFg)" stroke="#0a5d8f" stroke-width="2.5" stroke-linejoin="round"/><circle cx="16" cy="17" r="3" fill="#06324d"/><circle cx="15" cy="16" r="1" fill="#fff"/><path d="M24 12C28 20 28 20 24 28" stroke="#0a5d8f" stroke-width="2" fill="none" opacity=".6"/></svg>';
   function renderLB() {
-    var meta = {
-      c: ['Ikan Ditangkap', 'DITANGKAP'],
-      w: ['Ikan Terberat', 'BERAT'],
-      p: ['Prestise', 'REBIRTH']
-    }[lbTab];
+    var meta = { c: ['Ikan Ditangkap', 'DITANGKAP'], w: ['Ikan Terberat', 'BERAT'], p: ['Prestise', 'REBIRTH'] }[lbTab];
     var h = '<div class="lbTitle">' + LB_FISH + '<span>' + meta[0] + '</span></div>';
     h += '<div class="lbTabs">' + [['c', 'Tangkapan'], ['w', 'Terberat'], ['p', 'Prestise']].map(function (t) {
       return '<button class="lbTab' + (lbTab === t[0] ? ' on' : '') + '" data-lt="' + t[0] + '">' + t[1] + '</button>';
     }).join('') + '</div>';
-    h += '<div class="lbRows"><div class="lbHd"><span style="text-align:center">PERINGKAT</span><span>NAMA</span><span>' + meta[1] + '</span></div>';
+    h += '<div class="lbRows"><div class="lbHd"><span style="text-align:center">RANK</span><span>NAMA</span><span>' + meta[1] + '</span></div>';
     if (!netUp()) h += '<div class="lbMsg">Belum tersambung ke server.</div>';
     else if (!lbData) h += '<div class="lbMsg">Memuat peringkat...</div>';
     else {
@@ -940,6 +960,82 @@ window.PMExt = function (C) {
   mLB.body.addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-lt]'); if (!b) return; lbTab = b.dataset.lt; renderLB();
   });
+
+  /* --- papan peringkat 3D di samping Akuarium --- */
+  var LBB = { x: AQ.x - 4.3, z: AQ.z + 0.2 };
+  var lbCv = document.createElement('canvas'); lbCv.width = 1024; lbCv.height = 640;
+  var lbTex = new T.CanvasTexture(lbCv); lbTex.minFilter = T.LinearFilter; lbTex.magFilter = T.LinearFilter; lbTex.generateMipmaps = false;
+  try { lbTex.anisotropy = 8; } catch (e) {}
+  function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  function strokeFill(g, txt, x, y, fill, stroke, lw) { g.lineJoin = 'round'; g.lineWidth = lw; g.strokeStyle = stroke; g.strokeText(txt, x, y); g.fillStyle = fill; g.fillText(txt, x, y); }
+  function drawLB() {
+    var g = lbCv.getContext('2d'), W = 1024, H = 640, i, k;
+    // papan kayu + serat
+    var bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#c58a50'); bg.addColorStop(0.5, '#9a6636'); bg.addColorStop(1, '#74481f');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    for (i = 0; i < 9; i++) { g.fillStyle = 'rgba(0,0,0,' + (i % 2 ? 0.1 : 0.05) + ')'; g.fillRect(0, i * 72, W, 3); }
+    for (i = 0; i < 90; i++) { g.fillStyle = 'rgba(60,30,10,' + (0.05 + (i % 5) * 0.015) + ')'; g.fillRect((i * 97) % W, (i * 53) % H, 40 + (i * 13) % 120, 2); }
+    g.lineWidth = 14; g.strokeStyle = '#4a2c14'; g.strokeRect(7, 7, W - 14, H - 14);
+    g.lineWidth = 3; g.strokeStyle = 'rgba(255,220,170,.35)'; g.strokeRect(18, 18, W - 36, H - 36);
+    // paku
+    [[34, 34], [W - 34, 34], [34, H - 34], [W - 34, H - 34]].forEach(function (p) { g.fillStyle = '#2b1a0c'; g.beginPath(); g.arc(p[0], p[1], 9, 0, 7); g.fill(); g.fillStyle = '#c9b79a'; g.beginPath(); g.arc(p[0] - 2, p[1] - 2, 4, 0, 7); g.fill(); });
+    // judul + ikan
+    var fp = new Path2D('M4 20C14 4 36 2 48 16L62 6L58 20L62 34L48 24C36 38 14 36 4 20Z');
+    g.save(); g.translate(150, 36); g.scale(3.1, 3.1);
+    var fg = g.createLinearGradient(0, 0, 0, 40); fg.addColorStop(0, '#b8f7ff'); fg.addColorStop(1, '#1aa3e8');
+    g.fillStyle = fg; g.fill(fp); g.lineWidth = 2.5; g.strokeStyle = '#0a5d8f'; g.lineJoin = 'round'; g.stroke(fp);
+    g.fillStyle = '#06324d'; g.beginPath(); g.arc(16, 17, 3, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(15, 16, 1, 0, 7); g.fill();
+    g.restore();
+    g.textAlign = 'left'; g.textBaseline = 'middle'; g.font = 'italic 900 78px sans-serif';
+    g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 14; g.shadowOffsetY = 6;
+    strokeFill(g, 'Ikan Ditangkap', 370, 92, '#3adaff', '#06324d', 12);
+    g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetY = 0;
+    // panel isi
+    rr(g, 40, 166, W - 80, 434, 18); g.fillStyle = 'rgba(48,27,12,.72)'; g.fill(); g.lineWidth = 4; g.strokeStyle = '#3a2210'; g.stroke();
+    g.font = '800 22px sans-serif'; g.fillStyle = '#f6e3c4';
+    g.textAlign = 'center'; g.fillText('PERINGKAT', 112, 190); g.textAlign = 'left'; g.fillText('NAMA', 190, 190); g.textAlign = 'right'; g.fillText('DITANGKAP', W - 70, 190);
+    var list = (lbData && lbData.c) ? lbData.c.slice(0, 5) : [], msg = '';
+    if (!netUp()) msg = 'Belum tersambung ke server'; else if (!lbData) msg = 'Memuat peringkat...'; else if (!list.length) msg = 'Belum ada data';
+    if (msg) { g.textAlign = 'center'; g.font = '800 38px sans-serif'; g.fillStyle = '#f1d9b4'; g.fillText(msg, W / 2, 390); }
+    var col = ['#ffd84a', '#e3ebf5', '#f0a165', '#f5ecd8', '#f5ecd8'];
+    list.forEach(function (e, n) {
+      var y = 208 + n * 76, nm = String(e[0]);
+      rr(g, 56, y, W - 112, 68, 12);
+      var rg = g.createLinearGradient(0, y, 0, y + 68);
+      if (n === 0) { rg.addColorStop(0, '#b88a3a'); rg.addColorStop(1, '#7c5418'); } else { rg.addColorStop(0, '#936139'); rg.addColorStop(1, '#6b4223'); }
+      g.fillStyle = rg; g.fill(); g.lineWidth = 3; g.strokeStyle = '#3a2210'; g.stroke();
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '900 52px sans-serif';
+      strokeFill(g, String(n + 1), 112, y + 36, col[n], '#2a1805', 9);
+      var hh = lbHue(nm);
+      rr(g, 170, y + 8, 52, 52, 8); var ag = g.createLinearGradient(170, y, 222, y + 60); ag.addColorStop(0, 'hsl(' + hh + ',72%,62%)'); ag.addColorStop(1, 'hsl(' + ((hh + 40) % 360) + ',70%,30%)');
+      g.fillStyle = ag; g.fill(); g.lineWidth = 3; g.strokeStyle = '#20120a'; g.stroke();
+      g.font = '900 30px sans-serif'; g.fillStyle = '#fff'; g.fillText((nm.charAt(0) || '?').toUpperCase(), 196, y + 36);
+      g.textAlign = 'left'; g.font = '900 36px sans-serif'; if (nm.length > 18) nm = nm.slice(0, 17) + '…';
+      g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 4; g.shadowOffsetY = 3; g.fillStyle = '#fff'; g.fillText(nm, 240, y + 36);
+      g.textAlign = 'right'; g.fillText(fmtC(e[1]), W - 76, y + 36);
+      g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetY = 0;
+    });
+    lbTex.needsUpdate = true;
+  }
+  var lbBoard = new T.Group(); lbBoard.position.set(LBB.x, C.DECK_Y, LBB.z); C.town.add(lbBoard);
+  var lbWood = new T.MeshLambertMaterial({ color: 0x5a3a1e });
+  [-1.55, 1.55].forEach(function (px) { var p = new T.Mesh(new T.BoxGeometry(0.2, 2.0, 0.2), lbWood); p.position.set(px, 1.0, -0.05); lbBoard.add(p); });
+  var lbFrame = new T.Mesh(new T.BoxGeometry(3.7, 2.35, 0.14), lbWood); lbFrame.position.set(0, 1.9, 0); lbBoard.add(lbFrame);
+  var lbFace = new T.Mesh(new T.PlaneGeometry(3.5, 2.19), new T.MeshBasicMaterial({ map: lbTex })); lbFace.position.set(0, 1.9, 0.075); lbBoard.add(lbFace);
+  var lbRoof = new T.Mesh(new T.BoxGeometry(3.95, 0.12, 0.42), lbWood); lbRoof.position.set(0, 3.12, 0.05); lbBoard.add(lbRoof);
+  C.TOWN_COLLIDERS.push({ x: LBB.x, z: LBB.z, r: 1.75 });
+  C.TOWN_SHOPS.push({ id: 'lboard', name: 'PERINGKAT', label: 'Lihat Peringkat', x: LBB.x, z: LBB.z + 0.6, action: function () { openLB(); mLB.open(); } });
+  var lbKey = '';
+  function lbBoardTick() {
+    var k = (netUp() ? '1' : '0') + (lbData && lbData.c ? JSON.stringify(lbData.c.slice(0, 5)) : '-');
+    if (k !== lbKey) { lbKey = k; drawLB(); }
+  }
+  drawLB(); setInterval(lbBoardTick, 2000);
+  setInterval(function () {
+    var p = C.player.position;
+    if (netUp() && Math.hypot(p.x - LBB.x, p.z - LBB.z) < 16) netSend({ t: 'lbget' });
+  }, 30000);
+  setTimeout(function () { if (netUp()) netSend({ t: 'lbget' }); }, 7000);
   function openLB() { netSend({ t: 'lbget' }); renderLB(); }
   function lbReport() {
     if (!netUp()) return;
@@ -949,28 +1045,6 @@ window.PMExt = function (C) {
     netSend({ t: 'stat', c: t.catches, w: best ? best.w : 0, wf: best ? best.n : '', rb: s.rebirth || 0, lv: s.level || 1, tr: tr });
   }
   setInterval(lbReport, 45000); setTimeout(lbReport, 8000);
-
-  /* --- boss --- */
-  var bossEl = document.createElement('div'); bossEl.id = 'pm42Boss';
-  bossEl.innerHTML = '<div id="pm42BName"></div><div id="pm42BBar"><i id="pm42BFill"></i></div><button id="pm42BHit">SERANG!</button><div id="pm42BSub"></div>';
-  document.body.appendChild(bossEl);
-  var bossLeftAt = 0, bossMax = 1, lastHit = 0;
-  function bossShow(m) {
-    bossEl.style.display = 'block';
-    $('pm42BName').textContent = 'BOSS: ' + m.name;
-    bossMax = m.max || bossMax;
-    $('pm42BFill').style.width = Math.max(0, Math.min(100, m.hp / bossMax * 100)) + '%';
-    if (m.left != null) bossLeftAt = Date.now() + m.left;
-  }
-  setInterval(function () {
-    if (bossEl.style.display === 'none') return;
-    var r = Math.max(0, Math.ceil((bossLeftAt - Date.now()) / 1000));
-    $('pm42BSub').textContent = 'Sisa waktu ' + r + ' dtk • tap sekencang mungkin!';
-  }, 500);
-  $('pm42BHit').onclick = function () {
-    var n = Date.now(); if (n - lastHit < 170) return; lastHit = n;
-    netSend({ t: 'bhit' }); C.vibe(8);
-  };
 
   /* --- pasar pemain --- */
   var mM = mkModal('modalMarket', 'Pasar Pemain'), mkData = null, mkTab = 'buy', mkMult = 1, pend = {}, busy = false;
@@ -1053,15 +1127,6 @@ window.PMExt = function (C) {
   window.PMLB = { on: function (m) {
     var s = S(), q;
     if (m.t === 'lb') { lbData = m; if (mLB.ov.classList.contains('show')) renderLB(); }
-    else if (m.t === 'boss') {
-      if (m.st === 'spawn') { bossShow(m); C.toast('BOSS ' + m.name + ' muncul! Tap SERANG bareng-bareng!', 'secret'); C.Sfx.levelUp(); C.vibe([80, 40, 80]); }
-      else if (m.st === 'hp') bossShow(m);
-      else if (m.st === 'end') { bossEl.style.display = 'none'; C.toast(m.win ? 'Boss kalah! MVP: ' + (m.top || '-') : 'Boss kabur...'); }
-    }
-    else if (m.t === 'bossr') {
-      s.coins += Math.max(0, Math.min(+m.coins || 0, 100000)); C.persist(); C.refresh(); C.Sfx.sell();
-      C.toast((m.win ? 'Hadiah Boss: +' : 'Hadiah hiburan: +') + fmt(m.coins) + ' koin (' + m.hits + ' serangan)' + (m.mvp ? ' • MVP!' : ''));
-    }
     else if (m.t === 'aqs') { aqSrv = { ok: true, rate: +m.rate || 0, bank: +m.bank || 0, cap: +m.cap || 0, at: Date.now() }; if (mA.ov.classList.contains('show')) renderA(); }
     else if (m.t === 'aqpay') {
       aqBusy = 0; aqSrv = { ok: true, rate: +m.rate || 0, bank: +m.bank || 0, cap: +m.cap || 0, at: Date.now() };
@@ -1115,7 +1180,7 @@ window.PMExt = function (C) {
   });
   function addMenu() {
     var host = $('menuPanel') || $('hudPills'); if (!host) return;
-    [['Trofi', renderT, mT], ['Karakter', renderChar, mC], ['Pasar', renderP, mP], ['Rekor', renderR, mR], ['Peringkat', openLB, mLB], ['Pasar Pemain', openMK, mM]].forEach(function (x) {
+    [['Trofi', renderT, mT], ['Karakter', renderChar, mC], ['Pasar', renderP, mP], ['Rekor', renderR, mR], ['Pasar Pemain', openMK, mM]].forEach(function (x) {
       var b = document.createElement('button'); b.className = 'hudPill'; b.textContent = x[0];
       b.onclick = function () { var mp = $('menuPanel'); if (mp) mp.classList.remove('show'); x[1](); x[2].open(); };
       host.appendChild(b);
@@ -4277,20 +4342,43 @@ const PMFish = (function () {
   document.getElementById('btnSellAll').addEventListener('click', sellAllFish);
   document.getElementById('btnSellHud').addEventListener('click', sellAllFish);
 
-  // ================= UI: KOLEKSI IKAN =================
+  // ================= UI: INDEKS IKAN (PM_V44) =================
+  const FX_LOC = [
+    { k: 'umum', n: 'Perairan Umum', bg: 'linear-gradient(135deg,#e9c27a,#5fb3a6 55%,#2b7fb8)', t: f => !f.zone },
+    { k: 'dangkal', n: 'Perairan Dangkal', bg: 'linear-gradient(135deg,#6fe0d0,#2aa7c9 60%,#1c6fa8)', t: f => f.zone === 'dangkal' },
+    { k: 'dalam', n: 'Laut Dalam', bg: 'linear-gradient(135deg,#1f4f8a,#0f2a52 55%,#070f26)', t: f => f.zone === 'dalam' },
+  ];
+  let fxSel = 'umum';
   function renderIndex() {
     const list = document.getElementById('indexList'); list.innerHTML = '';
     const disc = save.discovered || {};
-    const sorted = FISH_TABLE.slice().sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
-    let got = 0;
-    for (const f of sorted) {
-      const known = !!disc[f.id]; if (known) got++;
-      const row = document.createElement('div'); row.className = 'rowItem';
-      row.innerHTML = `<img class="rowIcon" src="${fishIconCanvas(f, null, !known)}"><div class="rowInfo"><div class="rowName" style="color:${known ? RARITY_COLOR[f.rarity] : '#7f98a3'}">${known ? f.name : '???'}</div><div class="rowSub">${RARITY_LABEL[f.rarity]}${f.zone ? ' • ' + (f.zone === 'dalam' ? 'Laut Dalam' : 'Perairan Dangkal') : ''}${known ? ' • ' + f.value + ' koin/ekor' : ' • Belum ditemukan'}</div></div>`;
-      list.appendChild(row);
+    const byRar = (a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity);
+    let gotAll = 0;
+    for (const f of FISH_TABLE) if (disc[f.id]) gotAll++;
+    const loc = document.getElementById('fxLoc');
+    let lh = '<div class="fxLocH">Lokasi</div>';
+    for (const L of FX_LOC) {
+      const fs = FISH_TABLE.filter(L.t), g = fs.filter(f => disc[f.id]).length;
+      lh += '<button class="fxLocI' + (fxSel === L.k ? ' on' : '') + '" data-fx="' + L.k + '" style="background:' + L.bg + '">' + L.n + '<small>' + g + '/' + fs.length + '</small></button>';
     }
-    document.getElementById('indexCount').textContent = got + '/' + FISH_TABLE.length + ' terkumpul';
+    loc.innerHTML = lh;
+    const cur = FX_LOC.find(L => L.k === fxSel) || FX_LOC[0];
+    const fish = FISH_TABLE.filter(cur.t).sort(byRar);
+    let got = 0;
+    for (const f of fish) {
+      const known = !!disc[f.id]; if (known) got++;
+      const c = document.createElement('div'); c.className = 'fxCard' + (known ? '' : ' un');
+      c.innerHTML = `<div class="fxN">${known ? f.name : '???'}</div><img alt="" src="${fishIconCanvas(f, null, !known)}"><div class="fxR" style="color:${known ? RARITY_COLOR[f.rarity] : '#9aa7ae'}">${known ? RARITY_LABEL[f.rarity] + ' • ' + f.value + ' koin' : 'Belum ditemukan'}</div>`;
+      list.appendChild(c);
+    }
+    document.getElementById('fxZone').textContent = cur.n;
+    document.getElementById('fxProgTxt').textContent = cur.n + ' Ikan: ' + got + '/' + fish.length;
+    document.getElementById('fxBarFill').style.width = (fish.length ? got / fish.length * 100 : 0) + '%';
+    document.getElementById('indexCount').textContent = gotAll + '/' + FISH_TABLE.length + ' terkumpul';
   }
+  document.getElementById('fxLoc').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-fx]'); if (!b) return; fxSel = b.dataset.fx; renderIndex();
+  });
   document.getElementById('btnIndex').addEventListener('click', () => openModal('modalIndex'));
   document.getElementById('btnSound').addEventListener('click', () => {
     save.muted = !save.muted; saveQuiet(); refreshHud();
@@ -4672,12 +4760,16 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.3', DATE = '3 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.4', DATE = '3 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v4.4", [
+      "Papan Peringkat baru (kayu, gaya HD) di samping Akuarium. Dekati papan lalu tekan Lihat Peringkat. Menu Peringkat dihapus.",
+      "Indeks Ikan didesain ulang: pilih lokasi di kiri, kartu ikan di kanan, plus bar progres.",
+      "Fitur Boss Raja Laut dihapus."
+    ]],
     ["Update v4.3", [
       "Akuarium sekarang dihitung pakai jam server, jadi koin pasif nggak bisa dimajukan lewat jam HP. Ambil koin Akuarium butuh koneksi online.",
       "Pasar Pemain: batas listing dihitung per username dan nggak bisa beli barang sendiri.",
-      "Boss Fish: batas serangan lebih ketat, pemain yang dicurigai curang nggak dihitung.",
       "Peringkat: berat ikan dicek ke tabel ikan dan laporan dibatasi sekali per 20 detik."
     ]]
   ];
