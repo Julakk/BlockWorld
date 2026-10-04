@@ -597,7 +597,7 @@ window.PMExt = function (C) {
     ['Raksasa', 'Tangkap ikan 1.000 kg+', 1, 1000, function () { return st().heavy; }],
     ['Master Level', 'Capai Level 20', 20, 1500, function () { return S().level; }],
     ['Sultan Joran', 'Miliki Astral Rod', 1, 2000, function () { return (S().ownedRods || []).indexOf('legendaris') >= 0 ? 1 : 0; }],
-    ['Aquarist', 'Pajang 6 ikan di Akuarium', 6, 600, function () { return (S().aqua || []).length; }],
+    ['Penarik Gacha', 'Lakukan 50 kali Gacha Rod', 50, 600, function () { return (S().gacha || {}).total || 0; }],
     ['Veteran Dermaga', 'Tangkap 1.000 ikan', 1000, 3000, function () { return st().catches; }],
     ['Raja Pancing', 'Tangkap 5.000 ikan', 5000, 12000, function () { return st().catches; }],
     ['Pemburu Epik', 'Tangkap 25 ikan Epik atau lebih', 25, 2500, function () { return rc(3); }],
@@ -612,7 +612,7 @@ window.PMExt = function (C) {
     ['Terlahir Kembali', 'Lakukan 1 Rebirth', 1, 5000, function () { return S().rebirth || 0; }],
     ['Reinkarnasi', 'Lakukan 5 Rebirth', 5, 25000, function () { return S().rebirth || 0; }],
     ['Pecinta Hewan', 'Kumpulkan 3 jenis Pet', 3, 3000, function () { return Object.keys(S().pets || {}).length; }],
-    ['Bos Akuarium', 'Kumpulkan 10.000 koin dari Akuarium', 10000, 4000, function () { return S().aquaEarned || 0; }]
+    ['Kolektor Skin', 'Kumpulkan 8 skin rod', 8, 4000, function () { return Object.keys(S().skins || {}).length; }]
   ];
   function checkAch() {
     st(); var s = S(), hit = false;
@@ -733,89 +733,29 @@ window.PMExt = function (C) {
     c[g] = k; C.persist(); C.refresh(); renderChar();
   });
 
-  /* ===== AKUARIUM ===== */
-  var AQ = { x: 4.5, z: 19, max: 6 };
-  var aq = new T.Group(); aq.position.set(AQ.x, C.DECK_Y, AQ.z); C.town.add(aq);
-  var wd = new T.MeshLambertMaterial({ color: 0x6b4a2b });
-  var bs = new T.Mesh(new T.BoxGeometry(2.4, 0.6, 1.3), wd); bs.position.y = 0.3; aq.add(bs);
-  var gl = new T.Mesh(new T.BoxGeometry(2.2, 1.1, 1.1), new T.MeshLambertMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.28, depthWrite: false })); gl.position.y = 1.15; aq.add(gl);
-  var wt = new T.Mesh(new T.BoxGeometry(2.1, 0.95, 1.0), new T.MeshBasicMaterial({ color: 0x2a8fc0, transparent: true, opacity: 0.35, depthWrite: false })); wt.position.y = 1.12; aq.add(wt);
-  var lid = new T.Mesh(new T.BoxGeometry(2.4, 0.12, 1.3), wd); lid.position.y = 1.76; aq.add(lid);
-  var sg = new T.Sprite(new T.SpriteMaterial({ map: C.makeSignTexture('AKUARIUM', '#1f6f8f'), fog: false })); sg.scale.set(2, 0.5, 1); sg.position.y = 2.35; aq.add(sg);
-  C.TOWN_COLLIDERS.push({ x: AQ.x, z: AQ.z, r: 1.5 });
-  var tank = [], tankKey = '';
-  function rebuildTank() {
-    tank.forEach(function (o) { aq.remove(o.g); }); tank = [];
-    (S().aqua || []).forEach(function (e, i) {
-      var col = C.RARITY_COLOR[e.fish.rarity], mid = e.mutation.id;
-      if (/emas/.test(mid)) col = '#ffd54a'; else if (/ghost/.test(mid)) col = '#c4e0ff'; else if (mid === 'shiny') col = '#78fff0';
-      var mat = new T.MeshLambertMaterial({ color: col }), g = new T.Group();
-      var b = new T.Mesh(new T.SphereGeometry(0.16, 10, 8), mat); b.scale.set(1.6, 1, 0.7); g.add(b);
-      var t = new T.Mesh(new T.ConeGeometry(0.1, 0.22, 4), mat); t.rotation.z = -Math.PI / 2; t.position.x = -0.3; g.add(t);
-      var ey = new T.Mesh(new T.SphereGeometry(0.03, 6, 6), new T.MeshBasicMaterial({ color: 0x111111 })); ey.position.set(0.19, 0.04, 0.09); g.add(ey);
-      var sc = 0.8 + 0.12 * C.RARITY_ORDER.indexOf(e.fish.rarity); g.scale.set(sc, sc, sc);
-      aq.add(g);
-      tank.push({ g: g, mat: mat, rb: /pelangi/.test(mid), ph: i * 1.7, sp: 0.5 + (i % 3) * 0.15, y: 0.78 + (i % 3) * 0.22, z: ((i * 0.37) % 0.5) - 0.25 });
-    });
-  }
-  function animTank(t) {
-    var k = (S().aqua || []).map(function (e) { return e.fish.id + e.mutation.id; }).join(',');
-    if (k !== tankKey) { tankKey = k; rebuildTank(); }
-    tank.forEach(function (o) {
-      var a = t * o.sp + o.ph;
-      o.g.position.set(Math.sin(a) * 0.8, o.y + Math.sin(t * 1.7 + o.ph) * 0.05, o.z);
-      o.g.rotation.y = Math.cos(a) > 0 ? 0 : Math.PI;
-      if (o.rb) o.mat.color.setHSL((t * 0.2 + o.ph) % 1, 0.9, 0.6);
-    });
-  }
-  /* PM_V41 akuarium pasif */
-  var AQ_RATE = 0.005, AQ_CAP_MIN = 480;
-  /* PM_V43 bank akuarium dihitung server (jam server) */
-  var aqSrv = { ok: false, rate: 0, bank: 0, cap: 0, at: 0 }, aqBusy = 0;
-  function aqPush() { if (netUp()) netSend({ t: 'aqset', u: UID, rate: aqRate() }); }
-  function aqRate() { var r = 0; (S().aqua || []).forEach(function (e) { r += Math.max(1, Math.round(e.fish.value * ((e.mutation && e.mutation.mult) || 1) * AQ_RATE)); }); return r; }
-  function aqAccrue() {
-    var rate = aqRate();
-    if (!aqSrv.ok) return { rate: rate, cap: rate * AQ_CAP_MIN, bank: 0, off: true };
-    var el = (Date.now() - aqSrv.at) / 60000, bank = aqSrv.bank + Math.max(0, Math.min(aqSrv.rate * el, aqSrv.cap - aqSrv.bank));
-    return { rate: rate, cap: aqSrv.cap, bank: Math.floor(bank) };
-  }
-  function aqHtml() {
-    var a = aqAccrue();
-    return '<div class="rowItem"><div class="rowInfo"><div class="rowName">Pemasukan Akuarium</div><div class="rowSub">' + a.rate + ' koin/menit • Tersimpan ' + a.bank + '/' + a.cap + ' (maks 8 jam)' + (a.off ? ' • butuh online' : '') + '</div></div><button class="rowBtn" data-collect="1"' + (a.bank < 1 || a.off ? ' disabled' : '') + '>Ambil ' + a.bank + '</button></div>';
-  }
-  var mA = mkModal('modalAqua', 'Akuarium');
+  /* ===== AKUARIUM DIHAPUS (v4.12): diganti Mesin Gacha 3D, lihat PM-GACHA ===== */
+  var AQ = { x: 4.5, z: 19 };
   function icon(e) { return '<img class="rowIcon" src="' + C.fishIconCanvas(e.fish, e.mutation) + '">'; }
-  function renderA() {
-    var s = S(); s.aqua = s.aqua || [];
-    var h = aqHtml() + '<div class="rowName" style="margin-top:6px">Dipajang (' + s.aqua.length + '/' + AQ.max + ')</div>';
-    s.aqua.forEach(function (e, i) { h += row(icon(e), lbl(e), C.RARITY_LABEL[e.fish.rarity], '<button class="rowBtn" data-take="' + i + '">Ambil</button>'); });
-    h += '<div class="rowName" style="margin-top:6px">Dari Tas (Langka ke atas)</div>';
-    var any = false;
-    Object.keys(s.inventory).forEach(function (k) {
-      var e = s.inventory[k]; if (!e || e.count <= 0 || C.RARITY_ORDER.indexOf(e.fish.rarity) < 2) return; any = true;
-      h += row(icon(e), lbl(e), 'x' + e.count + ' • ' + C.RARITY_LABEL[e.fish.rarity], '<button class="rowBtn" data-put="' + k + '"' + (s.aqua.length >= AQ.max ? ' disabled' : '') + '>Pajang</button>');
+  (function () { /* ikan yang dulu dipajang balik ke tas */
+    var done = false;
+    C.hookAnim(function () {
+      if (done) return;
+      var s = S(); if (!s || !s.inventory) return;
+      done = true;
+      var a = s.aqua; if (!a || !a.length) { delete s.aqua; return; }
+      var n = 0;
+      a.forEach(function (e) {
+        if (!e || !e.fish || !e.mutation) return;
+        var k = e.fish.id + '|' + e.mutation.id;
+        s.inventory[k] = s.inventory[k] || { fish: e.fish, mutation: e.mutation, count: 0 };
+        s.inventory[k].count++; n++;
+      });
+      delete s.aqua; C.persist(); C.refresh();
+      if (n) C.toast('Akuarium dihapus: ' + n + ' ikan dikembalikan ke tas');
     });
-    if (!any) h += '<div class="rowSub">Belum ada ikan Langka+ di tas.</div>';
-    mA.body.innerHTML = h; mA.foot.textContent = 'Ikan yang dipajang gak ikut kejual';
-  }
-  mA.body.addEventListener('click', function (ev) {
-    var b = ev.target.closest('button'); if (!b || b.disabled) return; var s = S(); aqAccrue();
-    if (b.dataset.collect) {
-      if (!netUp()) { C.toast('Butuh koneksi server buat ambil koin Akuarium'); return; }
-      if (aqBusy && Date.now() - aqBusy < 5000) return; aqBusy = Date.now();
-      netSend({ t: 'aqclaim', rid: 'aq' + aqBusy, u: UID }); return;
-    }
-    if (b.dataset.put) { var e = s.inventory[b.dataset.put]; if (!e || e.count <= 0 || s.aqua.length >= AQ.max) return; e.count--; s.aqua.push({ fish: e.fish, mutation: e.mutation }); }
-    else if (b.dataset.take) { var x = s.aqua.splice(+b.dataset.take, 1)[0]; if (!x) return; var k = x.fish.id + '|' + x.mutation.id; s.inventory[k] = s.inventory[k] || { fish: x.fish, mutation: x.mutation, count: 0 }; s.inventory[k].count++; }
-    else return;
-    aqPush(); C.Sfx.tap(); C.persist(); C.refresh(); renderA(); checkAch();
-  });
-  C.TOWN_SHOPS.push({ id: 'aqua', name: 'AKUARIUM', label: 'Buka Akuarium', x: AQ.x, z: AQ.z, action: function () { aqPush(); renderA(); mA.open(); } });
-  setInterval(function () { if (mA.ov && mA.ov.classList.contains('show')) renderA(); }, 5000);
+  })();
 
-
-/* === BOAT MODELS v4.6 (builder murni THREE, tanpa asset) === */
+  /* === BOAT MODELS v4.6 (builder murni THREE, tanpa asset) === */
 function pmBuildBoat(id) {
   var T = THREE;
   function M(c, o) { o = o || {}; o.color = c; if (o.roughness === undefined) o.roughness = 0.65; return new T.MeshStandardMaterial(o); }
@@ -1398,7 +1338,6 @@ function pmBuildBoat(id) {
   window.PMOpenLB = function () { openLB(); mLB.open(); };
   function lbReport() {
     if (!netUp()) return;
-    aqPush();
     var s = S(), t = st(), best = (s.rec || [])[0], tr = 0;
     Object.keys(s.ach || {}).forEach(function (k) { if (s.ach[k]) tr++; });
     netSend({ t: 'stat', c: t.catches, w: best ? best.w : 0, wf: best ? best.n : '', rb: s.rebirth || 0, lv: s.level || 1, tr: tr });
@@ -1486,14 +1425,6 @@ function pmBuildBoat(id) {
   window.PMLB = { on: function (m) {
     var s = S(), q;
     if (m.t === 'lb') { lbData = m; if (mLB.ov.classList.contains('show')) renderLB(); }
-    else if (m.t === 'aqs') { aqSrv = { ok: true, rate: +m.rate || 0, bank: +m.bank || 0, cap: +m.cap || 0, at: Date.now() }; if (mA.ov.classList.contains('show')) renderA(); }
-    else if (m.t === 'aqpay') {
-      aqBusy = 0; aqSrv = { ok: true, rate: +m.rate || 0, bank: +m.bank || 0, cap: +m.cap || 0, at: Date.now() };
-      var ag = Math.max(0, Math.min(+m.coins || 0, 1e9));
-      if (ag > 0) { s.coins += ag; s.aquaEarned = (s.aquaEarned || 0) + ag; C.Sfx.sell(); C.toast('+' + fmt(ag) + ' koin dari Akuarium'); C.persist(); C.refresh(); checkAch(); }
-      else C.toast('Belum ada koin yang bisa diambil');
-      if (mA.ov.classList.contains('show')) renderA();
-    }
     else if (m.t === 'mlist') { mkData = m; if (mM.ov.classList.contains('show')) renderMK(); }
     else if (m.t === 'mok') { delete pend[m.rid]; busy = false; C.toast('Barang dipasang di pasar'); netSend({ t: 'mget', u: UID }); }
     else if (m.t === 'mfail') {
@@ -1527,7 +1458,7 @@ function pmBuildBoat(id) {
   var last = 0, lx = 0, lz = 0, achT = 0;
   C.hookAnim(function (t) {
     var dt = Math.min(0.1, t - last); last = t;
-    applyRod(t); applyCos(); animTank(t); evTick(t);
+    applyRod(t); applyCos(); evTick(t);
     var p = C.player.position;
     if (sailing) {
       boat.position.x = p.x; boat.position.z = p.z; boatE.x = p.x; boatE.z = p.z;
@@ -5110,8 +5041,9 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.11', DATE = '4 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.12', DATE = '4 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v4.12", ["Akuarium dihapus dan diganti Mesin Gacha 3D di plaza (tempat Akuarium dulu). Deketin mesinnya lalu tekan Main Gacha Rod.","Gacha sekarang pakai panggung 3D HD: kapsul jatuh, bergetar, lalu pecah dengan efek cahaya dan partikel, hadiahnya muncul 3D dan berputar. Ketuk gambar buat lewati.","Skin Rod bisa dipreview 3D dari tab Skin Saya (ketuk skin yang dimiliki).","Tombol Gacha di Menu dan layar utama dihapus.","Ikan yang dulu dipajang di Akuarium otomatis dikembalikan ke tas. Trofi Akuarium diganti trofi Gacha."]],
     ["Update v4.11", [
       "Gacha Rod baru! Buka dari Menu atau layar utama. Gacha 1x 100 koin, Gacha 10x 900 koin dengan garansi minimal Rare di pull ke-10.",
       "Peluang: Common 60%, Rare 25%, Epic 12%, Legendary 3%. Legendary dijamin di pull ke-60 (pity).",
@@ -5348,7 +5280,7 @@ const PMFish = (function () {
     var tips = ['Lepas tombol pas marker di zona Perfect buat peluang ikan langka naik.',
       'Malam hari dan hujan bikin ikan langka lebih gampang nyangkut.',
       'Ikan Rahasia harus ditarik manual, Auto Mancing gak bisa.',
-      'Pajang ikan langka di Akuarium biar gak ikut kejual.',
+      'Coba Mesin Gacha di plaza buat dapetin skin rod keren.',
       'Cek Pasar tiap hari, harga ikan berubah-ubah.',
       'Lempar kail ke air buat mulai mancing.'];
     var tip = document.createElement('div'); tip.id = 'loadingTip';
@@ -6177,7 +6109,7 @@ const PMFish = (function () {
     'Lepas tombol pas marker di zona Perfect buat peluang ikan langka naik.',
     'Malam hari dan hujan bikin ikan langka lebih gampang nyangkut.',
     'Ikan Rahasia harus ditarik manual, Auto Mancing gak bisa.',
-    'Pajang ikan langka di Akuarium biar gak ikut kejual.',
+    'Coba Mesin Gacha di plaza buat dapetin skin rod keren.',
     'Cek Pasar tiap hari, harga ikan berubah-ubah.',
     'Enchant rod di Altar buat nambah Luck dan Speed.',
     'Rebirth ngasih bonus permanen buat Luck, Speed, harga jual, dan XP.'
@@ -6499,14 +6431,15 @@ const PMFish = (function () {
 <!--PM-START-END-->
 <!--PM-GACHA-START-->
 <script>
-/* PM-GACHA v1 - Gacha Rod: 1x / 10x, skin rod (biasa, cahaya, animasi), pity Legendary */
+/* PM-GACHA v2 (v4.12) - Mesin Gacha 3D di dunia + panggung 3D HD, skin rod. Menggantikan Akuarium. */
 (function () {
   'use strict';
   var C = window.__PMC, T = window.THREE;
   if (!C || !T || window.__pmGacha) return;
   window.__pmGacha = true;
+  var PI = Math.PI;
 
-  /* ---------- setelan (ubah di sini kalau mau diseimbangkan) ---------- */
+  /* ---------- setelan ---------- */
   var COST1 = 100, COST10 = 900, PITY_MAX = 60;
   var ORDER = ['common', 'rare', 'epic', 'legendary'];
   var TIER = {
@@ -6515,8 +6448,8 @@ const PMFish = (function () {
     epic: { n: 'Epic', c: '#b56bff', w: 12, d: '500 koin / Skin Rod Efek Cahaya' },
     legendary: { n: 'Legendary', c: '#ffc233', w: 3, d: '2.000 koin / Skin Rod Animasi Unik' }
   };
-  var COIN_CHANCE = { rare: 0.30, epic: 0.25, legendary: 0.15 }; // sisanya jadi skin
-  var DUP = { rare: 30, epic: 75, legendary: 200 };              // skin duplikat jadi koin
+  var COIN_CHANCE = { rare: 0.30, epic: 0.25, legendary: 0.15 };
+  var DUP = { rare: 30, epic: 75, legendary: 200 };
   var KIND_LABEL = { solid: 'Skin Biasa', glow: 'Efek Cahaya', rainbow: 'Animasi Unik', fire: 'Animasi Unik', galaxy: 'Animasi Unik' };
   var SKINS = [
     { id: 's_merah', n: 'Merah Karang', t: 'rare', k: 'solid', c: '#d8302a' },
@@ -6549,6 +6482,33 @@ const PMFish = (function () {
     if (sk.k === 'fire') return 'background:radial-gradient(circle at 50% 70%,#ffe27a,#ff6a1a 55%,#7a1200);box-shadow:0 0 12px #ff6a1a';
     return 'background:linear-gradient(135deg,#1a1050,#7a5cff 55%,#2fd8ff);box-shadow:0 0 12px #7a5cff';
   }
+  function rewardName(r) {
+    if (r.kind === 'coin') return '+' + fmt(r.coins) + ' koin';
+    if (r.kind === 'bait') return baitName(r.id);
+    var sk = skinById(r.id); return (sk ? sk.n : 'Skin') + (r.dup ? ' (duplikat +' + r.coins + ')' : '');
+  }
+  var dotT = null, rayT = null;
+  function dotTex() {
+    if (dotT) return dotT;
+    var c = document.createElement('canvas'); c.width = c.height = 64;
+    var g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.45, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    dotT = new T.CanvasTexture(c); return dotT;
+  }
+  function rayTex() {
+    if (rayT) return rayT;
+    var c = document.createElement('canvas'); c.width = c.height = 256;
+    var g = c.getContext('2d'); g.translate(128, 128);
+    var gr = g.createRadialGradient(0, 0, 0, 0, 0, 128);
+    gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    for (var i = 0; i < 14; i++) {
+      g.save(); g.rotate(i * PI * 2 / 14);
+      g.beginPath(); g.moveTo(0, 0); g.lineTo(-11, -128); g.lineTo(11, -128); g.closePath(); g.fill(); g.restore();
+    }
+    rayT = new T.CanvasTexture(c); return rayT;
+  }
 
   /* ---------- logika gacha ---------- */
   function rollTier(min) {
@@ -6579,49 +6539,61 @@ const PMFish = (function () {
     else s.skins[res.id] = 1;
   }
 
-  var busy = false, animT = 0, flashEl = null;
-  var st = { tab: 'pull', anim: false, last: null, best: 'common', flash: false };
+  var busy = false, animT = 0, safeT = 0;
+  var st = { tab: 'pull', anim: false, last: null, best: 'common', bestRes: null };
 
   function pull(n) {
     var s = C.save, cost = n === 1 ? COST1 : COST10;
     if (busy) return;
     if (s.coins < cost) { C.toast('Koin kurang, butuh ' + fmt(cost)); return; }
     s.coins -= cost;
-    var g = s.gacha = s.gacha || { pity: 0, total: 0 }, out = [], best = 0, i;
+    var g = s.gacha = s.gacha || { pity: 0, total: 0 }, out = [], best = 0, bi = 0, i;
     for (i = 0; i < n; i++) {
       g.pity++; g.total++;
       var t = g.pity >= PITY_MAX ? 'legendary' : rollTier(n === 10 && i === 9 ? 'rare' : 'common');
       if (t === 'legendary') g.pity = 0;
       var r = reward(t); apply(r); out.push(r);
-      best = Math.max(best, ORDER.indexOf(t));
+      if (ORDER.indexOf(t) > best) { best = ORDER.indexOf(t); bi = i; }
     }
     C.persist(); C.refresh(); C.Sfx.tap();
-    st.last = out; st.best = ORDER[best]; st.anim = true; busy = true;
+    st.last = out; st.best = ORDER[best]; st.bestRes = out[bi]; st.anim = true; busy = true;
     render();
-    clearTimeout(animT); animT = setTimeout(finish, 1100);
+    clearTimeout(animT);
+    if (!stagePlay(out[bi])) animT = setTimeout(finish, 900);
+    clearTimeout(safeT); safeT = setTimeout(finish, 7000);
   }
   function finish() {
     if (!st.anim) return;
-    clearTimeout(animT); st.anim = false; busy = false;
-    var b = st.best;
-    C.Sfx.catchFish(b);
-    C.vibe(b === 'legendary' ? [100, 50, 100, 50, 160] : (b === 'epic' ? [60, 40, 60] : [30]));
+    clearTimeout(animT); clearTimeout(safeT);
+    st.anim = false; busy = false;
+    if (!S3.played) {
+      C.Sfx.catchFish(st.best);
+      C.vibe(st.best === 'legendary' ? [100, 50, 100, 50, 160] : (st.best === 'epic' ? [60, 40, 60] : [30]));
+    }
     render();
-    if (b === 'legendary' && flashEl) { flashEl.className = ''; void flashEl.offsetWidth; flashEl.className = 'on'; }
+  }
+  function skip() {
+    if (!st.anim) return;
+    if (S3.mode === 'cap') { S3.t = 2.5; S3.fast = true; }
+    else if (S3.mode === 'reveal') { S3.bt = S3.t - 1.2; }
+    else finish();
   }
   function equip(id) {
     var s = C.save;
     if (id && !(s.skins && s.skins[id])) return;
     s.skin = id; C.persist(); C.Sfx.tap();
     C.toast(id ? 'Skin ' + skinById(id).n + ' dipakai' : 'Skin dilepas');
+    if (st.tab === 'skin' && S3.r) stagePreview(id);
     render();
   }
 
   /* ---------- UI ---------- */
   var css = document.createElement('style');
   css.textContent = [
-    '#modalGacha .modalBox{position:relative}',
-    '.gcTabs{display:flex;gap:7px;padding:0 16px 10px}',
+    '#gcStageWrap{flex:none;padding:2px 16px 0;text-align:center}',
+    '#gcCv{display:block;margin:0 auto;width:100%;max-width:340px;height:auto;border-radius:16px;background:radial-gradient(circle at 50% 40%,#2f6f8a,#0b1c28 78%);touch-action:manipulation}',
+    '#gcRName{min-height:22px;margin-top:6px;font-size:14px;font-weight:900;letter-spacing:.5px;text-shadow:0 2px 0 rgba(0,0,0,.55);color:#fff}',
+    '.gcTabs{display:flex;gap:7px;padding:8px 16px 10px}',
     '.gcTab{flex:1;padding:9px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:var(--text-dim);font-size:12px;font-weight:700;font-family:inherit}',
     '.gcTab.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#052730;border-color:#fff;box-shadow:0 4px 0 rgba(0,80,90,.4)}',
     '.gcRates{display:grid;gap:5px;margin-bottom:10px}',
@@ -6645,34 +6617,43 @@ const PMFish = (function () {
     '.gcSw::after{content:"";position:absolute;left:7px;right:7px;top:50%;height:4px;border-radius:2px;background:rgba(255,255,255,.88);transform:rotate(-35deg)}',
     '.rowItem .gcSw{margin:0}',
     '.gcLocked .gcSw{filter:grayscale(1) brightness(.45)}',
-    '.gcCap{width:84px;height:84px;margin:16px auto 6px;border-radius:50%;background:radial-gradient(circle at 35% 28%,#fff,var(--rc) 55%,#0a1e2c);box-shadow:0 0 24px var(--rc);animation:gcShake .5s ease-in-out infinite}',
-    '.gcCapT{text-align:center;font-size:11px;color:var(--text-dim);margin-bottom:10px}',
-    '#gcFlash{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:inherit;pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(255,224,102,.85),rgba(255,224,102,0) 70%)}',
-    '#gcFlash.on{animation:gcFl 1s ease forwards}',
     '@keyframes gcPop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}',
-    '@keyframes gcShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-10deg) scale(1.05)}75%{transform:rotate(10deg) scale(1.05)}}',
-    '@keyframes gcFl{0%{opacity:0}20%{opacity:1}100%{opacity:0}}',
-    '@media (prefers-reduced-motion:reduce){.gcCard,.gcCap,#gcFlash.on{animation:none!important}.gcCard{opacity:1}}'
+    '@media (orientation:landscape) and (max-height:520px){#gcCv{max-width:190px}#gcRName{font-size:12px;min-height:16px;margin-top:3px}.gcTabs{padding:4px 16px 6px}}',
+    '@media (prefers-reduced-motion:reduce){.gcCard{animation:none!important;opacity:1}}'
   ].join('');
   document.head.appendChild(css);
 
   var ov = document.createElement('div'); ov.className = 'modalOverlay'; ov.id = 'modalGacha';
-  ov.innerHTML = '<div class="modalBox"><div class="modalHead"><h2>Gacha Rod</h2><button class="modalClose" id="gcX" type="button">\u2715</button></div>' +
+  ov.innerHTML = '<div class="modalBox"><div class="modalHead"><h2>Mesin Gacha Rod</h2><button class="modalClose" id="gcX" type="button">\u2715</button></div>' +
+    '<div id="gcStageWrap"><canvas id="gcCv" width="360" height="260"></canvas><div id="gcRName"></div></div>' +
     '<div class="gcTabs" id="gcTabs"><button class="gcTab on" data-tab="pull" type="button">Gacha</button><button class="gcTab" data-tab="skin" type="button">Skin Saya</button></div>' +
-    '<div class="modalBody" id="gcBody"></div><div class="modalFoot"><span id="gcFoot"></span><span id="gcCoins"></span></div><div id="gcFlash"></div></div>';
+    '<div class="modalBody" id="gcBody"></div><div class="modalFoot"><span id="gcFoot"></span><span id="gcCoins"></span></div></div>';
   document.body.appendChild(ov);
-  var body = $('gcBody'); flashEl = $('gcFlash');
+  var body = $('gcBody');
   $('gcX').onclick = function () { ov.classList.remove('show'); };
+  $('gcCv').addEventListener('pointerdown', skip);
   $('gcTabs').addEventListener('click', function (e) {
     var b = e.target.closest('[data-tab]'); if (!b) return;
     st.tab = b.getAttribute('data-tab'); render();
+    if (!S3.r || st.anim) return;
+    if (st.tab === 'skin') stagePreview(C.save.skin || ''); else stageIdle();
   });
   body.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
     var a = b.getAttribute('data-act');
-    if (a === 'p1') pull(1); else if (a === 'p10') pull(10); else if (a === 'skip') finish();
-    else if (a === 'eq') equip(b.getAttribute('data-id')); else if (a === 'un') equip('');
+    if (a === 'p1') pull(1); else if (a === 'p10') pull(10);
+    else if (a === 'eq') equip(b.getAttribute('data-id'));
+    else if (a === 'un') equip('');
+    else if (a === 'pv') {
+      var id = b.getAttribute('data-id');
+      if (C.save.skins && C.save.skins[id]) stagePreview(id); else C.toast('Skin belum dimiliki');
+    }
   });
+  new MutationObserver(function () {
+    if (ov.classList.contains('show')) return;
+    if (st.anim) { st.anim = false; busy = false; clearTimeout(animT); clearTimeout(safeT); }
+    s3dispose();
+  }).observe(ov, { attributes: true, attributeFilter: ['class'] });
 
   function card(r, i) {
     var t = TIER[r.tier], big, sub, sw = '';
@@ -6687,7 +6668,7 @@ const PMFish = (function () {
   }
 
   function render() {
-    var s = C.save, g = s.gacha || { pity: 0, total: 0 }, h = '', i, k;
+    var s = C.save, g = s.gacha || { pity: 0, total: 0 }, h = '', i;
     var tp = ov.querySelectorAll('.gcTab');
     for (i = 0; i < tp.length; i++) tp[i].className = 'gcTab' + (tp[i].getAttribute('data-tab') === st.tab ? ' on' : '');
     if (st.tab === 'pull') {
@@ -6698,7 +6679,7 @@ const PMFish = (function () {
         '<button class="gcPull gold" type="button" data-act="p10"' + ((busy || s.coins < COST10) ? ' disabled' : '') + '>Gacha 10x<small>' + fmt(COST10) + ' koin (Hemat!)</small><small>Garansi minimal Rare di pull ke-10</small></button></div>';
       h += '<div class="gcInfo">Pity: <b>' + g.pity + '/' + PITY_MAX + '</b> \u2022 Legendary dijamin di pull ke-' + PITY_MAX + '<br>Skin duplikat jadi koin (Rare ' + DUP.rare + ', Epic ' + DUP.epic + ', Legendary ' + DUP.legendary + '). Skin berlaku di semua rod.</div>';
       if (st.anim) {
-        h += '<div class="gcCap" data-act="skip" style="--rc:' + TIER[st.best].c + '"></div><div class="gcCapT">Mengundi... ketuk buat lewati</div>';
+        h += '<div class="gcInfo"><b>Mengundi...</b> ketuk gambar buat lewati</div>';
       } else if (st.last) {
         h += '<div class="gcH">Hasil terakhir</div><div class="gcGrid">';
         for (i = 0; i < st.last.length; i++) h += card(st.last[i], i);
@@ -6707,11 +6688,12 @@ const PMFish = (function () {
       $('gcFoot').textContent = 'Total pull: ' + fmt(g.total);
     } else {
       var owned = 0;
+      h += '<div class="gcInfo">Ketuk skin yang dimiliki buat lihat preview 3D-nya.</div>';
       h += '<button class="rowBtn" type="button" data-act="un"' + (s.skin ? '' : ' disabled') + ' style="width:100%;margin-bottom:8px">Tanpa Skin</button>';
       SKINS.forEach(function (sk) {
         var has = !!(s.skins && s.skins[sk.id]), on = s.skin === sk.id, t = TIER[sk.t];
         if (has) owned++;
-        h += '<div class="rowItem' + (has ? '' : ' gcLocked') + '" style="border-color:' + t.c + '"><div class="gcSw" style="' + swatch(sk) + '"></div>' +
+        h += '<div class="rowItem' + (has ? '' : ' gcLocked') + '" data-act="pv" data-id="' + sk.id + '" style="border-color:' + t.c + '"><div class="gcSw" style="' + swatch(sk) + '"></div>' +
           '<div class="rowInfo"><div class="rowName" style="color:' + t.c + '">' + (has ? sk.n : '???') + '</div><div class="rowSub">' + t.n + ' \u2022 ' + KIND_LABEL[sk.k] + '</div></div>' +
           '<button class="rowBtn' + (on ? ' owned' : '') + '" type="button"' + (has && !on ? ' data-act="eq" data-id="' + sk.id + '"' : ' disabled') + '>' + (on ? 'Dipakai' : (has ? 'Pakai' : 'Terkunci')) + '</button></div>';
       });
@@ -6720,33 +6702,377 @@ const PMFish = (function () {
     $('gcCoins').textContent = 'Koin: ' + fmt(s.coins);
     body.innerHTML = h;
   }
-  function openG() { render(); ov.classList.add('show'); }
 
-  var host = $('menuPanel') || $('hudPills');
-  if (host) {
-    var mb = document.createElement('button'); mb.className = 'hudPill'; mb.textContent = 'Gacha';
-    mb.onclick = function () { var mp = $('menuPanel'); if (mp) mp.classList.remove('show'); openG(); };
-    host.appendChild(mb);
+  /* ---------- animasi warna skin (dipakai joran di tangan & panggung 3D) ---------- */
+  var _pc = new T.Color();
+  function skinAnim(sk, m, glow, t) {
+    var k = sk.k;
+    if (k === 'glow') m.emissiveIntensity = 0.55 + 0.35 * Math.sin(t * 3);
+    else if (k === 'rainbow') { m.color.setHSL((t * 0.25 + 0.1) % 1, 0.7, 0.55); m.emissive.setHSL((t * 0.25) % 1, 0.9, 0.5); }
+    else if (k === 'fire') { m.emissiveIntensity = 0.7 + 0.3 * Math.sin(t * 17) * Math.sin(t * 5.3); m.emissive.setHSL(0.03 + 0.02 * Math.sin(t * 11), 1, 0.5); }
+    else if (k === 'galaxy') m.emissive.setHSL(0.68 + 0.1 * Math.sin(t * 1.5), 0.9, 0.5);
+    if (glow && k === 'rainbow') glow.material.color.setHSL((t * 0.25) % 1, 1, 0.6);
   }
-  var q = $('pmsQuick');
-  if (q) {
-    var qb = document.createElement('button'); qb.type = 'button'; qb.className = 'pmsQ'; qb.textContent = 'Gacha';
-    qb.onclick = openG; q.insertBefore(qb, q.lastChild);
+  function pcol(sk, t) {
+    if (sk.k === 'rainbow') return _pc.setHSL((t * 0.3) % 1, 1, 0.6);
+    if (sk.k === 'fire') return _pc.setRGB(1, 0.35 + Math.random() * 0.3, 0.05);
+    if (sk.k === 'galaxy') return _pc.setHSL(0.6 + Math.random() * 0.15, 0.9, 0.65);
+    return _pc.set(sk.c);
   }
 
-  /* ---------- skin 3D di joran (overlay, tidak mengubah material rod asli) ---------- */
-  var rod = C.rodMesh, roots = [], skinId = null, cur = null, skinMat = null, glow = null, pts = null, ptsPos = null, ptsCol = null;
-  var N = 14, tc = new T.Color(), dotT = null;
-  function dotTex() {
-    if (dotT) return dotT;
-    var c = document.createElement('canvas'); c.width = c.height = 32;
-    var g = c.getContext('2d'), gr = g.createRadialGradient(16, 16, 0, 16, 16, 16);
-    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.5, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = gr; g.fillRect(0, 0, 32, 32);
-    dotT = new T.CanvasTexture(c); return dotT;
+  /* ---------- panggung 3D (render sendiri, dibuang saat modal ditutup) ---------- */
+  var S3 = {};
+  function dropObj(o) {
+    if (!o) return;
+    if (o.parent) o.parent.remove(o);
+    o.traverse(function (x) {
+      if (x.geometry) x.geometry.dispose();
+      if (x.material) { if (x.material.length) x.material.forEach(function (mm) { mm.dispose(); }); else x.material.dispose(); }
+    });
   }
+  function s3clearObjs() {
+    if (!S3.root) return;
+    while (S3.root.children.length) dropObj(S3.root.children[0]);
+    S3.cap = S3.rew = null;
+  }
+  function setCol(col) {
+    S3.col = col;
+    S3.glow.material.color.copy(col); S3.rays.material.color.copy(col); S3.pl.color.copy(col);
+    S3.floor.material.color.copy(col); S3.flash.material.color.copy(col); S3.shock.material.color.copy(col);
+  }
+  function s3init() {
+    if (S3.r) return true;
+    if (S3.fail) return false;
+    var cv = $('gcCv');
+    try { S3.r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); }
+    catch (e) { S3 = { fail: true }; cv.style.display = 'none'; return false; }
+    var r = S3.r;
+    r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    r.setSize(360, 260, false); r.setClearColor(0x000000, 0);
+    var sc = S3.sc = new T.Scene();
+    sc.add(new T.HemisphereLight(0xe6f4ff, 0x2a3a4a, 0.95));
+    var dl = new T.DirectionalLight(0xfff0d8, 1.1); dl.position.set(2.5, 4, 4); sc.add(dl);
+    S3.pl = new T.PointLight(0xffffff, 0, 9); S3.pl.position.set(0, 0.6, 2); sc.add(S3.pl);
+    S3.cam = new T.PerspectiveCamera(36, 360 / 260, 0.1, 50);
+    S3.cam.position.set(0, 0.8, 6.2); S3.cam.lookAt(0, 0.35, 0);
+    S3.root = new T.Group(); sc.add(S3.root);
+    S3.floor = new T.Mesh(new T.RingGeometry(0.9, 1.6, 48).rotateX(-PI / 2), new T.MeshBasicMaterial({ color: 0x37d1c8, transparent: true, opacity: 0.25, depthWrite: false, side: T.DoubleSide }));
+    S3.floor.position.y = -0.95; sc.add(S3.floor);
+    S3.rays = new T.Mesh(new T.PlaneGeometry(8, 8), new T.MeshBasicMaterial({ map: rayTex(), color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }));
+    S3.rays.position.set(0, 0.3, -1); sc.add(S3.rays);
+    S3.glow = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending }));
+    S3.glow.position.set(0, 0.2, 0.3); sc.add(S3.glow);
+    S3.flash = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending }));
+    S3.flash.position.set(0, 0.2, 0.9); sc.add(S3.flash);
+    S3.shock = new T.Mesh(new T.RingGeometry(0.92, 1, 56), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }));
+    S3.shock.position.set(0, 0.2, 0.2); sc.add(S3.shock);
+    var PN = 150; S3.PN = PN;
+    S3.pp = new Float32Array(PN * 3); S3.pcol = new Float32Array(PN * 3); S3.pvel = new Float32Array(PN * 3);
+    S3.plife = new Float32Array(PN); S3.pmax = new Float32Array(PN); S3.pbase = new Float32Array(PN * 3);
+    for (var i = 0; i < PN; i++) S3.pp[i * 3 + 1] = -999;
+    S3.pgeo = new T.BufferGeometry();
+    S3.pgeo.setAttribute('position', new T.BufferAttribute(S3.pp, 3));
+    S3.pgeo.setAttribute('color', new T.BufferAttribute(S3.pcol, 3));
+    var pts = new T.Points(S3.pgeo, new T.PointsMaterial({ size: 0.16, map: dotTex(), vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending }));
+    pts.frustumCulled = false; sc.add(pts);
+    S3.t = 0; S3.run = false;
+    return true;
+  }
+  function s3dispose() {
+    if (S3.raf) cancelAnimationFrame(S3.raf);
+    S3.run = false;
+    if (S3.r) {
+      try { s3clearObjs(); S3.r.dispose(); if (S3.r.forceContextLoss) S3.r.forceContextLoss(); } catch (e) {}
+    }
+    S3 = { fail: S3.fail };
+  }
+  function s3run() { if (S3.run) return; S3.run = true; S3.last = 0; S3.raf = requestAnimationFrame(s3frame); }
+  function emit(x, y, z, n, spd, up, col) {
+    var c = 0;
+    for (var i = 0; i < S3.PN && c < n; i++) {
+      if (S3.plife[i] > 0) continue;
+      var a = Math.random() * PI * 2, sp = spd * (0.35 + Math.random() * 0.65), j = i * 3;
+      S3.pp[j] = x; S3.pp[j + 1] = y; S3.pp[j + 2] = z;
+      S3.pvel[j] = Math.cos(a) * sp; S3.pvel[j + 1] = up * (0.4 + Math.random()); S3.pvel[j + 2] = Math.sin(a) * sp * 0.6;
+      S3.pmax[i] = S3.plife[i] = 0.7 + Math.random() * 0.8;
+      S3.pbase[j] = col.r; S3.pbase[j + 1] = col.g; S3.pbase[j + 2] = col.b; c++;
+    }
+  }
+  function stepP(dt) {
+    var i, j, f;
+    for (i = 0; i < S3.PN; i++) {
+      if (S3.plife[i] <= 0) continue;
+      j = i * 3; S3.plife[i] -= dt;
+      if (S3.plife[i] <= 0) { S3.pp[j + 1] = -999; S3.pcol[j] = S3.pcol[j + 1] = S3.pcol[j + 2] = 0; continue; }
+      S3.pvel[j + 1] -= 4 * dt;
+      S3.pp[j] += S3.pvel[j] * dt; S3.pp[j + 1] += S3.pvel[j + 1] * dt; S3.pp[j + 2] += S3.pvel[j + 2] * dt;
+      f = S3.plife[i] / S3.pmax[i];
+      S3.pcol[j] = S3.pbase[j] * f; S3.pcol[j + 1] = S3.pbase[j + 1] * f; S3.pcol[j + 2] = S3.pbase[j + 2] * f;
+    }
+    S3.pgeo.attributes.position.needsUpdate = true; S3.pgeo.attributes.color.needsUpdate = true;
+  }
+
+  function mkCapsule(hex) {
+    var g = new T.Group();
+    var mt = new T.MeshStandardMaterial({ color: hex, roughness: 0.22, metalness: 0.15, emissive: hex, emissiveIntensity: 0.18, side: T.DoubleSide });
+    var mw = new T.MeshStandardMaterial({ color: 0xf2f4f6, roughness: 0.22, metalness: 0.1, side: T.DoubleSide });
+    var top = new T.Group(), bot = new T.Group();
+    top.add(new T.Mesh(new T.SphereGeometry(0.5, 28, 14, 0, PI * 2, 0, PI / 2), mt));
+    bot.add(new T.Mesh(new T.SphereGeometry(0.5, 28, 14, 0, PI * 2, PI / 2, PI / 2), mw));
+    var band = new T.Mesh(new T.TorusGeometry(0.5, 0.03, 8, 40), new T.MeshStandardMaterial({ color: 0xd9b25a, metalness: 0.7, roughness: 0.3 }));
+    band.rotation.x = PI / 2;
+    g.add(top); g.add(bot); g.add(band);
+    g.userData = { top: top, bot: bot, band: band };
+    return g;
+  }
+  function mkRodModel(sk) {
+    var g = new T.Group(), c = sk ? sk.c : '#8a929a';
+    var m = new T.MeshStandardMaterial({ color: c, roughness: 0.35, metalness: 0.3 });
+    if (sk && sk.k !== 'solid') { m.emissive.set(c); m.emissiveIntensity = 0.7; m.roughness = 0.25; }
+    g.add(new T.Mesh(new T.CylinderGeometry(0.035, 0.075, 2.2, 18), m));
+    var tip = new T.Mesh(new T.CylinderGeometry(0.018, 0.035, 0.85, 14).translate(0, 0.425, 0), m); tip.position.y = 1.1; g.add(tip);
+    var grip = new T.Mesh(new T.CylinderGeometry(0.1, 0.1, 0.55, 16), new T.MeshStandardMaterial({ color: 0x2a2018, roughness: 0.9 })); grip.position.y = -0.85; g.add(grip);
+    var steel = new T.MeshStandardMaterial({ color: 0xcfd6dc, metalness: 0.7, roughness: 0.3 });
+    var reel = new T.Mesh(new T.CylinderGeometry(0.14, 0.14, 0.16, 20), steel); reel.rotation.z = PI / 2; reel.position.set(0.15, -0.5, 0); g.add(reel);
+    for (var i = 0; i < 4; i++) { var gd = new T.Mesh(new T.TorusGeometry(0.035, 0.008, 6, 14), steel); gd.position.set(0, 0.1 + i * 0.5, 0.09 - i * 0.02); g.add(gd); }
+    var glow = null;
+    if (sk && sk.k !== 'solid') {
+      glow = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: c, blending: T.AdditiveBlending, depthWrite: false, transparent: true }));
+      glow.position.set(0, 1.95, 0); glow.scale.set(0.6, 0.6, 1); g.add(glow);
+    }
+    return { g: g, mat: m, glow: glow };
+  }
+  function buildReward(res) {
+    var group = new T.Group(), spin = new T.Group(); group.add(spin);
+    var o = { group: group, spin: spin, base: 1, update: null, noSpin: false };
+    if (res.kind === 'skin') {
+      var sk = res.id ? skinById(res.id) : null, rod = mkRodModel(sk), tilt = new T.Group();
+      tilt.rotation.z = 0.5; rod.g.position.y = -0.4; tilt.add(rod.g); spin.add(tilt); o.base = 0.85;
+      o.update = function (t) {
+        if (sk) skinAnim(sk, rod.mat, rod.glow, t);
+        if (rod.glow) { var gs = 0.6 + 0.1 * Math.sin(t * 4); rod.glow.scale.set(gs, gs, 1); }
+        if (sk && sk.t === 'legendary' && Math.random() < 0.6) {
+          var a = Math.random() * PI * 2;
+          emit(Math.cos(a) * 0.25, 0.1 + Math.random() * 1.5, Math.sin(a) * 0.25, 1, 0.2, 0.9, pcol(sk, t));
+        }
+      };
+    } else if (res.kind === 'coin') {
+      var gm = new T.MeshStandardMaterial({ color: 0xffd24a, roughness: 0.25, metalness: 0.6, emissive: 0x7a4a00, emissiveIntensity: 0.35 });
+      var dk = new T.MeshStandardMaterial({ color: 0xc8901c, roughness: 0.35, metalness: 0.6 });
+      var pivs = [];
+      [[-0.6, -0.1, 0.9], [0.6, 0.05, 0.0], [0, 0.4, 1.8]].forEach(function (p) {
+        var pv = new T.Group(); pv.position.set(p[0], p[1], 0); pv.rotation.y = p[2];
+        var coin = new T.Mesh(new T.CylinderGeometry(0.42, 0.42, 0.09, 32), gm); coin.rotation.x = PI / 2; pv.add(coin);
+        var r1 = new T.Mesh(new T.TorusGeometry(0.34, 0.025, 8, 32), dk); r1.position.z = 0.05; pv.add(r1);
+        var r2 = new T.Mesh(new T.TorusGeometry(0.34, 0.025, 8, 32), dk); r2.position.z = -0.05; pv.add(r2);
+        spin.add(pv); pivs.push(pv);
+      });
+      o.noSpin = true;
+      o.update = function (t, dt) { for (var i = 0; i < pivs.length; i++) pivs[i].rotation.y += dt * (2 + i * 0.6); };
+    } else {
+      var bc = (C.GEAR_COLORS.bait && C.GEAR_COLORS.bait[res.id]) || '#5fd36b';
+      var om = new T.MeshStandardMaterial({ color: bc, roughness: 0.2, metalness: 0.2, emissive: bc, emissiveIntensity: 0.6 });
+      spin.add(new T.Mesh(new T.SphereGeometry(0.42, 24, 16), om));
+      var rm = new T.MeshStandardMaterial({ color: 0xffffff, emissive: bc, emissiveIntensity: 0.8 });
+      var ra = new T.Mesh(new T.TorusGeometry(0.7, 0.03, 8, 40), rm); ra.rotation.x = 1.2; spin.add(ra);
+      var rb = new T.Mesh(new T.TorusGeometry(0.6, 0.025, 8, 40), rm); rb.rotation.x = -0.7; spin.add(rb);
+      o.update = function (t) { om.emissiveIntensity = 0.5 + 0.3 * Math.sin(t * 4); ra.rotation.z = t * 1.5; rb.rotation.z = -t * 1.2; };
+    }
+    return o;
+  }
+
+  function stageReset() {
+    s3clearObjs();
+    S3.t = 0; S3.burst = false; S3.done = false; S3.landed = false; S3.fast = false; S3.played = false;
+    S3.rays.material.opacity = 0; S3.flash.material.opacity = 0; S3.shock.material.opacity = 0; S3.glow.material.opacity = 0; S3.pl.intensity = 0;
+    S3.floor.material.opacity = 0.25;
+  }
+  function stageIdle() {
+    if (!s3init()) return;
+    stageReset(); S3.mode = 'idle';
+    var col = new T.Color(0x37d1c8); setCol(col);
+    S3.cap = mkCapsule(col.getHex()); S3.cap.scale.setScalar(1.5); S3.root.add(S3.cap);
+    var n = $('gcRName'); n.textContent = ''; n.style.color = '#fff';
+    s3run();
+  }
+  function stagePlay(res) {
+    if (!s3init()) return false;
+    stageReset(); S3.mode = 'cap'; S3.res = res;
+    var col = new T.Color(TIER[res.tier].c); setCol(col);
+    S3.cap = mkCapsule(col.getHex()); S3.cap.scale.setScalar(1.5); S3.cap.position.set(0, 3, 0); S3.root.add(S3.cap);
+    var n = $('gcRName'); n.textContent = 'Mengundi...'; n.style.color = '#fff';
+    s3run();
+    return true;
+  }
+  function stagePreview(id) {
+    if (!s3init()) return;
+    stageReset(); S3.mode = 'preview';
+    var sk = id ? skinById(id) : null;
+    setCol(new T.Color(sk ? TIER[sk.t].c : '#9fb4bd'));
+    S3.pvTier = sk ? ORDER.indexOf(sk.t) : 0;
+    S3.rew = buildReward({ kind: 'skin', id: id || '' });
+    S3.rew.group.scale.setScalar(S3.rew.base); S3.root.add(S3.rew.group);
+    S3.pl.intensity = 0.8;
+    var n = $('gcRName'); n.textContent = sk ? sk.n + ' (' + TIER[sk.t].n + ')' : 'Tanpa Skin'; n.style.color = sk ? TIER[sk.t].c : '#cfe6ec';
+    s3run();
+  }
+  function burst() {
+    var res = S3.res, ti = ORDER.indexOf(res.tier), col = S3.col;
+    S3.mode = 'reveal'; S3.bt = S3.t; S3.burst = true; S3.played = true;
+    S3.vtop = new T.Vector3(-1.4, 3.2, 0.4); S3.vbot = new T.Vector3(1.0, 0.4, 0.4);
+    if (S3.cap) S3.cap.userData.band.visible = false;
+    S3.rew = buildReward(res); S3.rew.group.scale.setScalar(0.01); S3.root.add(S3.rew.group);
+    emit(0, 0.1, 0, 50 + ti * 30, 3.2 + ti * 0.8, 4.5, col);
+    if (ti >= 2) emit(0, 0.1, 0, 30, 4, 5, new T.Color(0xffffff));
+    S3.cam.userData = { shake: 0.15 + ti * 0.08 };
+    C.Sfx.catchFish(res.tier);
+    C.vibe(res.tier === 'legendary' ? [100, 50, 100, 50, 160] : (res.tier === 'epic' ? [60, 40, 60] : [30]));
+    var n = $('gcRName'); n.textContent = TIER[res.tier].n.toUpperCase() + ' \u2022 ' + rewardName(res); n.style.color = TIER[res.tier].c;
+  }
+  function backOut(u) { var c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2); }
+
+  function s3frame(ts) {
+    if (!S3.run || !S3.r) return;
+    S3.raf = requestAnimationFrame(s3frame);
+    var dt = S3.last ? Math.min(0.05, (ts - S3.last) / 1000) : 0; S3.last = ts;
+    S3.t += dt;
+    var t = S3.t, m = S3.mode, cam = S3.cam, col = S3.col, u, b, y, k, ti, rw;
+    cam.position.set(0, 0.8, 6.2);
+    if (m === 'idle') {
+      if (S3.cap) { S3.cap.position.y = 0.1 + Math.sin(t * 1.8) * 0.12; S3.cap.rotation.y += dt * 0.8; S3.cap.rotation.z = Math.sin(t * 0.9) * 0.1; }
+      S3.glow.material.opacity = 0.25; S3.glow.scale.setScalar(2.2 + Math.sin(t * 2) * 0.2);
+    } else if (m === 'cap') {
+      var cp = S3.cap;
+      if (t < 0.8) { u = t / 0.8; y = 3 * (1 - u * u); }
+      else if (t < 1.5) y = Math.abs(Math.sin((t - 0.8) * 8)) * 0.3 * Math.exp(-(t - 0.8) * 3.5);
+      else y = 0;
+      if (t >= 0.8 && !S3.landed) { S3.landed = true; C.Sfx.tap(); emit(0, -0.8, 0, 12, 1.6, 1.2, col); }
+      k = t > 1.5 ? Math.min(1, (t - 1.5) / 1.0) : 0;
+      cp.position.set(Math.sin(t * 61) * 0.03 * k, y + Math.sin(t * 53) * 0.02 * k, 0);
+      cp.rotation.z = Math.sin(t * 38) * 0.18 * k; cp.rotation.y += dt * (0.6 + 4 * k);
+      S3.glow.material.opacity = 0.15 + 0.7 * k; S3.glow.scale.setScalar(1.6 + 1.8 * k);
+      S3.pl.intensity = 2.5 * k; S3.floor.material.opacity = 0.2 + 0.4 * k;
+      if (k > 0 && Math.random() < 0.4) emit((Math.random() - 0.5) * 1.4, -0.7, (Math.random() - 0.5) * 0.6, 1, 0.2, 1.6, col);
+      if (t >= 2.5) burst();
+    } else if (m === 'reveal') {
+      b = t - S3.bt; ti = ORDER.indexOf(S3.res.tier);
+      if (S3.cap) {
+        var ud = S3.cap.userData, sc2 = Math.max(0, 1 - b * 1.1);
+        S3.vtop.y -= 7 * dt; S3.vbot.y -= 7 * dt;
+        ud.top.position.addScaledVector(S3.vtop, dt); ud.bot.position.addScaledVector(S3.vbot, dt);
+        ud.top.rotation.z += dt * 5; ud.bot.rotation.z -= dt * 4;
+        S3.cap.scale.setScalar(Math.max(0.0001, 1.5 * sc2));
+        if (sc2 <= 0) { dropObj(S3.cap); S3.cap = null; }
+      }
+      rw = S3.rew;
+      if (rw) {
+        rw.group.scale.setScalar(Math.max(0.01, backOut(Math.min(1, b / 0.7)) * rw.base));
+        rw.group.position.y = 0.2 + Math.sin(t * 2.2) * 0.08;
+        if (!rw.noSpin) rw.spin.rotation.y += dt * 1.5;
+        if (rw.update) rw.update(t, dt);
+      }
+      S3.flash.material.opacity = Math.max(0, 1 - b * 2.2); S3.flash.scale.setScalar(2 + b * 9);
+      S3.shock.material.opacity = Math.max(0, 0.9 - b * 1.1); S3.shock.scale.setScalar(0.2 + b * 8);
+      S3.rays.material.opacity = (0.12 + 0.12 * ti) * Math.min(1, b * 3); S3.rays.rotation.z += dt * 0.35;
+      if (S3.res.tier === 'legendary') { S3.rays.material.color.setHSL((t * 0.2) % 1, 0.8, 0.6); S3.glow.material.color.setHSL((t * 0.2 + 0.1) % 1, 0.9, 0.6); }
+      S3.glow.material.opacity = 0.55; S3.glow.scale.setScalar(2.8 + Math.sin(t * 3) * 0.3);
+      S3.pl.intensity = Math.max(0.6, 2.5 - b * 2);
+      if (b < 0.5) { var sh = (0.5 - b) * cam.userData.shake; cam.position.x += (Math.random() - 0.5) * sh; cam.position.y += (Math.random() - 0.5) * sh; }
+      if (ti >= 2 && Math.random() < 0.35) emit((Math.random() - 0.5) * 1.6, -0.3, (Math.random() - 0.5) * 0.6, 1, 0.3, 1.8, col);
+      if (!S3.done && b >= (S3.fast ? 0.4 : 1.1)) { S3.done = true; finish(); }
+    } else if (m === 'preview') {
+      rw = S3.rew;
+      if (rw) {
+        rw.spin.rotation.y += dt * 0.9; rw.group.position.y = 0.2 + Math.sin(t * 1.6) * 0.06;
+        if (rw.update) rw.update(t, dt);
+      }
+      S3.glow.material.opacity = 0.18; S3.glow.scale.setScalar(2.6);
+      S3.rays.material.opacity = S3.pvTier >= 2 ? 0.1 : 0; S3.rays.rotation.z += dt * 0.25;
+      if (S3.pvTier === 3) S3.rays.material.color.setHSL((t * 0.2) % 1, 0.8, 0.6);
+    }
+    stepP(dt);
+    S3.r.render(S3.sc, cam);
+  }
+
+  function openG() {
+    render(); ov.classList.add('show');
+    if (st.anim) return;
+    if (st.tab === 'skin') stagePreview(C.save.skin || ''); else stageIdle();
+  }
+  window.PMGacha = { open: openG };
+
+  /* ---------- Mesin Gacha 3D di plaza (menggantikan Akuarium) ---------- */
+  var MX = 4.5, MZ = 19;
+  var mach = new T.Group(); mach.position.set(MX, C.DECK_Y, MZ);
+  function MS(c, o) { o = o || {}; o.color = c; if (o.roughness === undefined) o.roughness = 0.45; return new T.MeshStandardMaterial(o); }
+  function mb(geo, mat, x, y, z) { var m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; mach.add(m); return m; }
+  var mRed = MS(0xd8352a, { roughness: 0.35, metalness: 0.2 }), mSteel = MS(0xcfd6dc, { metalness: 0.8, roughness: 0.28 }),
+      mDark = MS(0x1c1f24, { roughness: 0.7 }), mGold = MS(0xd9b25a, { metalness: 0.85, roughness: 0.3 });
+  mb(new T.BoxGeometry(1.5, 1.0, 1.1), mRed, 0, 0.5, 0);
+  mb(new T.BoxGeometry(1.56, 0.1, 1.16), mGold, 0, 1.03, 0);
+  mb(new T.BoxGeometry(1.56, 0.1, 1.16), mGold, 0, 0.05, 0);
+  mb(new T.BoxGeometry(0.46, 0.3, 0.1), mDark, 0, 0.3, 0.55);
+  mb(new T.BoxGeometry(0.36, 0.2, 0.06), MS(0x050607), 0, 0.28, 0.6);
+  mb(new T.BoxGeometry(0.34, 0.34, 0.05), mSteel, 0.5, 0.68, 0.55);
+  mb(new T.BoxGeometry(0.2, 0.025, 0.02), mDark, 0.5, 0.74, 0.585);
+  var crank = new T.Group(); crank.position.set(-0.42, 0.68, 0.58); mach.add(crank);
+  var cDisc = new T.Mesh(new T.CylinderGeometry(0.2, 0.2, 0.06, 24), mSteel); cDisc.rotation.x = PI / 2; crank.add(cDisc);
+  var cArm = new T.Mesh(new T.BoxGeometry(0.34, 0.07, 0.07), mGold); cArm.position.set(0.12, 0, 0.07); crank.add(cArm);
+  var cKnob = new T.Mesh(new T.SphereGeometry(0.07, 12, 10), MS(0xe8432f)); cKnob.position.set(0.3, 0, 0.1); crank.add(cKnob);
+  mb(new T.CylinderGeometry(0.62, 0.7, 0.14, 28), mSteel, 0, 1.15, 0);
+  var dome = new T.Mesh(new T.SphereGeometry(0.8, 28, 20), new T.MeshStandardMaterial({ color: 0xbfeaff, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1, depthWrite: false, side: T.DoubleSide }));
+  dome.position.y = 1.95; dome.renderOrder = 2; mach.add(dome);
+  mb(new T.CylinderGeometry(0.3, 0.55, 0.25, 24), mGold, 0, 2.82, 0);
+  mb(new T.SphereGeometry(0.1, 12, 10), mGold, 0, 3.0, 0);
+  var capsIn = [], palette = [0xff5a5a, 0x4aa8ff, 0xb56bff, 0xffc233, 0x5bff7a, 0xffffff];
+  for (var ci = 0; ci < 18; ci++) {
+    var ca = ci * 2.4, cr = 0.12 + (ci % 5) * 0.085, cy = 1.5 + (ci % 4) * 0.12 + (ci % 3) * 0.04, pc = palette[ci % palette.length];
+    var cm = new T.Mesh(new T.SphereGeometry(0.14, 14, 10), MS(pc, { roughness: 0.25, emissive: pc, emissiveIntensity: 0.12 }));
+    var cx = Math.cos(ca) * cr, cz = Math.sin(ca) * cr * 0.9;
+    cm.position.set(cx, cy, cz); mach.add(cm); capsIn.push({ m: cm, x: cx, y: cy, ph: ci });
+  }
+  var bulbs = [];
+  for (var bi = 0; bi < 10; bi++) {
+    var ba = bi / 10 * PI * 2, bm = MS(0xffffff, { emissive: 0xffffff, emissiveIntensity: 1 });
+    var bl = new T.Mesh(new T.SphereGeometry(0.05, 10, 8), bm); bl.position.set(Math.cos(ba) * 0.68, 1.26, Math.sin(ba) * 0.68); mach.add(bl); bulbs.push(bm);
+  }
+  var starsM = [];
+  for (var si = 0; si < 3; si++) {
+    var sm = new T.Mesh(new T.OctahedronGeometry(0.1), MS(0xfff2a0, { emissive: 0xffd45a, emissiveIntensity: 1 }));
+    mach.add(sm); starsM.push(sm);
+  }
+  var mGlow = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: 0xffd45a, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.3, fog: false }));
+  mGlow.scale.set(3.4, 3.4, 1); mGlow.position.set(0, 2.0, -0.1); mach.add(mGlow);
+  var mSign = new T.Sprite(new T.SpriteMaterial({ map: C.makeSignTexture('GACHA ROD', '#b3262a'), fog: false }));
+  mSign.scale.set(2, 0.5, 1); mSign.position.set(0, 3.55, 0); mach.add(mSign);
+  C.town.add(mach);
+  C.TOWN_COLLIDERS.push({ x: MX, z: MZ, r: 1.25 });
+  C.TOWN_SHOPS.push({ id: 'gacha', name: 'GACHA', label: 'Main Gacha Rod', x: MX, z: MZ + 0.2, action: function () { openG(); } });
+  C.hookAnim(function (t) {
+    var i, c, a;
+    for (i = 0; i < capsIn.length; i++) {
+      c = capsIn[i];
+      c.m.position.y = c.y + Math.sin(t * 1.6 + c.ph) * 0.03 + (busy ? Math.sin(t * 30 + c.ph) * 0.04 : 0);
+      c.m.position.x = c.x + Math.sin(t * 0.9 + c.ph * 1.3) * 0.025;
+    }
+    for (i = 0; i < bulbs.length; i++) {
+      bulbs[i].emissive.setHSL((t * 0.3 + i / 10) % 1, 1, 0.5);
+      bulbs[i].emissiveIntensity = 0.4 + 0.8 * Math.max(0, Math.sin(t * 5 - i * 0.63));
+    }
+    for (i = 0; i < starsM.length; i++) {
+      a = t * 0.9 + i * 2.094;
+      starsM[i].position.set(Math.cos(a) * 1.15, 2.1 + Math.sin(t * 1.7 + i) * 0.2, Math.sin(a) * 1.15);
+      starsM[i].rotation.y = t * 2;
+    }
+    mGlow.material.opacity = 0.28 + 0.1 * Math.sin(t * 2);
+    crank.rotation.z = busy ? t * 9 : Math.sin(t * 0.8) * 0.12;
+  });
+
+  /* ---------- skin 3D di joran yang dipegang karakter ---------- */
+  var rodM = C.rodMesh, roots = [], skinId = null, cur = null, skinMat = null, wGlow = null, pts = null, ptsPos = null, ptsCol = null;
+  var N = 14, tcol = new T.Color();
   function findTip() {
-    var kids = rod.children;
+    var kids = rodM.children;
     for (var i = 0; i < kids.length; i++) {
       var gm = kids[i].geometry;
       if (gm && gm.type === 'CylinderGeometry' && gm.parameters && gm.parameters.radiusTop === 0.008) return kids[i];
@@ -6754,15 +7080,12 @@ const PMFish = (function () {
     return null;
   }
   function clearSkin() {
-    roots.forEach(function (r) {
-      if (r.parent) r.parent.remove(r);
-      r.traverse(function (o) { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
-    });
-    roots = []; cur = skinMat = glow = pts = ptsPos = ptsCol = null;
+    roots.forEach(function (r) { dropObj(r); });
+    roots = []; cur = skinMat = wGlow = pts = ptsPos = ptsCol = null;
   }
   function buildSkin(sk) {
     var tip = findTip(), root = new T.Group(), tg = new T.Group();
-    rod.add(root); (tip || rod).add(tg); if (!tip) tg.position.y = 0.55;
+    rodM.add(root); (tip || rodM).add(tg); if (!tip) tg.position.y = 0.55;
     roots = [root, tg]; cur = sk;
     var m = new T.MeshStandardMaterial({ color: sk.c, roughness: 0.4, metalness: 0.35 });
     if (sk.k !== 'solid') { m.emissive.set(sk.c); m.emissiveIntensity = 0.7; m.roughness = 0.25; }
@@ -6770,8 +7093,8 @@ const PMFish = (function () {
     var sh = new T.Mesh(new T.CylinderGeometry(0.0155, 0.0325, 1.1, 14), m); sh.castShadow = true; root.add(sh);
     tg.add(new T.Mesh(new T.CylinderGeometry(0.0095, 0.0155, 0.42, 10).translate(0, 0.21, 0), m));
     if (sk.k !== 'solid') {
-      glow = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: sk.c, blending: T.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
-      glow.position.set(0, 0.44, 0); glow.scale.set(0.2, 0.2, 1); tg.add(glow);
+      wGlow = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: sk.c, blending: T.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
+      wGlow.position.set(0, 0.44, 0); wGlow.scale.set(0.2, 0.2, 1); tg.add(wGlow);
     }
     if (sk.t === 'legendary') {
       ptsPos = new Float32Array(N * 3); ptsCol = new Float32Array(N * 3);
@@ -6787,21 +7110,15 @@ const PMFish = (function () {
     if (id !== skinId) { skinId = id; clearSkin(); var sk = id ? skinById(id) : null; if (sk) buildSkin(sk); }
     if (!cur || !skinMat) return;
     var k = cur.k, i, a, u, p, f, tw;
-    if (k === 'glow') skinMat.emissiveIntensity = 0.55 + 0.35 * Math.sin(t * 3);
-    else if (k === 'rainbow') { skinMat.color.setHSL((t * 0.25 + 0.1) % 1, 0.7, 0.55); skinMat.emissive.setHSL((t * 0.25) % 1, 0.9, 0.5); }
-    else if (k === 'fire') { skinMat.emissiveIntensity = 0.7 + 0.3 * Math.sin(t * 17) * Math.sin(t * 5.3); skinMat.emissive.setHSL(0.03 + 0.02 * Math.sin(t * 11), 1, 0.5); }
-    else if (k === 'galaxy') skinMat.emissive.setHSL(0.68 + 0.1 * Math.sin(t * 1.5), 0.9, 0.5);
-    if (glow) {
-      var gs = 0.2 + 0.05 * Math.sin(t * 4); glow.scale.set(gs, gs, 1);
-      if (k === 'rainbow') glow.material.color.setHSL((t * 0.25) % 1, 1, 0.6);
-    }
+    skinAnim(cur, skinMat, wGlow, t);
+    if (wGlow) { var gs = 0.2 + 0.05 * Math.sin(t * 4); wGlow.scale.set(gs, gs, 1); }
     if (!pts) return;
     for (i = 0; i < N; i++) {
       u = i / N; p = i * 3;
       if (k === 'rainbow') {
         a = t * 2.2 + u * 6.283;
         ptsPos[p] = Math.cos(a) * 0.06; ptsPos[p + 1] = -0.3 + u * 1.2; ptsPos[p + 2] = Math.sin(a) * 0.06;
-        tc.setHSL((u + t * 0.2) % 1, 1, 0.6); ptsCol[p] = tc.r; ptsCol[p + 1] = tc.g; ptsCol[p + 2] = tc.b;
+        tcol.setHSL((u + t * 0.2) % 1, 1, 0.6); ptsCol[p] = tcol.r; ptsCol[p + 1] = tcol.g; ptsCol[p + 2] = tcol.b;
       } else if (k === 'fire') {
         f = (t * 0.7 + u) % 1;
         ptsPos[p] = Math.sin(i * 7.3 + t * 3) * 0.035 * f; ptsPos[p + 1] = -0.15 + f * 1.0; ptsPos[p + 2] = Math.cos(i * 5.1 + t * 2.4) * 0.035 * f;
