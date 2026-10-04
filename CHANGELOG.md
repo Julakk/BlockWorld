@@ -2,6 +2,17 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## v4.16 - 4 Okt 2026
+
+- Skin rod diredupkan: aura, halo, kilau ujung, dan partikel tidak lagi menyilaukan. Warna skin tetap jelas. Glow benang juga dikurangi sedikit.
+- Tampilan Gacha dirapikan: tombol Gacha 1x dan 10x sekarang selalu kelihatan di bawah, tidak terpotong lagi di layar landscape. Daftar peluang jadi ringkas 2 kolom.
+- Ada penanda pity Legendary dan Epic, plus ringkasan hasil tarikan (skin baru, bait, duplikat, total koin).
+- Soft pity Legendary: mulai pull ke-45 peluangnya naik tiap pull (sampai maksimal 50%), tetap dijamin di pull ke-60. Daftar peluang menampilkan angka yang berlaku saat ini.
+- Pity Epic baru: tiap 20 pull tanpa Epic atau lebih, pull berikutnya dijamin minimal Epic.
+- Tombol Lewati animasi: hasil langsung tampil di panggung 3D tanpa nunggu kapsul pecah. Pilihanmu tersimpan di save.
+- Progres pity lama tetap aman, tersimpan di save yang sama.
+- Info Update dalam game diganti dengan catatan v4.16.
+
 ## v4.11 - 4 Okt 2026
 
 - Gacha Rod baru! Buka dari Menu atau layar utama. Gacha 1x 100 koin, Gacha 10x 900 koin dengan garansi minimal Rare di pull ke-10.
