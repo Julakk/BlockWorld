@@ -2,6 +2,14 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## v4.11 - 4 Okt 2026
+
+- Gacha Rod baru! Buka dari Menu atau layar utama. Gacha 1x 100 koin, Gacha 10x 900 koin dengan garansi minimal Rare di pull ke-10.
+- Peluang: Common 60%, Rare 25%, Epic 12%, Legendary 3%. Legendary dijamin di pull ke-60 (pity).
+- Hadiah berupa koin, Bait, dan 13 skin rod: Biasa (Rare), Efek Cahaya (Epic), dan Animasi Unik (Legendary: Pelangi Abadi, Api Naga, Galaksi).
+- Skin berlaku di semua rod, dipakai lewat tab Skin Saya. Skin duplikat otomatis jadi koin.
+- Skin dan progres pity tersimpan di save, jadi ikut Backup.
+
 ## v4.10 - 4 Okt 2026
 
 - Layar utama dirombak: preview karakter 3D di kiri, kartu Hadiah Harian dan Misi Harian di kanan.
