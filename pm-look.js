@@ -116,10 +116,10 @@
     R.r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     R.r.setSize(200, 240, false);
     R.r.setClearColor(0x000000, 0);
-    R.r.toneMapping = T.ACESFilmicToneMapping; R.r.toneMappingExposure = 1.15;
+    R.r.toneMapping = T.NoToneMapping;
     R.sc = new T.Scene();
     R.sc.add(new T.HemisphereLight(0xfff0dd, 0x3a4a5a, 1.0));
-    var dl = new T.DirectionalLight(0xffe2c0, 0.9); dl.position.set(3, 5, 4); R.sc.add(dl);
+    var dl = new T.DirectionalLight(0xffe2c0, 0.55); dl.position.set(3, 5, 4); R.sc.add(dl);
     R.cam = new T.PerspectiveCamera(30, 200 / 240, 0.1, 50);
     R.cam.position.set(0, 1.2, 4.6); R.cam.lookAt(new T.Vector3(0, 0.95, 0));
     R.pivot = new T.Group(); R.sc.add(R.pivot);

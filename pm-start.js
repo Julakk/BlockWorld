@@ -138,7 +138,7 @@
       chip('Level ' + s.level); chip(fmt(s.coins) + ' koin'); chip('Koleksi ' + n + '/' + C.FISH_TABLE.length);
 
       var prof = null; try { prof = JSON.parse(ls('pm_profile') || 'null'); } catch (e) {}
-      $('pmsName').textContent = (prof && prof.name) || 'Pemancing';
+      $('pmsName').textContent = (prof && prof.name) || 'Tamu';
       $('pmsTitle').textContent = (typeof window.PMTitle === 'function') ? window.PMTitle() : '';
       var meta = [], ct = (s.stats && s.stats.catches) || 0;
       if (s.rebirth) meta.push('Rebirth ' + s.rebirth);
@@ -187,8 +187,7 @@
 
   /* ---------- LANJUTKAN vs MULAI ---------- */
   safe(function () {
-    var has = !!ls(SAVE_KEY), s = C.save;
-    if (!has && s) has = s.level > 1 || s.xp > 0 || Object.keys(s.discovered || {}).length > 0;
+    var s = C.save, has = !!s && (s.level > 1 || s.xp > 0 || Object.keys(s.discovered || {}).length > 0 || ((s.stats && s.stats.catches) || 0) > 0);
     btn.textContent = has ? '\u25B6 LANJUTKAN' : '\u25B6 MULAI MANCING';
   });
 
@@ -203,7 +202,7 @@
   /* ---------- langit mengikuti jam perangkat ---------- */
   var PAL = {
     dawn: { bg: 'linear-gradient(180deg,#2b3f7c 0%,#8a79b8 28%,#ffb08a 54%,#ffe0a8 66%,#2a6a8a 66.2%,#0b3a55 100%)', l: '50%', t: '66%', half: true, sun: 'radial-gradient(circle at 40% 35%,#fffbe0,#ffe08a 55%,#ffb24a)', glow: 'rgba(255,200,120,.5)' },
-    day: { bg: 'linear-gradient(180deg,#1e6fd6 0%,#5aa9ec 36%,#a9d8fa 62%,#dff2ff 66%,#2a93c4 66.2%,#0d5f8c 100%)', l: '82%', t: '20%', half: false, sun: 'radial-gradient(circle at 40% 35%,#ffffff,#fff3b0 55%,#ffd24a)', glow: 'rgba(255,240,170,.6)' },
+    day: { bg: 'linear-gradient(180deg,#1e6fd6 0%,#5aa9ec 36%,#a9d8fa 62%,#dff2ff 66%,#2a93c4 66.2%,#0d5f8c 100%)', l: '72%', t: '20%', half: false, sun: 'radial-gradient(circle at 40% 35%,#ffffff,#fff3b0 55%,#ffd24a)', glow: 'rgba(255,240,170,.6)' },
     dusk: { bg: 'linear-gradient(180deg,#1c3f7a 0%,#6a5a9e 28%,#f08a6a 52%,#ffc98a 66%,#0f5577 66.2%,#083049 100%)', l: '50%', t: '66%', half: true, sun: 'radial-gradient(circle at 40% 35%,#fff6c9,#ffd27a 55%,#ff9e4a)', glow: 'rgba(255,190,110,.5)' },
     night: { bg: 'linear-gradient(180deg,#050a1e 0%,#0b1836 40%,#1a2a4a 62%,#24385c 66%,#0a2a40 66.2%,#04131f 100%)', l: '80%', t: '20%', half: false, sun: 'radial-gradient(circle at 38% 36%,#ffffff,#dfe8ff 60%,#aebde6)', glow: 'rgba(170,190,255,.45)' }
   };
@@ -283,10 +282,10 @@
     pv.r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     pv.r.setSize(150, 180, false);
     pv.r.setClearColor(0x000000, 0);
-    pv.r.toneMapping = T.ACESFilmicToneMapping; pv.r.toneMappingExposure = 1.15;
+    pv.r.toneMapping = T.NoToneMapping;
     pv.sc = new T.Scene();
     pv.sc.add(new T.HemisphereLight(0xfff0dd, 0x3a4a5a, 1.0));
-    var dl = new T.DirectionalLight(0xffe2c0, 0.9); dl.position.set(3, 5, 4); pv.sc.add(dl);
+    var dl = new T.DirectionalLight(0xffe2c0, 0.55); dl.position.set(3, 5, 4); pv.sc.add(dl);
     pv.cam = new T.PerspectiveCamera(30, 150 / 180, 0.1, 50);
     pv.cam.position.set(0, 1.2, 4.6); pv.cam.lookAt(new T.Vector3(0, 0.95, 0));
     pv.pivot = new T.Group(); pv.sc.add(pv.pivot);
