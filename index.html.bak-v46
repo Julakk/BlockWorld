@@ -597,7 +597,7 @@ window.PMExt = function (C) {
     ['Raksasa', 'Tangkap ikan 1.000 kg+', 1, 1000, function () { return st().heavy; }],
     ['Master Level', 'Capai Level 20', 20, 1500, function () { return S().level; }],
     ['Sultan Joran', 'Miliki Astral Rod', 1, 2000, function () { return (S().ownedRods || []).indexOf('legendaris') >= 0 ? 1 : 0; }],
-    ['Penarik Gacha', 'Lakukan 50 kali Gacha Rod', 50, 600, function () { return (S().gacha || {}).total || 0; }],
+    ['Aquarist', 'Pajang 6 ikan di Akuarium', 6, 600, function () { return (S().aqua || []).length; }],
     ['Veteran Dermaga', 'Tangkap 1.000 ikan', 1000, 3000, function () { return st().catches; }],
     ['Raja Pancing', 'Tangkap 5.000 ikan', 5000, 12000, function () { return st().catches; }],
     ['Pemburu Epik', 'Tangkap 25 ikan Epik atau lebih', 25, 2500, function () { return rc(3); }],
@@ -612,7 +612,7 @@ window.PMExt = function (C) {
     ['Terlahir Kembali', 'Lakukan 1 Rebirth', 1, 5000, function () { return S().rebirth || 0; }],
     ['Reinkarnasi', 'Lakukan 5 Rebirth', 5, 25000, function () { return S().rebirth || 0; }],
     ['Pecinta Hewan', 'Kumpulkan 3 jenis Pet', 3, 3000, function () { return Object.keys(S().pets || {}).length; }],
-    ['Kolektor Skin', 'Kumpulkan 8 skin rod', 8, 4000, function () { return Object.keys(S().skins || {}).length; }]
+    ['Bos Akuarium', 'Kumpulkan 10.000 koin dari Akuarium', 10000, 4000, function () { return S().aquaEarned || 0; }]
   ];
   function checkAch() {
     st(); var s = S(), hit = false;
@@ -684,7 +684,6 @@ window.PMExt = function (C) {
   /* ===== JORAN PER TIER ===== */
   var rodMat = C.rodMesh.material, lastRod = '';
   function applyRod(t) {
-    if (window.pmRodTick) { window.pmRodTick(t); return; }
     var id = S().rod, idx = C.ROD_TIERS.findIndex(function (r) { return r.id === id; });
     if (id !== lastRod) { lastRod = id; var col = id === 'bambu' ? new T.Color(0x8a5a2b) : new T.Color(C.GEAR_COLORS.rod[id] || '#9fb4bd'); rodMat.color.copy(col); rodMat.emissive.copy(col); }
     if (idx >= 5) rodMat.emissive.setHSL((t * 0.2) % 1, 0.9, 0.55);
@@ -733,29 +732,89 @@ window.PMExt = function (C) {
     c[g] = k; C.persist(); C.refresh(); renderChar();
   });
 
-  /* ===== AKUARIUM DIHAPUS (v4.12): diganti Mesin Gacha 3D, lihat PM-GACHA ===== */
-  var AQ = { x: 4.5, z: 19 };
-  function icon(e) { return '<img class="rowIcon" src="' + C.fishIconCanvas(e.fish, e.mutation) + '">'; }
-  (function () { /* ikan yang dulu dipajang balik ke tas */
-    var done = false;
-    C.hookAnim(function () {
-      if (done) return;
-      var s = S(); if (!s || !s.inventory) return;
-      done = true;
-      var a = s.aqua; if (!a || !a.length) { delete s.aqua; return; }
-      var n = 0;
-      a.forEach(function (e) {
-        if (!e || !e.fish || !e.mutation) return;
-        var k = e.fish.id + '|' + e.mutation.id;
-        s.inventory[k] = s.inventory[k] || { fish: e.fish, mutation: e.mutation, count: 0 };
-        s.inventory[k].count++; n++;
-      });
-      delete s.aqua; C.persist(); C.refresh();
-      if (n) C.toast('Akuarium dihapus: ' + n + ' ikan dikembalikan ke tas');
+  /* ===== AKUARIUM ===== */
+  var AQ = { x: 4.5, z: 19, max: 6 };
+  var aq = new T.Group(); aq.position.set(AQ.x, C.DECK_Y, AQ.z); C.town.add(aq);
+  var wd = new T.MeshLambertMaterial({ color: 0x6b4a2b });
+  var bs = new T.Mesh(new T.BoxGeometry(2.4, 0.6, 1.3), wd); bs.position.y = 0.3; aq.add(bs);
+  var gl = new T.Mesh(new T.BoxGeometry(2.2, 1.1, 1.1), new T.MeshLambertMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.28, depthWrite: false })); gl.position.y = 1.15; aq.add(gl);
+  var wt = new T.Mesh(new T.BoxGeometry(2.1, 0.95, 1.0), new T.MeshBasicMaterial({ color: 0x2a8fc0, transparent: true, opacity: 0.35, depthWrite: false })); wt.position.y = 1.12; aq.add(wt);
+  var lid = new T.Mesh(new T.BoxGeometry(2.4, 0.12, 1.3), wd); lid.position.y = 1.76; aq.add(lid);
+  var sg = new T.Sprite(new T.SpriteMaterial({ map: C.makeSignTexture('AKUARIUM', '#1f6f8f'), fog: false })); sg.scale.set(2, 0.5, 1); sg.position.y = 2.35; aq.add(sg);
+  C.TOWN_COLLIDERS.push({ x: AQ.x, z: AQ.z, r: 1.5 });
+  var tank = [], tankKey = '';
+  function rebuildTank() {
+    tank.forEach(function (o) { aq.remove(o.g); }); tank = [];
+    (S().aqua || []).forEach(function (e, i) {
+      var col = C.RARITY_COLOR[e.fish.rarity], mid = e.mutation.id;
+      if (/emas/.test(mid)) col = '#ffd54a'; else if (/ghost/.test(mid)) col = '#c4e0ff'; else if (mid === 'shiny') col = '#78fff0';
+      var mat = new T.MeshLambertMaterial({ color: col }), g = new T.Group();
+      var b = new T.Mesh(new T.SphereGeometry(0.16, 10, 8), mat); b.scale.set(1.6, 1, 0.7); g.add(b);
+      var t = new T.Mesh(new T.ConeGeometry(0.1, 0.22, 4), mat); t.rotation.z = -Math.PI / 2; t.position.x = -0.3; g.add(t);
+      var ey = new T.Mesh(new T.SphereGeometry(0.03, 6, 6), new T.MeshBasicMaterial({ color: 0x111111 })); ey.position.set(0.19, 0.04, 0.09); g.add(ey);
+      var sc = 0.8 + 0.12 * C.RARITY_ORDER.indexOf(e.fish.rarity); g.scale.set(sc, sc, sc);
+      aq.add(g);
+      tank.push({ g: g, mat: mat, rb: /pelangi/.test(mid), ph: i * 1.7, sp: 0.5 + (i % 3) * 0.15, y: 0.78 + (i % 3) * 0.22, z: ((i * 0.37) % 0.5) - 0.25 });
     });
-  })();
+  }
+  function animTank(t) {
+    var k = (S().aqua || []).map(function (e) { return e.fish.id + e.mutation.id; }).join(',');
+    if (k !== tankKey) { tankKey = k; rebuildTank(); }
+    tank.forEach(function (o) {
+      var a = t * o.sp + o.ph;
+      o.g.position.set(Math.sin(a) * 0.8, o.y + Math.sin(t * 1.7 + o.ph) * 0.05, o.z);
+      o.g.rotation.y = Math.cos(a) > 0 ? 0 : Math.PI;
+      if (o.rb) o.mat.color.setHSL((t * 0.2 + o.ph) % 1, 0.9, 0.6);
+    });
+  }
+  /* PM_V41 akuarium pasif */
+  var AQ_RATE = 0.005, AQ_CAP_MIN = 480;
+  /* PM_V43 bank akuarium dihitung server (jam server) */
+  var aqSrv = { ok: false, rate: 0, bank: 0, cap: 0, at: 0 }, aqBusy = 0;
+  function aqPush() { if (netUp()) netSend({ t: 'aqset', u: UID, rate: aqRate() }); }
+  function aqRate() { var r = 0; (S().aqua || []).forEach(function (e) { r += Math.max(1, Math.round(e.fish.value * ((e.mutation && e.mutation.mult) || 1) * AQ_RATE)); }); return r; }
+  function aqAccrue() {
+    var rate = aqRate();
+    if (!aqSrv.ok) return { rate: rate, cap: rate * AQ_CAP_MIN, bank: 0, off: true };
+    var el = (Date.now() - aqSrv.at) / 60000, bank = aqSrv.bank + Math.max(0, Math.min(aqSrv.rate * el, aqSrv.cap - aqSrv.bank));
+    return { rate: rate, cap: aqSrv.cap, bank: Math.floor(bank) };
+  }
+  function aqHtml() {
+    var a = aqAccrue();
+    return '<div class="rowItem"><div class="rowInfo"><div class="rowName">Pemasukan Akuarium</div><div class="rowSub">' + a.rate + ' koin/menit • Tersimpan ' + a.bank + '/' + a.cap + ' (maks 8 jam)' + (a.off ? ' • butuh online' : '') + '</div></div><button class="rowBtn" data-collect="1"' + (a.bank < 1 || a.off ? ' disabled' : '') + '>Ambil ' + a.bank + '</button></div>';
+  }
+  var mA = mkModal('modalAqua', 'Akuarium');
+  function icon(e) { return '<img class="rowIcon" src="' + C.fishIconCanvas(e.fish, e.mutation) + '">'; }
+  function renderA() {
+    var s = S(); s.aqua = s.aqua || [];
+    var h = aqHtml() + '<div class="rowName" style="margin-top:6px">Dipajang (' + s.aqua.length + '/' + AQ.max + ')</div>';
+    s.aqua.forEach(function (e, i) { h += row(icon(e), lbl(e), C.RARITY_LABEL[e.fish.rarity], '<button class="rowBtn" data-take="' + i + '">Ambil</button>'); });
+    h += '<div class="rowName" style="margin-top:6px">Dari Tas (Langka ke atas)</div>';
+    var any = false;
+    Object.keys(s.inventory).forEach(function (k) {
+      var e = s.inventory[k]; if (!e || e.count <= 0 || C.RARITY_ORDER.indexOf(e.fish.rarity) < 2) return; any = true;
+      h += row(icon(e), lbl(e), 'x' + e.count + ' • ' + C.RARITY_LABEL[e.fish.rarity], '<button class="rowBtn" data-put="' + k + '"' + (s.aqua.length >= AQ.max ? ' disabled' : '') + '>Pajang</button>');
+    });
+    if (!any) h += '<div class="rowSub">Belum ada ikan Langka+ di tas.</div>';
+    mA.body.innerHTML = h; mA.foot.textContent = 'Ikan yang dipajang gak ikut kejual';
+  }
+  mA.body.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b || b.disabled) return; var s = S(); aqAccrue();
+    if (b.dataset.collect) {
+      if (!netUp()) { C.toast('Butuh koneksi server buat ambil koin Akuarium'); return; }
+      if (aqBusy && Date.now() - aqBusy < 5000) return; aqBusy = Date.now();
+      netSend({ t: 'aqclaim', rid: 'aq' + aqBusy, u: UID }); return;
+    }
+    if (b.dataset.put) { var e = s.inventory[b.dataset.put]; if (!e || e.count <= 0 || s.aqua.length >= AQ.max) return; e.count--; s.aqua.push({ fish: e.fish, mutation: e.mutation }); }
+    else if (b.dataset.take) { var x = s.aqua.splice(+b.dataset.take, 1)[0]; if (!x) return; var k = x.fish.id + '|' + x.mutation.id; s.inventory[k] = s.inventory[k] || { fish: x.fish, mutation: x.mutation, count: 0 }; s.inventory[k].count++; }
+    else return;
+    aqPush(); C.Sfx.tap(); C.persist(); C.refresh(); renderA(); checkAch();
+  });
+  C.TOWN_SHOPS.push({ id: 'aqua', name: 'AKUARIUM', label: 'Buka Akuarium', x: AQ.x, z: AQ.z, action: function () { aqPush(); renderA(); mA.open(); } });
+  setInterval(function () { if (mA.ov && mA.ov.classList.contains('show')) renderA(); }, 5000);
 
-  /* === BOAT MODELS v4.6 (builder murni THREE, tanpa asset) === */
+
+/* === BOAT MODELS v4.6 (builder murni THREE, tanpa asset) === */
 function pmBuildBoat(id) {
   var T = THREE;
   function M(c, o) { o = o || {}; o.color = c; if (o.roughness === undefined) o.roughness = 0.65; return new T.MeshStandardMaterial(o); }
@@ -805,17 +864,8 @@ function pmBuildBoat(id) {
     o = { L: 3.4, W: 1.15, D: 0.42, bow: 1.5, st: 1.6, sf: 0.85, rb: 0.22, rs: 0.14 };
     hull(o, M(0xe9dfc8)); rail(o, wood, 0, 0.035);
     box(0.95, 0.04, 2.5, woodD, 0, -0.27, 0);
-    [-0.7, 0.35].forEach(function (z) { box(1.0, 0.06, 0.26, wood, 0, -0.17, z); });
-    G.userData.oars = [];
-    [-1, 1].forEach(function (s) {
-      cyl(0.018, 0.018, 0.16, brass, s * 0.46, 0.04, 0.6, 6);
-      var pv = new T.Group(); pv.position.set(s * 0.46, 0.1, 0.6); G.add(pv);
-      var sh = new T.Group(); sh.rotation.z = -s * 0.2; pv.add(sh);
-      var oar = new T.Mesh(new T.CylinderGeometry(0.022, 0.022, 1.75, 8), woodD); oar.rotation.z = Math.PI / 2; oar.position.x = s * 0.5; oar.castShadow = true; sh.add(oar);
-      var bl = new T.Mesh(new T.BoxGeometry(0.46, 0.015, 0.17), wood); bl.position.x = s * 1.15; bl.castShadow = true; sh.add(bl);
-      var grip = new T.Object3D(); grip.position.set(-s * 0.3, 0, 0); sh.add(grip);
-      G.userData.oars.push({ pv: pv, sh: sh, grip: grip, s: s });
-    });
+    [-0.7, 0.35].forEach(function (z) { box(1.0, 0.06, 0.26, wood, 0, -0.06, z); });
+    [-1, 1].forEach(function (s) { var oar = cyl(0.025, 0.025, 1.9, woodD, s * 0.95, 0.12, 0.1, 6); oar.rotation.z = s * 1.1; oar.rotation.y = 0.3; var bl = box(0.12, 0.32, 0.03, wood, s * 1.62, -0.28, 0.35); bl.rotation.z = s * 0.2; });
     cyl(0.03, 0.03, 0.55, woodD, 0, 0.25, 1.45, 6); add(new T.SphereGeometry(0.08, 10, 8), lamp, 0, 0.58, 1.45);
   } else if (id === 'jukung') {
     o = { L: 4.6, W: 0.85, D: 0.5, bow: 1.4, st: 1.4, sf: 0.9, rb: 0.45, rs: 0.38 };
@@ -866,11 +916,6 @@ function pmBuildBoat(id) {
     [-1, 1].forEach(function (s) { add(new T.SphereGeometry(0.1, 10, 8), lamp, s * 0.85, 1.15, -2.7); cyl(0.02, 0.02, 0.5, brass, s * 0.85, 0.95, -2.7, 6); });
     box(1.0, 0.06, 0.6, M(0x7a1f1f), 0, 0.08, 0.2);
   }
-  /* titik duduk pemain: [z di model, tinggi permukaan duduk] */
-  if (id === 'jukung') box(0.6, 0.05, 0.3, wood, 0, -0.2, 0);
-  if (id === 'speed') box(0.9, 0.08, 0.4, dark, 0, 0.29, -1.15);
-  var SEATS = { sampan: [0.35, -0.14], jukung: [0.0, -0.175], motor: [1.0, 0.11], speed: [-1.15, 0.33], royal: [0.2, 0.11] };
-  G.userData.seat = SEATS[id] || SEATS.sampan;
   G.userData.pmBoat = 1;
   return G;
 }
@@ -1335,9 +1380,9 @@ function pmBuildBoat(id) {
   }, 30000);
   setTimeout(function () { if (netUp()) netSend({ t: 'lbget' }); }, 7000);
   function openLB() { netSend({ t: 'lbget' }); renderLB(); }
-  window.PMOpenLB = function () { openLB(); mLB.open(); };
   function lbReport() {
     if (!netUp()) return;
+    aqPush();
     var s = S(), t = st(), best = (s.rec || [])[0], tr = 0;
     Object.keys(s.ach || {}).forEach(function (k) { if (s.ach[k]) tr++; });
     netSend({ t: 'stat', c: t.catches, w: best ? best.w : 0, wf: best ? best.n : '', rb: s.rebirth || 0, lv: s.level || 1, tr: tr });
@@ -1425,6 +1470,14 @@ function pmBuildBoat(id) {
   window.PMLB = { on: function (m) {
     var s = S(), q;
     if (m.t === 'lb') { lbData = m; if (mLB.ov.classList.contains('show')) renderLB(); }
+    else if (m.t === 'aqs') { aqSrv = { ok: true, rate: +m.rate || 0, bank: +m.bank || 0, cap: +m.cap || 0, at: Date.now() }; if (mA.ov.classList.contains('show')) renderA(); }
+    else if (m.t === 'aqpay') {
+      aqBusy = 0; aqSrv = { ok: true, rate: +m.rate || 0, bank: +m.bank || 0, cap: +m.cap || 0, at: Date.now() };
+      var ag = Math.max(0, Math.min(+m.coins || 0, 1e9));
+      if (ag > 0) { s.coins += ag; s.aquaEarned = (s.aquaEarned || 0) + ag; C.Sfx.sell(); C.toast('+' + fmt(ag) + ' koin dari Akuarium'); C.persist(); C.refresh(); checkAch(); }
+      else C.toast('Belum ada koin yang bisa diambil');
+      if (mA.ov.classList.contains('show')) renderA();
+    }
     else if (m.t === 'mlist') { mkData = m; if (mM.ov.classList.contains('show')) renderMK(); }
     else if (m.t === 'mok') { delete pend[m.rid]; busy = false; C.toast('Barang dipasang di pasar'); netSend({ t: 'mget', u: UID }); }
     else if (m.t === 'mfail') {
@@ -1458,7 +1511,7 @@ function pmBuildBoat(id) {
   var last = 0, lx = 0, lz = 0, achT = 0;
   C.hookAnim(function (t) {
     var dt = Math.min(0.1, t - last); last = t;
-    applyRod(t); applyCos(); evTick(t);
+    applyRod(t); applyCos(); animTank(t); evTick(t);
     var p = C.player.position;
     if (sailing) {
       boat.position.x = p.x; boat.position.z = p.z; boatE.x = p.x; boatE.z = p.z;
@@ -1843,7 +1896,7 @@ function pmBuildBoat(id) {
     bandeng: [0.3, 2], belanak: [0.2, 1.5], baronang: [0.4, 3], kerapu: [3, 60], ubur: [0.5, 12], kuda_laut: [0.02, 0.3], penyu: [60, 400],
     layur: [0.1, 2], kembung: [0.1, 0.9], lentera: [0.2, 3], todak: [20, 180], pari_manta: [200, 1500], hiu_martil: [150, 900],
     cumi_raksasa: [500, 3000], ikan_bulan: [800, 5000], paus_biru: [8000, 80000], megalodon: [25000, 150000] };
-  const ROD_WEIGHT = { bambu: 10, luckrod: 15, kayu: 20, grass: 250, karbon: 400, ice: 750, perak: 5000, midrod: 10000, steampunk: 25000, emas: 90000, legendaris: 160000, angler: 125000, dev: 1e9 };
+  const ROD_WEIGHT = { bambu: 10, kayu: 20, karbon: 400, perak: 5000, emas: 190000, legendaris: 150000, dev: 1e9 };
   function hudAb(n) { // 19600 -> 19,6K ; 1000000000 -> 1B
     n = Math.round(+n) || 0;
     if (n < 10000) return String(n);
@@ -1858,17 +1911,12 @@ function pmBuildBoat(id) {
     return String(Math.round(w)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' kg';
   }
   function assignWeight(c) {
-    // v4.7: rentang berat ikan menyesuaikan kapasitas rod, dan condong ke ikan berat kalau luck rod + bait tinggi
     const wr = FISH_WEIGHT[c.fish.id] || [1, 2];
-    const rod = currentRod(), bait = currentBait();
-    const cap = ROD_WEIGHT[rod.id] || 10;
+    const cap = ROD_WEIGHT[currentRod().id] || 10;
     const wm = (c.mutation && c.mutation.wmult) || 1;
-    const lo = wr[0] * wm, hi = wr[1] * wm;
-    c.tooHeavy = lo > cap;
-    const top = c.tooHeavy ? hi : Math.max(lo, Math.min(hi, cap));
-    const gp = Math.min(6, (rod.rarityBoost - 1) + (bait.rarityBoost - 1));
-    const k = Math.max(0.55, 1.5 / (1 + 0.25 * gp));
-    const w = lo + Math.pow(Math.random(), k) * (top - lo);
+    let w = (wr[0] + Math.pow(Math.random(), 1.5) * (wr[1] - wr[0])) * wm;
+    c.tooHeavy = wr[0] * wm > cap;
+    if (!c.tooHeavy) w = Math.min(w, cap);
     c.weight = Math.round(w * 100) / 100;
   }
   function castRating(p) {
@@ -1898,31 +1946,21 @@ function pmBuildBoat(id) {
 
   // ================= DATA JORAN & UMPAN =================
   const ROD_TIERS = [
-    { id: 'bambu',      name: 'Starter Rod',   price: 0,     biteSpeed: 1.00, rarityBoost: 1.00, castRange: 7 },
-    { id: 'luckrod',    name: 'Luck Rod',      price: 80,    biteSpeed: 1.02, rarityBoost: 1.50, castRange: 8 },
-    { id: 'kayu',       name: 'Carbon Rod',    price: 150,   biteSpeed: 1.04, rarityBoost: 1.30, castRange: 9 },
-    { id: 'grass',      name: 'Grass Rod',     price: 400,   biteSpeed: 1.05, rarityBoost: 1.55, castRange: 10 },
-    { id: 'karbon',     name: 'Damascus Rod',  price: 600,   biteSpeed: 1.04, rarityBoost: 1.80, castRange: 11 },
-    { id: 'ice',        name: 'Ice Rod',       price: 1200,  biteSpeed: 1.07, rarityBoost: 1.60, castRange: 12 },
-    { id: 'perak',      name: 'Lucky Rod',     price: 2000,  biteSpeed: 1.07, rarityBoost: 2.40, castRange: 13 },
-    { id: 'midrod',     name: 'Midnight Rod',  price: 3500,  biteSpeed: 1.10, rarityBoost: 2.00, castRange: 14 },
-    { id: 'steampunk',  name: 'Steampunk Rod', price: 5500,  biteSpeed: 1.19, rarityBoost: 3.25, castRange: 15 },
-    { id: 'emas',       name: 'Chrome Rod',    price: 9000,  biteSpeed: 1.23, rarityBoost: 3.80, castRange: 16 },
-    { id: 'legendaris', name: 'Astral Rod',    price: 20000, biteSpeed: 1.23, rarityBoost: 4.00, castRange: 18 },
-    { id: 'angler',     name: 'Angler Rod',    price: 40000, biteSpeed: 1.43, rarityBoost: 4.80, castRange: 20 },
+    { id: 'bambu', name: 'Starter Rod', price: 0, biteSpeed: 1.0, rarityBoost: 1.0, castRange: 7 },
+    { id: 'kayu', name: 'Carbon Rod', price: 150, biteSpeed: 1.15, rarityBoost: 1.3, castRange: 9 },
+    { id: 'karbon', name: 'Damascus Rod', price: 600, biteSpeed: 1.3, rarityBoost: 1.8, castRange: 11 },
+    { id: 'perak', name: 'Lucky Rod', price: 2000, biteSpeed: 1.5, rarityBoost: 2.3, castRange: 13 },
+    { id: 'emas', name: 'Chrome Rod', price: 6000, biteSpeed: 1.8, rarityBoost: 3.29, castRange: 15 },
+    { id: 'legendaris', name: 'Astral Rod', price: 20000, biteSpeed: 2.2, rarityBoost: 4.5, castRange: 18 },
   ];
   const AUTOFISH_PRICE = 2500;
   const BAIT_TYPES = [
-    { id: 'biasa',    name: 'Starter Bait',     price: 5,     rarityBoost: 1.08, stock: 999 },
-    { id: 'luck',     name: 'Luck Bait',        price: 40,    rarityBoost: 1.12, stock: 0 },
-    { id: 'midnight', name: 'Midnight Bait',    price: 150,   rarityBoost: 1.22, stock: 0 },
-    { id: 'super',    name: 'Nature Bait',      price: 500,   rarityBoost: 1.45, xp: 0.04, stock: 0 },
-    { id: 'chroma',   name: 'Chroma Bait',      price: 1800,  rarityBoost: 2.00, stock: 0 },
-    { id: 'ajaib',    name: 'Dark Matter Bait', price: 5000,  rarityBoost: 2.70, xp: 0.05, shiny: 0.05, stock: 0 },
-    { id: 'corrupt',  name: 'Corrupt Bait',     price: 12000, rarityBoost: 3.20, mut: 0.10, shiny: 0.10, stock: 0 },
-    { id: 'aether',   name: 'Aether Bait',      price: 25000, rarityBoost: 3.60, mut: 0.15, shiny: 0.05, stock: 0 },
+    { id: 'biasa', name: 'Starter Bait', price: 5, rarityBoost: 1.0, stock: 999 },
+    { id: 'midnight', name: 'Midnight Bait', price: 150, rarityBoost: 1.22, stock: 0 },
+    { id: 'super', name: 'Nature Bait', price: 500, rarityBoost: 1.45, stock: 0 },
+    { id: 'chroma', name: 'Chroma Bait', price: 1800, rarityBoost: 2.0, stock: 0 },
+    { id: 'ajaib', name: 'Dark Matter Bait', price: 5000, rarityBoost: 2.6, stock: 0 },
   ];
-  function baitExtra(b) { return (b.xp ? ' \u2022 XP +' + Math.round(b.xp * 100) + '%' : '') + (b.shiny ? ' \u2022 Shiny +' + Math.round(b.shiny * 100) + '%' : '') + (b.mut ? ' \u2022 Mutasi +' + Math.round(b.mut * 100) + '%' : ''); }
 
   // ================= PELUANG RARITAS =================
   // boost gabungan dari joran x umpan. Makin gede boost, makin condong ke ikan langka.
@@ -1931,7 +1969,7 @@ function pmBuildBoat(id) {
   const RARITY_MAXGEAR = [20, 28, 28, 16, 6.5, 1.3, 0.2]; // peluang di gear paling maksimal (jumlahnya tetap 100) -- secret tetap sangat jarang walau gear full
   // boost 1 = gear paling awal, MAX_BOOST = joran+umpan paling mahal. Di antaranya interpolasi lurus,
   // biar ikan mitos tetap kerasa "langka" walau udah gear terbaik (gak sampe lebih umum dari ikan biasa).
-  const MAX_BOOST = 4.8 + 3.6 - 1;
+  const MAX_BOOST = 4.5 + 2.6 - 1;
   function rollRarity(boost) {
     const t = Math.max(0, Math.min(1, (boost - 1) / (MAX_BOOST - 1)));
     const shifted = RARITY_BASE.map((w, i) => w + (RARITY_MAXGEAR[i] - w) * t);
@@ -1941,10 +1979,9 @@ function pmBuildBoat(id) {
     return RARITY_ORDER[0];
   }
   function rollMutation() {
-    const bt = currentBait(), mx = bt.mut || 0;
     let r = Math.random(), acc = 0, base = MUTATIONS[0];
-    for (const m of MUTATIONS) { acc += m.id === 'normal' ? Math.max(0.1, m.chance - mx) : m.chance * (1 + mx / 0.14); if (r <= acc) { base = m; break; } }
-    if (Math.random() < SHINY_CHANCE + (bt.shiny || 0)) {
+    for (const m of MUTATIONS) { acc += m.chance; if (r <= acc) { base = m; break; } }
+    if (Math.random() < SHINY_CHANCE) {
       const sh = Object.assign({}, base);
       delete sh.chance;
       sh.id = base.id === 'normal' ? 'shiny' : 'shiny_' + base.id;
@@ -1968,8 +2005,8 @@ function pmBuildBoat(id) {
 
   // ================= SIMPAN / MUAT (localStorage) =================
   const GEAR_COLORS = {
-    rod: { bambu: '#c2a94a', luckrod: '#4fcf6a', kayu: '#8a929a', grass: '#5bbf3a', karbon: '#cfd6dc', ice: '#7fd8ff', perak: '#4a8aff', midrod: '#6a5aff', steampunk: '#d8883a', emas: '#b56bff', legendaris: '#ffc233', angler: '#19d3c0' },
-    bait: { biasa: '#9fb4bd', luck: '#5fd36b', midnight: '#4aa8ff', super: '#b56bff', chroma: '#ffc233', ajaib: '#ff4d6d', corrupt: '#b13cff', aether: '#7af0ff' }
+    rod: { bambu: '#9fb4bd', kayu: '#b7c4ca', karbon: '#5fd36b', perak: '#4aa8ff', emas: '#b56bff', legendaris: '#ffc233' },
+    bait: { biasa: '#9fb4bd', midnight: '#4aa8ff', super: '#b56bff', chroma: '#ffc233', ajaib: '#ff4d6d' }
   };
   const SAVE_KEY = 'pancingmania_save_v1';
   function defaultSave() {
@@ -3128,7 +3165,7 @@ function pmBuildBoat(id) {
   
   /* PM_V39 resolusi adaptif */
   const PMQ = {
-    base: 1, now: 1, acc: 0, frames: 0, t: 0, upOk: 0, floor: 1.25,
+    base: 1, now: 1, acc: 0, frames: 0, t: 0, upOk: 0, floor: 0.75,
     adapt(raw) {
       if (raw > 0.5) return;
       if (!PMHD.isHD()) return;
@@ -3137,8 +3174,8 @@ function pmBuildBoat(id) {
       if (this.acc < 2) return;
       const fps = this.frames / this.acc;
       this.acc = 0; this.frames = 0;
-      if (fps < 38 && this.now > this.floor) {
-        this.now = Math.max(this.floor, this.now - 0.15); this.upOk = 0; this.applyNow();
+      if (fps < 45 && this.now > this.floor) {
+        this.now = Math.max(this.floor, this.now - 0.2); this.upOk = 0; this.applyNow();
       } else if (fps >= 58 && this.now < this.base) {
         if (++this.upOk >= 4) { this.now = Math.min(this.base, this.now + 0.1); this.upOk = 0; this.applyNow(); }
       } else { this.upOk = 0; }
@@ -3146,23 +3183,26 @@ function pmBuildBoat(id) {
     applyNow() { renderer.setPixelRatio(this.now); renderer.setSize(window.innerWidth, window.innerHeight); }
   };
   const PMHD = (function () {
-    let hd = true; // v4.8: tombol Grafis dihapus, HD selalu aktif
-    const maxAniso = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
+    let hd = true;
+    try { hd = localStorage.getItem('pm_hd') !== '0'; } catch (e) {}
+    const maxAniso = Math.min(renderer.capabilities.getMaxAnisotropy(), isMobile ? 4 : 8);
     const islandTex = islandMat.map;
     scene.traverse(o => { if (o.isMesh && o !== water) { o.castShadow = true; o.receiveShadow = true; } });
     renderer.shadowMap.type = isMobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
-    sunLight.shadow.mapSize.set(2048, 2048);
+    sunLight.shadow.mapSize.set(isMobile ? 1024 : 2048, isMobile ? 1024 : 2048);
     const sc = sunLight.shadow.camera; sc.left = -22; sc.right = 22; sc.top = 22; sc.bottom = -22; sc.near = 1; sc.far = 160;
     sunLight.shadow.bias = -0.0004; sunLight.shadow.normalBias = 0.03;
     scene.add(sunLight.target);
   
     const btn = document.createElement('button');
     btn.className = 'hudPill';
+    const pills = document.getElementById('hudPills');
+    if (pills) pills.appendChild(btn);
   
     function apply(on) {
       hd = on;
       const dpr = window.devicePixelRatio || 1;
-      PMQ.base = Math.min(dpr, isMobile ? 2.5 : 3); PMQ.now = PMQ.base; renderer.setPixelRatio(PMQ.now);
+      PMQ.base = on ? Math.min(dpr, isMobile ? 1.5 : 2) : Math.min(dpr, isMobile ? 2 : 2.5); PMQ.now = PMQ.base; renderer.setPixelRatio(PMQ.now);
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.shadowMap.enabled = on;
       sunLight.castShadow = on;
@@ -3193,7 +3233,8 @@ function pmBuildBoat(id) {
         if (acc >= 5) {
           if (frames / acc < 30) {
             done = true; apply(false);
-            showToast('FPS drop, grafis diturunin otomatis biar tetap lancar');
+            try { localStorage.setItem('pm_hd', '0'); } catch (e) {}
+            showToast('FPS drop, grafis diturunin ke Normal (bisa balik lewat tombol Grafis)');
           }
           acc = 0; frames = 0;
         }
@@ -3208,7 +3249,7 @@ function pmBuildBoat(id) {
   //   GLINT      = kilau matahari di air (20 - 120, makin besar makin tajam)
   window.PMReal = (function () {
     var EXPOSURE = 1.15, WATER_BUMP = 2.5, GLINT = 60;
-    var TAU = Math.PI * 2, big = true;
+    var TAU = Math.PI * 2, big = !isMobile;
     var on = false, raf = 0, timer = 0, ready = false, building = false, waterReady = false;
     var origImg = islandMat.map.image, origIslandMat = island.material, origWaterMat = water.material;
     var hiColor = null, realIslandMat = null, realWaterMat = null, shallows = null, foam = null;
@@ -4128,7 +4169,7 @@ function pmBuildBoat(id) {
       save.inventory[key] = save.inventory[key] || { fish: currentCatch.fish, mutation: currentCatch.mutation, count: 0 };
       save.inventory[key].count++; Quest.on('catch', currentCatch);
       save.inventory[key].maxW = Math.max(save.inventory[key].maxW || 0, currentCatch.weight || 0);
-      addXp(Math.round((Math.round(currentCatch.value / 4) + 5) * (1 + enchBonus('xp') + (currentBait().xp || 0))));
+      addXp(Math.round((Math.round(currentCatch.value / 4) + 5) * (1 + enchBonus('xp'))));
       save.discovered = save.discovered || {}; save.discovered[currentCatch.fish.id] = true;
       const label = currentCatch.mutation.name ? currentCatch.mutation.name + ' ' + currentCatch.fish.name : currentCatch.fish.name;
       if (currentCatch.fish.rarity === 'secret') {
@@ -4719,7 +4760,7 @@ const PMFish = (function () {
         const canBuy = save.coins >= rod.price;
         const row = document.createElement('div'); row.className = 'rowItem';
         const btnLabel = equipped ? 'Terpasang' : (owned ? 'Pakai' : (rod.price + ' koin'));
-        row.innerHTML = `<div class="rowIcon" style="${(window.pmRodIcon && window.pmRodIcon(rod.id, GEAR_COLORS.rod[rod.id] || '#9fb4bd')) || gearIconStyle('rod', rod.id)}"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Luck +${Math.round((rod.rarityBoost - 1) * 100)}% • Speed +${Math.round((rod.biteSpeed - 1) * 100)}% • Weight ${fmtKg(ROD_WEIGHT[rod.id])} • Range ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
+        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('rod', rod.id)}"></div><div class="rowInfo"><div class="rowName">${rod.name}</div><div class="rowSub">Luck +${Math.round((rod.rarityBoost - 1) * 100)}% • Speed +${Math.round((rod.biteSpeed - 1) * 100)}% • Weight ${fmtKg(ROD_WEIGHT[rod.id])} • Range ${rod.castRange}m</div></div><button class="rowBtn ${equipped ? 'owned' : ''}" data-rod="${rod.id}" ${equipped ? 'disabled' : (!owned && !canBuy ? 'disabled' : '')}>${btnLabel}</button>`;
         shopList.appendChild(row);
       }
     } else if (shopTab === 'bait') {
@@ -4732,7 +4773,7 @@ const PMFish = (function () {
         if (bait.id === 'biasa') btns = `<button class="rowBtn ${equipped ? 'owned' : ''}" data-usebait="biasa" ${equipped ? 'disabled' : ''}>${equipped ? 'Dipakai' : 'Pakai'}</button>`;
         else if (stock > 0) btns = `<button class="rowBtn ${equipped ? 'owned' : ''}" data-usebait="${bait.id}" ${equipped ? 'disabled' : ''}>${equipped ? 'Dipakai' : 'Pakai'}</button>`;
         else btns = `<button class="rowBtn" data-bait="${bait.id}" ${!canBuy ? 'disabled' : ''}>${bait.price} koin</button>`;
-        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('bait', bait.id)}"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Luck +${Math.round((bait.rarityBoost - 1) * 100)}%${baitExtra(bait)} • ${bait.id === 'biasa' || stock > 0 ? 'Dimiliki' : 'Belum dimiliki'}</div></div><div class="rowBtns">${btns}</div>`;
+        row.innerHTML = `<div class="rowIcon" style="${gearIconStyle('bait', bait.id)}"></div><div class="rowInfo"><div class="rowName">${bait.name} ${equipped ? '(dipakai)' : ''}</div><div class="rowSub">Luck +${Math.round((bait.rarityBoost - 1) * 100)}% • ${bait.id === 'biasa' || stock > 0 ? 'Dimiliki' : 'Belum dimiliki'}</div></div><div class="rowBtns">${btns}</div>`;
         shopList.appendChild(row);
       }
     } else {
@@ -5041,40 +5082,12 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.14', DATE = '4 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.6', DATE = '4 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
-    ["Update v4.14", ["Grafis HD lebih tajam: resolusi render naik, bayangan dan tekstur pulau lebih detail.", "Resolusi adaptif tidak lagi turun terlalu rendah saat FPS drop."]],
-    ["Update v4.13", ["Gacha tampil dalam panggung 3D HD: podium, kapsul jatuh dan pecah, hadiah muncul 3D. Di layar landscape panggung ada di kiri, daftar di kanan.","Tab Skin Saya sekarang pakai ikon 3D joran, dan ketuk skin yang dimiliki buat lihat preview 3D-nya muter di podium.","Skin rod yang dipakai tampil 3D realistis di tangan karakter dengan aura sesuai skin: Rare (aura tipis), Epic (selubung dan halo neon), Pelangi (pita warna mengalir), Api Naga (lidah api naik), Galaksi (bintang mengorbit).","Perbaikan: panggung 3D yang tidak muncul setelah modal dibuka ulang."]],
-    ["Update v4.12", ["Akuarium dihapus dan diganti Mesin Gacha 3D di plaza (tempat Akuarium dulu). Deketin mesinnya lalu tekan Main Gacha Rod.","Gacha sekarang pakai panggung 3D HD: kapsul jatuh, bergetar, lalu pecah dengan efek cahaya dan partikel, hadiahnya muncul 3D dan berputar. Ketuk gambar buat lewati.","Skin Rod bisa dipreview 3D dari tab Skin Saya (ketuk skin yang dimiliki).","Tombol Gacha di Menu dan layar utama dihapus.","Ikan yang dulu dipajang di Akuarium otomatis dikembalikan ke tas. Trofi Akuarium diganti trofi Gacha."]],
-    ["Update v4.11", [
-      "Gacha Rod baru! Buka dari Menu atau layar utama. Gacha 1x 100 koin, Gacha 10x 900 koin dengan garansi minimal Rare di pull ke-10.",
-      "Peluang: Common 60%, Rare 25%, Epic 12%, Legendary 3%. Legendary dijamin di pull ke-60 (pity).",
-      "Hadiah berupa koin, Bait, dan 13 skin rod: Biasa (Rare), Efek Cahaya (Epic), dan Animasi Unik (Legendary: Pelangi Abadi, Api Naga, Galaksi).",
-      "Skin berlaku di semua rod, dipakai lewat tab Skin Saya. Skin duplikat otomatis jadi koin.",
-      "Skin dan progres pity tersimpan di save, jadi ikut Backup."
-    ]],
-    ["Update v4.10", [
-      "Layar utama dirombak: preview karakter 3D di kiri, kartu Hadiah Harian dan Misi Harian di kanan.",
-      "Hadiah Harian punya tombol Klaim dan penanda streak 7 hari. Kalau lupa klaim, otomatis diklaim saat masuk game.",
-      "Tombol utama berubah jadi LANJUTKAN kalau sudah punya save.",
-      "Baris tombol cepat di layar utama: Peringkat, Suara, Getar, Backup, dan Info Update.",
-      "Badge Discord ditambahkan di layar utama dan di Menu. Gabung komunitasnya langsung dari game.",
-      "Menu dalam game dapat tombol Peringkat, jadi tidak perlu ke papan di samping Akuarium.",
-      "Status server tampil di layar utama: online, maintenance, dan pengumuman kalau ada.",
-      "Warna karakter langsung terlihat di preview, termasuk dari layar utama.",
-      "Tips jadi satu baris setelah pertama dibaca. Matahari digeser, dan langit mengikuti jam perangkat (pagi, siang, senja, malam)."
-    ]],
-    ["Update v4.9", [
-      "Menu baru Warna Karakter: ganti warna rambut, baju, celana, dan kulit pakai pilihan cepat atau color picker.",
-      "Ada preview karakter 3D yang berputar di panel itu, bisa digeser buat muter manual.",
-      "Warna tersimpan di save, jadi ikut Backup dan tetap ada setelah update.",
-      "Layar Buat Karakter sekarang punya tombol Atur Warna Karakter.",
-      "Username dicek langsung saat diketik: kelihatan tersedia atau sudah dipakai sebelum menekan Lanjut."
-    ]],
-    ["Update v4.8", [
-      "Tombol Grafis (Mode HD) di Menu dihapus. Grafis HD sekarang selalu aktif, dan turun otomatis kalau FPS drop.",
-      "Karakter sekarang duduk di perahu, nggak berdiri lagi. Di Sampan karakter mendayung, di perahu lain duduk sambil pegang kemudi.",
-      "Joran disimpan waktu berlayar, dan keluar lagi pas perahu berhenti buat mancing."
+    ["Update v4.6", [
+      "Semua perahu sekarang model 3D HD: Sampan, Jukung bercadik, Perahu Motor, Speedboat, dan Kapal Layar Mewah punya bentuk lambung sendiri.",
+      "Gambar perahu di Toko Pak Karto sekarang render 3D asli, bukan kotak warna lagi.",
+      "Detail baru: dayung, cadik dan layar jukung, mesin tempel, kaca depan, tiang layar, lampu, dan pagar kuningan."
     ]]
   ];
   var vb0 = document.getElementById('versionBadge'); if (vb0) vb0.textContent = VER; // badge versi ikut VER
@@ -5282,7 +5295,7 @@ const PMFish = (function () {
     var tips = ['Lepas tombol pas marker di zona Perfect buat peluang ikan langka naik.',
       'Malam hari dan hujan bikin ikan langka lebih gampang nyangkut.',
       'Ikan Rahasia harus ditarik manual, Auto Mancing gak bisa.',
-      'Coba Mesin Gacha di plaza buat dapetin skin rod keren.',
+      'Pajang ikan langka di Akuarium biar gak ikut kejual.',
       'Cek Pasar tiap hari, harga ikan berubah-ubah.',
       'Lempar kail ke air buat mulai mancing.'];
     var tip = document.createElement('div'); tip.id = 'loadingTip';
@@ -5564,1778 +5577,5 @@ const PMFish = (function () {
   });
 })();
 </script>
-<script>
-/* === ROD 3D HD v4.7 === */
-(function () {
-  if (!window.THREE) return;
-  var T = THREE, PI = Math.PI;
-  function MS(c, o) { o = o || {}; o.color = c; if (o.roughness === undefined) o.roughness = 0.5; return new T.MeshStandardMaterial(o); }
-  function put(par, geo, mat, x, y, z) { var m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; par.add(m); return m; }
-  function rs(y) { return y <= 0.55 ? 0.03 - 0.016 * (y + 0.55) / 1.1 : 0.014 - 0.006 * (y - 0.55) / 0.42; }
-  function wrap(par, y, tube, mat) { var m = put(par, new T.TorusGeometry(rs(y) + tube * 0.6, tube, 6, 16), mat, 0, y, 0); m.rotation.x = PI / 2; return m; }
-  function guides(par, ys, mat) { ys.forEach(function (y) { var m = put(par, new T.TorusGeometry(0.013, 0.0028, 6, 12), mat, 0, y, rs(y) + 0.012); m.rotation.x = PI / 2; }); }
-  function spike(par, geo, mat, y, ang, out, tilt) { var m = put(par, geo, mat, Math.sin(ang) * (rs(y) + out), y, Math.cos(ang) * (rs(y) + out)); m.rotation.set(Math.cos(ang) * tilt, 0, -Math.sin(ang) * tilt); return m; }
-
-  var LOOK = {
-    bambu: { c: 0xc2a94a, m: 0.0, r: 0.8, e: 0x000000, ei: 0, grip: 0x5a3a1e, reel: 0x44403a },
-    luckrod: { c: 0x4fcf6a, m: 0.1, r: 0.45, e: 0x1f8a3a, ei: 0.25, grip: 0x2d6a3a, reel: 0xd4a73a },
-    kayu: { c: 0x1d1f23, m: 0.35, r: 0.35, e: 0x000000, ei: 0, grip: 0x15161a, reel: 0x2a2d33 },
-    grass: { c: 0x5b8a3a, m: 0.0, r: 0.8, e: 0x2c6a1a, ei: 0.15, grip: 0x4a3420, reel: 0x6b4a26 },
-    karbon: { c: 0xcfd6dc, m: 0.85, r: 0.3, e: 0x000000, ei: 0, grip: 0x2a2018, reel: 0x8b97a1, tex: 1 },
-    ice: { c: 0xbfe9ff, m: 0.15, r: 0.12, e: 0x5ac8ff, ei: 0.45, grip: 0x3a6a8a, reel: 0xe8f7ff, glow: 'pulse' },
-    perak: { c: 0x2f6fe0, m: 0.5, r: 0.3, e: 0x1a3a8a, ei: 0.2, grip: 0x1a2a5a, reel: 0xe0b83a },
-    midrod: { c: 0x1a1f4a, m: 0.4, r: 0.3, e: 0x4a3aff, ei: 0.5, grip: 0x0e1030, reel: 0x6a6ae0, glow: 'pulse' },
-    steampunk: { c: 0xb8733a, m: 0.8, r: 0.35, e: 0x000000, ei: 0, grip: 0x3a2414, reel: 0xd4a73a },
-    emas: { c: 0xc9a0ff, m: 1.0, r: 0.08, e: 0x8a3aff, ei: 0.3, grip: 0x2a1a4a, reel: 0xe6d0ff, glow: 'pulse' },
-    legendaris: { c: 0xffd45a, m: 0.7, r: 0.25, e: 0xffa81a, ei: 0.5, grip: 0x4a2a0a, reel: 0xfff2c0, glow: 'rainbow' },
-    angler: { c: 0x0f5a6a, m: 0.3, r: 0.4, e: 0x00d0c0, ei: 0.35, grip: 0x082a33, reel: 0x1aa8a0, glow: 'pulse' }
-  };
-  var damTex = null;
-  function dam() {
-    if (damTex) return damTex;
-    var c = document.createElement('canvas'); c.width = 64; c.height = 256; var g = c.getContext('2d');
-    g.fillStyle = '#9aa4ac'; g.fillRect(0, 0, 64, 256);
-    for (var i = 0; i < 26; i++) { g.strokeStyle = i % 2 ? 'rgba(30,36,42,.55)' : 'rgba(235,240,245,.5)'; g.lineWidth = 2 + (i % 3); g.beginPath();
-      for (var y = 0; y <= 256; y += 8) { var x = (i * 2.6 + Math.sin(y * 0.09 + i * 0.7) * 7 + Math.sin(y * 0.031 + i) * 5) % 64; if (y) g.lineTo(x, y); else g.moveTo(x, y); } g.stroke(); }
-    damTex = new T.CanvasTexture(c); damTex.wrapS = damTex.wrapT = T.RepeatWrapping; return damTex;
-  }
-
-  /* dekorasi per rod. root = badan joran (y -0.55..0.55), tip = ruas ujung (y 0..0.42). Mengembalikan fungsi tick(t) kalau ada animasi */
-  function deco(id, root, tip) {
-    var steel = MS(0xcfd6dc, { metalness: 0.9, roughness: 0.25 }), brass = MS(0xd4a73a, { metalness: 0.85, roughness: 0.3 }), tick = null, i, k;
-    if (id === 'bambu') {
-      var nd = MS(0x7a6a22, { roughness: 0.8 }); [-0.4, -0.12, 0.16, 0.4].forEach(function (y) { wrap(root, y, 0.007, nd); });
-      guides(root, [0.05, 0.28, 0.48], steel);
-    } else if (id === 'luckrod') {
-      guides(root, [0.05, 0.28, 0.48], brass);
-      var lg = MS(0x2fd05a, { emissive: 0x168a38, emissiveIntensity: 0.5 }), cl = new T.Group(); cl.position.set(0, 0.13, rs(0.13) + 0.035); root.add(cl);
-      [[0.02, 0], [-0.02, 0], [0, 0.02], [0, -0.02]].forEach(function (p) { var s = put(cl, new T.SphereGeometry(0.019, 10, 8), lg, p[0], p[1], 0); s.scale.z = 0.5; });
-      put(cl, new T.CylinderGeometry(0.003, 0.003, 0.04, 5), lg, 0.012, -0.04, 0).rotation.z = 0.5;
-      wrap(root, 0.0, 0.006, brass); wrap(root, 0.36, 0.006, brass);
-    } else if (id === 'kayu') {
-      var red = MS(0xd8302a, { roughness: 0.6 }); [-0.18, 0.08, 0.34].forEach(function (y) { wrap(root, y, 0.006, red); wrap(root, y + 0.03, 0.004, red); });
-      guides(root, [0.05, 0.28, 0.48], MS(0x888f96, { metalness: 0.8, roughness: 0.3 }));
-    } else if (id === 'grass') {
-      var vm = MS(0x2f9a38, { roughness: 0.7 }), pts = [];
-      for (i = 0; i <= 36; i++) { var y = -0.15 + i * 0.0185, a = i * 0.55; pts.push(new T.Vector3(Math.sin(a) * (rs(y) + 0.007), y, Math.cos(a) * (rs(y) + 0.007))); }
-      var vine = put(root, new T.TubeGeometry(new T.CatmullRomCurve3(pts), 90, 0.0045, 5, false), vm, 0, 0, 0);
-      for (i = 2; i < 36; i += 5) { var lf = put(root, new T.SphereGeometry(0.02, 8, 6), MS(0x4ed44a, { roughness: 0.6 }), pts[i].x * 1.9, pts[i].y, pts[i].z * 1.9); lf.scale.set(1, 0.35, 1.7); lf.rotation.y = Math.atan2(pts[i].x, pts[i].z); }
-      guides(root, [0.05, 0.28, 0.48], MS(0x6b4a26));
-    } else if (id === 'karbon') {
-      [-0.2, 0.1, 0.38].forEach(function (y) { wrap(root, y, 0.008, brass); });
-      guides(root, [0.05, 0.28, 0.48], brass);
-    } else if (id === 'ice') {
-      var cm = MS(0xd8f4ff, { emissive: 0x4ab8ff, emissiveIntensity: 0.6, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.85 });
-      [[-0.1, 0], [0.0, 2.1], [0.12, 4.2], [0.24, 1.0], [0.34, 3.1], [0.44, 5.2]].forEach(function (p) { spike(root, new T.ConeGeometry(0.014, 0.09 + 0.02 * ((p[1] * 7) % 3), 5), cm, p[0], p[1], 0.02, 0.55); });
-      put(tip, new T.ConeGeometry(0.01, 0.07, 5), cm, 0, 0.43, 0);
-      guides(root, [0.05, 0.28, 0.48], MS(0xbfe9ff, { metalness: 0.5, roughness: 0.2 }));
-    } else if (id === 'perak') {
-      var hs = put(root, new T.TorusGeometry(0.03, 0.008, 6, 16, PI * 1.5), brass, 0, 0.12, rs(0.12) + 0.035); hs.rotation.z = PI * 0.75 + PI / 2 * 0; hs.rotation.z = -PI * 0.25 - PI / 2 + PI / 2;
-      for (i = 0; i < 3; i++) put(root, new T.SphereGeometry(0.004, 6, 5), steel, Math.cos(i * 0.9 - 0.9) * 0.036 * 0.0 + (i - 1) * 0.02, 0.12 - 0.028, rs(0.12) + 0.045);
-      [-0.22, 0.34].forEach(function (y) { wrap(root, y, 0.008, brass); });
-      guides(root, [0.05, 0.28, 0.48], brass);
-    } else if (id === 'midrod') {
-      var star = MS(0xffffff, { emissive: 0xbfd0ff, emissiveIntensity: 1.0 });
-      for (i = 0; i < 9; i++) { var yy = -0.2 + i * 0.07, aa = i * 2.1; put(root, new T.OctahedronGeometry(0.0085 + 0.003 * (i % 3)), star, Math.sin(aa) * (rs(yy) + 0.007), yy, Math.cos(aa) * (rs(yy) + 0.007)); }
-      var moon = put(root, new T.TorusGeometry(0.03, 0.008, 6, 16, PI * 1.5), MS(0xfff2b8, { emissive: 0xffd86a, emissiveIntensity: 0.8 }), 0, 0.2, rs(0.2) + 0.03); moon.rotation.z = PI * 0.25;
-      wrap(root, -0.3, 0.007, MS(0x8a8aff, { metalness: 0.7, roughness: 0.3 })); wrap(root, 0.4, 0.007, MS(0x8a8aff, { metalness: 0.7, roughness: 0.3 }));
-      guides(root, [0.05, 0.28, 0.48], steel);
-    } else if (id === 'steampunk') {
-      var cop = MS(0xc87a3a, { metalness: 0.85, roughness: 0.3 }), gears = [];
-      [[0.0, 0.18, 0.05, 0.05], [-0.05, 0.3, 0.07, 0.035]].forEach(function (p, n) {
-        var gr = new T.Group(); gr.position.set(p[0] * 0 + (n ? -0.04 : 0.04), p[1], rs(p[1]) + 0.02); gr.rotation.x = PI / 2; root.add(gr);
-        put(gr, new T.CylinderGeometry(p[3], p[3], 0.012, 10), brass, 0, 0, 0); put(gr, new T.CylinderGeometry(p[3] * 0.45, p[3] * 0.45, 0.016, 10), cop, 0, 0, 0); put(gr, new T.CylinderGeometry(p[3] * 1.18, p[3] * 1.18, 0.006, 5), brass, 0, 0, 0); gears.push(gr);
-      });
-      var gauge = new T.Group(); gauge.position.set(0, -0.02, rs(-0.02) + 0.03); root.add(gauge);
-      put(gauge, new T.TorusGeometry(0.027, 0.007, 8, 18), brass, 0, 0, 0); put(gauge, new T.CircleGeometry(0.026, 18), MS(0xf4efe0, { roughness: 0.6 }), 0, 0, -0.001);
-      put(gauge, new T.BoxGeometry(0.003, 0.02, 0.004), MS(0xd8302a), 0.005, 0.007, 0.004).rotation.z = -0.6;
-      var pm = [new T.Vector3(0.026, -0.3, 0.0), new T.Vector3(0.05, -0.1, 0.02), new T.Vector3(0.05, 0.1, 0.02), new T.Vector3(0.026, 0.24, 0.0)];
-      put(root, new T.TubeGeometry(new T.CatmullRomCurve3(pm), 20, 0.007, 6, false), cop, 0, 0, 0);
-      [-0.3, 0.1, 0.4].forEach(function (y) { wrap(root, y, 0.007, cop); });
-      guides(root, [0.05, 0.28, 0.48], brass);
-      tick = function (t) { gears[0].rotation.y = t * 1.4; gears[1].rotation.y = -t * 2.0; };
-    } else if (id === 'emas') {
-      var cg = MS(0xb56bff, { emissive: 0x9a3aff, emissiveIntensity: 0.9, roughness: 0.2 }), ch = MS(0xf2e8ff, { metalness: 1, roughness: 0.06 });
-      [-0.3, -0.05, 0.2, 0.42].forEach(function (y) { wrap(root, y, 0.009, cg); });
-      [0, PI * 0.66, PI * 1.33].forEach(function (a) { var f = spike(root, new T.BoxGeometry(0.004, 0.16, 0.05), ch, -0.1, a, 0.03, 0.0); f.rotation.x = Math.cos(a) * 0.25; f.rotation.z = -Math.sin(a) * 0.25; f.rotation.y = a; });
-      guides(root, [0.05, 0.28, 0.48], ch);
-    } else if (id === 'legendaris') {
-      var gold = MS(0xffd45a, { metalness: 0.9, roughness: 0.2, emissive: 0xffa81a, emissiveIntensity: 0.4 }), orb = new T.Group(), orb2 = new T.Group();
-      orb.position.set(0, 0.16, 0); orb.rotation.x = 0.5; root.add(orb); orb2.position.set(0, 0.16, 0); orb2.rotation.x = -0.5; orb2.rotation.z = 0.8; root.add(orb2);
-      put(orb, new T.TorusGeometry(0.075, 0.0035, 6, 30), gold, 0, 0, 0).rotation.x = PI / 2; put(orb2, new T.TorusGeometry(0.095, 0.0035, 6, 30), gold, 0, 0, 0).rotation.x = PI / 2;
-      var sm = MS(0xffffff, { emissive: 0xfff2a0, emissiveIntensity: 1.2 });
-      put(orb, new T.OctahedronGeometry(0.014), sm, 0.075, 0, 0); put(orb, new T.OctahedronGeometry(0.01), sm, -0.075, 0, 0); put(orb2, new T.OctahedronGeometry(0.012), sm, 0, 0, 0.095);
-      [-0.3, 0.4].forEach(function (y) { wrap(root, y, 0.009, gold); });
-      put(tip, new T.OctahedronGeometry(0.016), sm, 0, 0.44, 0);
-      guides(root, [0.05, 0.28, 0.48], gold);
-      tick = function (t) { orb.rotation.y = t * 1.3; orb2.rotation.y = -t * 1.7; };
-    } else if (id === 'angler') {
-      var dk = MS(0x0a3a46, { roughness: 0.5 }), gl = MS(0x7ffff0, { emissive: 0x00e8d0, emissiveIntensity: 1.3 });
-      [-0.3, 0.0, 0.3].forEach(function (y) { wrap(root, y, 0.008, MS(0x1aa8a0, { metalness: 0.6, roughness: 0.3 })); });
-      for (i = 0; i < 4; i++) { var fy = -0.25 + i * 0.16; var fn = put(root, new T.ConeGeometry(0.02, 0.1 - i * 0.012, 4), dk, 0, fy, -(rs(fy) + 0.03)); fn.rotation.x = -PI / 2 - 0.5; }
-      [-1, 1].forEach(function (s) { var fin = put(root, new T.BoxGeometry(0.004, 0.12, 0.07), MS(0x0f7a82, { roughness: 0.4 }), s * 0.045, -0.12, 0.0); fin.rotation.z = s * 0.35; fin.rotation.y = s * 0.2; });
-      var st = [new T.Vector3(0, 0.38, 0), new T.Vector3(0, 0.46, 0.02), new T.Vector3(0, 0.5, 0.07), new T.Vector3(0, 0.46, 0.12)];
-      put(tip, new T.TubeGeometry(new T.CatmullRomCurve3(st), 16, 0.0035, 5, false), dk, 0, 0, 0);
-      var lure = put(tip, new T.SphereGeometry(0.02, 12, 10), gl, 0, 0.46, 0.125);
-      guides(root, [0.05, 0.28, 0.48], MS(0x7ffff0, { metalness: 0.5, roughness: 0.3 }));
-      tick = function (t) { var s = 1 + 0.18 * Math.sin(t * 3.5); lure.scale.set(s, s, s); gl.emissiveIntensity = 1.0 + 0.5 * Math.sin(t * 3.5); };
-    }
-    return tick;
-  }
-
-  function lookMat(L) {
-    var m = MS(L.c, { metalness: L.m, roughness: L.r, emissive: L.e }); m.emissiveIntensity = L.ei; if (L.tex) m.map = dam(); return m;
-  }
-  /* model utuh (buat gambar di toko) */
-  window.pmRodModel = function (id) {
-    var L = LOOK[id] || LOOK.bambu, G = new T.Group(), m = lookMat(L);
-    put(G, new T.CylinderGeometry(0.014, 0.03, 1.1, 14), m, 0, 0, 0);
-    var tp = put(G, new T.CylinderGeometry(0.008, 0.014, 0.42, 10).translate(0, 0.21, 0), m, 0, 0.55, 0);
-    put(G, new T.CylinderGeometry(0.038, 0.038, 0.24, 12), MS(L.grip, { roughness: 0.9 }), 0, -0.4, 0);
-    var rl = put(G, new T.CylinderGeometry(0.055, 0.055, 0.06, 16), MS(L.reel, { metalness: 0.8, roughness: 0.3 }), 0.05, -0.2, 0); rl.rotation.z = PI / 2;
-    put(G, new T.CylinderGeometry(0.014, 0.014, 0.1, 8), MS(0x888f96, { metalness: 0.8 }), 0.105, -0.2, 0).rotation.z = PI / 2;
-    deco(id, G, tp); return G;
-  };
-
-  /* gambar 3D joran untuk Rod Shop */
-  var icons = {}, iconsDone = false;
-  function makeIcons() {
-    if (iconsDone) return; iconsDone = true;
-    try {
-      var W = 192, cv = document.createElement('canvas'); cv.width = cv.height = W;
-      var r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: true });
-      r.setPixelRatio(1); r.setSize(W, W, false); r.setClearColor(0x000000, 0);
-      if ('outputEncoding' in r && T.sRGBEncoding) r.outputEncoding = T.sRGBEncoding;
-      var sc = new T.Scene(); sc.add(new T.HemisphereLight(0xe6f4ff, 0x3b4650, 1.0));
-      var dl = new T.DirectionalLight(0xfff0d0, 1.3); dl.position.set(3, 5, 6); sc.add(dl);
-      var cam = new T.PerspectiveCamera(28, 1, 0.1, 50);
-      Object.keys(LOOK).forEach(function (id) {
-        var m = window.pmRodModel(id); m.scale.set(1.8, 1, 1.8); m.rotation.z = -0.62; m.rotation.y = -0.5; sc.add(m); m.updateMatrixWorld(true);
-        var bb = new T.Box3().setFromObject(m), c = bb.getCenter(new T.Vector3()), rad = bb.getBoundingSphere(new T.Sphere()).radius;
-        var dist = rad * 1.02 / Math.tan(PI * 14 / 180), dir = new T.Vector3(0.12, 0.1, 1).normalize();
-        cam.position.copy(c).addScaledVector(dir, dist); cam.lookAt(c);
-        r.render(sc, cam); icons[id] = cv.toDataURL('image/png');
-        sc.remove(m); m.traverse(function (o) { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map && o.material.map !== damTex) o.material.map.dispose(); o.material.dispose(); } });
-      });
-      r.dispose(); if (r.forceContextLoss) r.forceContextLoss();
-    } catch (e) { console.warn('ikon rod 3D gagal', e); }
-  }
-  window.pmRodIcon = function (id, col) {
-    makeIcons(); if (!icons[id]) return null;
-    return 'background:url(' + icons[id] + ') center/contain no-repeat,radial-gradient(circle at 50% 38%,' + col + '55,#0b1c28 75%);border:2px solid ' + col + ';box-shadow:0 0 10px ' + col + '88;width:64px;height:64px;border-radius:14px;image-rendering:auto;';
-  };
-
-  /* joran yang dipegang karakter */
-  var C = window.__PMC; if (!C || !C.rodMesh) return;
-  var rod = C.rodMesh, rodMat = rod.material, cur = '', decoG = null, tipG = null, tickFn = null, P = null, curL = null;
-  function parts() {
-    if (P) return P; P = {};
-    rod.children.forEach(function (m) {
-      var g = m.geometry; if (!g) return; var p = g.parameters || {};
-      if (g.type === 'CylinderGeometry' && p.radiusTop === 0.038) P.grip = m;
-      else if (g.type === 'CylinderGeometry' && p.radiusTop === 0.055) P.reel = m;
-      else if (g.type === 'CylinderGeometry' && p.radiusTop === 0.008) P.tip = m;
-      else if (g.type === 'OctahedronGeometry' || g.type === 'TorusGeometry') P.old = (P.old || []).concat([m]);
-    });
-    return P;
-  }
-  function setRod(id) {
-    var p = parts(), L = LOOK[id] || LOOK.bambu; curL = L; cur = id;
-    if (decoG) { rod.remove(decoG); decoG.traverse(function (o) { if (o.geometry) o.geometry.dispose(); }); decoG = null; }
-    if (tipG && p.tip) { p.tip.remove(tipG); tipG.traverse(function (o) { if (o.geometry) o.geometry.dispose(); }); tipG = null; }
-    rodMat.color.set(L.c); rodMat.metalness = L.m; rodMat.roughness = L.r; rodMat.emissive.set(L.e); rodMat.emissiveIntensity = L.ei;
-    var tx = L.tex ? dam() : null; if (rodMat.map !== tx) { rodMat.map = tx; rodMat.needsUpdate = true; }
-    if (p.grip) { if (!p.gm) { p.gm = MS(L.grip, { roughness: 0.9 }); p.grip.material = p.gm; } p.gm.color.set(L.grip); }
-    if (p.reel) { if (!p.rm) { p.rm = MS(L.reel, { metalness: 0.8, roughness: 0.3 }); p.reel.material = p.rm; } p.rm.color.set(L.reel); }
-    decoG = new T.Group(); rod.add(decoG); tipG = new T.Group(); if (p.tip) p.tip.add(tipG); else rod.add(tipG);
-    tickFn = deco(id, decoG, tipG);
-  }
-  window.pmRodTick = function (t) {
-    var id = C.save && C.save.rod; if (!id) return;
-    if (id !== cur) setRod(id);
-    var o = parts().old; if (o) o.forEach(function (m) { m.visible = false; });
-    if (curL.glow === 'rainbow') { rodMat.emissive.setHSL((t * 0.2) % 1, 0.9, 0.55); rodMat.emissiveIntensity = 0.55; }
-    else if (curL.glow === 'pulse') rodMat.emissiveIntensity = curL.ei * (0.75 + 0.25 * Math.sin(t * 3));
-    if (tickFn) tickFn(t);
-  };
-})();
-
-</script>
-<script>
-/* === DUDUK DI PERAHU v4.8 (pmBoatSeat) === */
-(function () {
-  var C = window.__PMC; if (!C || !C.player || !C.boatMesh || !C.hookAnim || !window.THREE) return;
-  var T = THREE, P = C.player, boat = C.boatMesh, rod = C.rodMesh;
-  var THIGH = 0.1, HIP = 0.62;
-  var arms = {}, legs = {}, els = {};
-  P.children.slice().forEach(function (m) {
-    var p = m.geometry && m.geometry.parameters; if (!m.isMesh || !p) return;
-    if (p.radiusTop === 0.08 && p.radiusBottom === 0.07 && m.position.y > 1.1) arms[m.position.x < 0 ? 'L' : 'R'] = m;
-    if (p.radiusTop === 0.105) legs[m.position.x < 0 ? 'L' : 'R'] = m;
-  });
-  if (!arms.L || !arms.R || !legs.L || !legs.R) { console.warn('Duduk di perahu: bagian karakter tidak ketemu'); return; }
-  ['L', 'R'].forEach(function (k) { els[k] = arms[k].children.filter(function (c) { return c.isGroup; })[0]; });
-  if (!els.L || !els.R) { console.warn('Duduk di perahu: siku tidak ketemu'); return; }
-
-  var V = T.Vector3, Q = T.Quaternion, DOWN = new V(0, -1, 0);
-  var tmp = new V(), pv = new V(), up = new V(), ep = new V(), lo = new V(), qa = new Q(), qe = new Q(), qi = new Q(), gp = new V(), tg = new V();
-  function ik(arm, el, target, side, wt) {
-    var s = arm.position, d = tmp.copy(target).sub(s), len = d.length() || 1e-3, a = 0.27, b = 0.29;
-    var D = Math.min(len, a + b - 0.004); d.multiplyScalar(1 / len);
-    var cA = Math.max(-1, Math.min(1, (a * a + D * D - b * b) / (2 * a * D))), sA = Math.sqrt(1 - cA * cA);
-    pv.set(side * 0.5, -0.6, -0.6); pv.addScaledVector(d, -pv.dot(d));
-    if (pv.lengthSq() < 1e-6) pv.set(side, 0, 0); pv.normalize();
-    up.copy(d).multiplyScalar(cA).addScaledVector(pv, sA);
-    qa.setFromUnitVectors(DOWN, up);
-    ep.copy(up).multiplyScalar(a).add(s);
-    lo.copy(target).sub(ep).normalize().applyQuaternion(qi.copy(qa).invert());
-    qe.setFromUnitVectors(DOWN, lo);
-    arm.quaternion.slerp(qa, wt); el.quaternion.slerp(qe, wt);
-  }
-
-  var sw = 0, rw = 0, rowT = 0, last = 0, lx = 0, lz = 0, seat = [0.35, -0.14], oars = null, mdl = null, rodHid = false;
-  C.hookAnim(function (t) {
-    var dt = Math.min(0.1, Math.max(0.001, t - last)); last = t;
-    var sail = boat.visible;
-    if (sail) {
-      var found = null;
-      boat.children.forEach(function (c) { if (c.visible && c.userData && c.userData.pmBoat) found = c; });
-      if (found) { mdl = found; seat = found.userData.seat || seat; oars = found.userData.oars || null; found.position.x = 0; found.position.z = -seat[0]; }
-    }
-    sw += ((sail ? 1 : 0) - sw) * Math.min(1, dt * 7);
-    var dx = P.position.x - lx, dz = P.position.z - lz; lx = P.position.x; lz = P.position.z;
-    if (!sail && sw < 0.004) { sw = 0; rw = 0; if (rodHid) { rod.visible = true; rodHid = false; } return; }
-
-    var spd = Math.min(12, Math.sqrt(dx * dx + dz * dz) / dt), moving = sail && spd > 0.4, fishing = C.fishState !== 'idle';
-    rw += ((moving && !fishing ? 1 : 0) - rw) * Math.min(1, dt * 8);
-    if (moving) rowT += dt * (3.2 + spd * 0.45);
-
-    // duduk di bangku, menghadap sesuai arah perahu
-    var targetY = boat.position.y + (mdl ? mdl.position.y : 0.12) + seat[1] + THIGH - HIP;
-    P.position.y += (targetY - P.position.y) * sw;
-    var dr = boat.rotation.y - P.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); P.rotation.y += dr * sw;
-    legs.L.rotation.x += (-1.2 - legs.L.rotation.x) * sw; legs.R.rotation.x += (-1.2 - legs.R.rotation.x) * sw;
-    legs.L.rotation.z += (-0.1 - legs.L.rotation.z) * sw; legs.R.rotation.z += (0.1 - legs.R.rotation.z) * sw;
-
-    // joran disimpan waktu berlayar
-    var hide = rw > 0.5; if (hide !== rodHid) { rod.visible = !hide; rodHid = hide; }
-
-    P.updateWorldMatrix(true, false);
-    if (oars) {
-      oars.forEach(function (o) {
-        var a = 0.6 * Math.cos(rowT) * rw - 0.1 * (1 - rw);
-        var rec = rw * Math.max(0, -Math.sin(rowT)) + (1 - rw);
-        o.pv.rotation.y = -o.s * a;
-        o.sh.rotation.z = -o.s * (0.2 - 0.24 * rec);
-      });
-      if (rw * sw > 0.01) {
-        oars.forEach(function (o) {
-          o.grip.getWorldPosition(gp); P.worldToLocal(gp);
-          var k = o.s > 0 ? 'R' : 'L';
-          ik(arms[k], els[k], gp, o.s, rw * sw);
-        });
-      }
-    } else if (rw * sw > 0.01) {
-      // perahu tanpa dayung: tangan di depan, kayak pegang kemudi
-      var sway = 0.03 * Math.sin(t * 0.9);
-      ik(arms.R, els.R, tg.set(0.2, 0.9, 0.42 + sway), 1, rw * sw);
-      ik(arms.L, els.L, tg.set(-0.2, 0.9, 0.42 - sway), -1, rw * sw);
-    }
-  });
-})();
-
-</script>
-<!--PM-LOOK-START-->
-<script>
-/* PM-LOOK v1 - warna karakter + preview 3D muter + cek username live */
-(function () {
-  'use strict';
-  var C = window.__PMC;
-  if (!C || !window.THREE || window.__pmLook) return;
-  window.__pmLook = true;
-  var T = THREE, P = C.player;
-
-  var KEYS = ['hair', 'shirt', 'pants', 'skin'];
-  var LABEL = { hair: 'Rambut', shirt: 'Baju', pants: 'Celana', skin: 'Kulit' };
-  var DEF = { hair: '#3a2a1a', shirt: '#4ac0e0', pants: '#33485f', skin: '#f0c299' };
-  var PRESET = {
-    hair: ['#1b1b1b', '#3a2a1a', '#8b5a2b', '#d9b44a', '#c0392b', '#8e44ad', '#2e86de', '#ecf0f1'],
-    shirt: ['#4ac0e0', '#e74c3c', '#27ae60', '#f1c40f', '#8e44ad', '#e67e22', '#ecf0f1', '#2c3e50'],
-    pants: ['#33485f', '#1d2126', '#6b4423', '#1e8449', '#7f8c8d', '#e6e9ee'],
-    skin: ['#f8d9b8', '#f0c299', '#d69a6b', '#a56b43', '#6b4226']
-  };
-  var HEX = /^#[0-9a-f]{6}$/i;
-  var NAME_RE = /^[A-Za-z0-9_]{3,16}$/;
-
-  /* ---------- cari bagian karakter ---------- */
-  var hairMesh = null, headMesh = null;
-  P.traverse(function (o) {
-    var g = o.geometry;
-    if (!o.isMesh || !g || g.type !== 'SphereGeometry' || !g.parameters) return;
-    if (g.parameters.radius === 0.212) hairMesh = o;
-    else if (g.parameters.radius === 0.2 && g.parameters.widthSegments === 24) headMesh = o;
-  });
-  function mats() {
-    return {
-      hair: hairMesh ? hairMesh.material : null,
-      shirt: C.body.material,
-      pants: C.legL.material,
-      skin: headMesh ? headMesh.material : null
-    };
-  }
-
-  /* ---------- warna aktif (diterapkan tiap frame, setelah sistem Karakter lama) ---------- */
-  var cols = {}, on = false;
-  KEYS.forEach(function (k) { cols[k] = new T.Color(DEF[k]); });
-  function clean(d) {
-    var o = {};
-    KEYS.forEach(function (k) { o[k] = d && HEX.test(d[k]) ? d[k] : DEF[k]; });
-    return o;
-  }
-  function use(d) { KEYS.forEach(function (k) { cols[k].set(d[k]); }); on = true; applyLook(); }
-  function applyLook() {
-    if (!on) return;
-    var m = mats();
-    for (var i = 0; i < KEYS.length; i++) { var k = KEYS[i]; if (m[k]) m[k].color.copy(cols[k]); }
-  }
-  if (C.save && C.save.look) use(clean(C.save.look));
-  C.hookAnim(applyLook);
-
-  /* ---------- UI ---------- */
-  function el(t, c) { var e = document.createElement(t); if (c) e.className = c; return e; }
-  var css = document.createElement('style');
-  css.textContent = [
-    '#pmlOv{position:fixed;left:0;top:0;right:0;bottom:0;z-index:55;display:none;align-items:center;justify-content:center;background:rgba(2,8,14,.72);padding:12px;box-sizing:border-box}',
-    '#pmlOv.on{display:flex}',
-    '#pmlBox{width:min(94vw,400px);max-height:92vh;display:flex;flex-direction:column;background:linear-gradient(165deg,#1d5068,#0a1e2c);border:3px solid rgba(255,255,255,.9);border-radius:22px;box-shadow:0 8px 0 rgba(0,0,0,.35),0 18px 40px rgba(0,0,0,.5);color:#fff;overflow:hidden;font-family:inherit}',
-    '#pmlHead{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:2px dashed rgba(255,255,255,.24)}',
-    '#pmlHead h2{margin:0;font-size:16px;font-weight:800}',
-    '#pmlX{border:2px solid rgba(255,255,255,.55);background:rgba(255,255,255,.16);color:#fff;width:30px;height:30px;border-radius:50%;font-size:14px}',
-    '#pmlBody{overflow-y:auto;padding:10px 14px;-webkit-overflow-scrolling:touch}',
-    '#pmlCv{display:block;margin:0 auto 10px;width:200px;height:240px;border-radius:14px;background:radial-gradient(circle at 50% 35%,#2f6f8a,#0b1c28 75%);touch-action:none}',
-    '.pmlRow{margin-bottom:9px}',
-    '.pmlLb{display:block;font-size:12px;font-weight:700;opacity:.85;margin-bottom:4px}',
-    '.pmlSw{display:flex;flex-wrap:wrap;gap:6px;align-items:center}',
-    '.pmlChip{width:28px;height:28px;border-radius:7px;border:2px solid rgba(255,255,255,.7);padding:0}',
-    '.pmlSw input[type=color]{width:36px;height:32px;border:0;padding:0;background:none}',
-    '#pmlFoot{display:flex;gap:8px;padding:10px 14px;border-top:2px dashed rgba(255,255,255,.24)}',
-    '#pmlFoot button{flex:1;padding:10px 6px;border-radius:999px;border:2px solid #fff;font-weight:800;font-size:13px;color:#052730;background:linear-gradient(90deg,#37d1c8,#2f9fc9)}',
-    '#pmlFoot button.alt{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.5)}',
-    '@media (orientation:landscape) and (max-height:520px){#pmlBox{width:min(94vw,640px)}#pmlBody{display:flex;gap:14px;align-items:flex-start}#pmlCv{width:150px;height:180px;margin:0;flex:none}#pmlCtl{flex:1;min-width:0}}'
-  ].join('');
-  document.head.appendChild(css);
-
-  var ov = el('div'); ov.id = 'pmlOv';
-  var box = el('div'); box.id = 'pmlBox';
-  var head = el('div'); head.id = 'pmlHead';
-  var h2 = el('h2'); h2.textContent = 'Warna Karakter';
-  var xb = el('button'); xb.id = 'pmlX'; xb.type = 'button'; xb.textContent = '\u2715';
-  head.appendChild(h2); head.appendChild(xb);
-  var body = el('div'); body.id = 'pmlBody';
-  var cv = el('canvas'); cv.id = 'pmlCv';
-  var ctl = el('div'); ctl.id = 'pmlCtl';
-  body.appendChild(cv); body.appendChild(ctl);
-  var foot = el('div'); foot.id = 'pmlFoot';
-  var bSave = el('button'); bSave.type = 'button'; bSave.textContent = 'Simpan';
-  var bReset = el('button', 'alt'); bReset.type = 'button'; bReset.textContent = 'Bawaan';
-  var bCancel = el('button', 'alt'); bCancel.type = 'button'; bCancel.textContent = 'Batal';
-  foot.appendChild(bSave); foot.appendChild(bReset); foot.appendChild(bCancel);
-  box.appendChild(head); box.appendChild(body); box.appendChild(foot);
-  ov.appendChild(box); document.body.appendChild(ov);
-
-  KEYS.forEach(function (key) {
-    var row = el('div', 'pmlRow'), lb = el('span', 'pmlLb'); lb.textContent = LABEL[key]; row.appendChild(lb);
-    var sw = el('div', 'pmlSw');
-    PRESET[key].forEach(function (c) {
-      var b = el('button', 'pmlChip'); b.type = 'button'; b.style.background = c;
-      b.onclick = function () { setColor(key, c); };
-      sw.appendChild(b);
-    });
-    var inp = document.createElement('input'); inp.type = 'color'; inp.id = 'pmlIn-' + key;
-    inp.oninput = function () { setColor(key, inp.value); };
-    sw.appendChild(inp); row.appendChild(sw); ctl.appendChild(row);
-  });
-
-  /* ---------- preview 3D ---------- */
-  var R = { r: null, run: false, raf: 0, last: 0, drag: false, dx: 0 };
-  function ensureRenderer() {
-    if (R.r) return true;
-    try { R.r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); }
-    catch (e) { R.r = null; return false; }
-    R.r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    R.r.setSize(200, 240, false);
-    R.r.setClearColor(0x000000, 0);
-    R.r.toneMapping = T.NoToneMapping;
-    R.sc = new T.Scene();
-    R.sc.add(new T.HemisphereLight(0xfff0dd, 0x3a4a5a, 1.0));
-    var dl = new T.DirectionalLight(0xffe2c0, 0.55); dl.position.set(3, 5, 4); R.sc.add(dl);
-    R.cam = new T.PerspectiveCamera(30, 200 / 240, 0.1, 50);
-    R.cam.position.set(0, 1.2, 4.6); R.cam.lookAt(new T.Vector3(0, 0.95, 0));
-    R.pivot = new T.Group(); R.sc.add(R.pivot);
-    return true;
-  }
-  function rebuildModel() {
-    while (R.pivot.children.length) R.pivot.remove(R.pivot.children[0]);
-    var g = P.clone(true); // material & geometry dibagi dengan karakter asli, warna ikut live
-    g.position.set(0, 0, 0); g.rotation.set(0, 0, 0); g.scale.set(1, 1, 1);
-    g.traverse(function (o) {
-      if (o.isSprite) { o.visible = false; return; }
-      var gm = o.geometry, p = gm && gm.parameters;
-      if (o.isMesh && p && gm.type === 'CylinderGeometry' && p.radiusTop === 0.014 && p.radiusBottom === 0.03) o.visible = false; // joran
-    });
-    g.children.forEach(function (o) { // reset pose: berdiri lurus
-      var gm = o.geometry, p = gm && gm.parameters;
-      if (o.isMesh && p && gm.type === 'CylinderGeometry' && (p.radiusTop === 0.105 || (p.radiusTop === 0.08 && p.radiusBottom === 0.07))) {
-        o.rotation.set(0, 0, 0);
-        o.children.forEach(function (c) { if (c.isGroup) c.rotation.set(0, 0, 0); });
-      } else if (o.isGroup && Math.abs(o.position.y - 1.3) < 0.03) o.rotation.set(0, 0, 0); // kepala
-    });
-    R.pivot.add(g); R.pivot.rotation.y = 0.5;
-  }
-  function frame(t) {
-    if (!R.run) return;
-    R.raf = requestAnimationFrame(frame);
-    var dt = R.last ? Math.min(0.1, (t - R.last) / 1000) : 0; R.last = t;
-    if (!R.drag) R.pivot.rotation.y += dt * 0.9;
-    R.r.render(R.sc, R.cam);
-  }
-  function startLoop() { if (R.run) return; R.run = true; R.last = 0; R.raf = requestAnimationFrame(frame); }
-  function stopLoop() { R.run = false; cancelAnimationFrame(R.raf); }
-  cv.addEventListener('pointerdown', function (e) { R.drag = true; R.dx = e.clientX; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
-  cv.addEventListener('pointermove', function (e) { if (R.drag && R.pivot) { R.pivot.rotation.y += (e.clientX - R.dx) * 0.012; R.dx = e.clientX; } });
-  function endDrag() { R.drag = false; }
-  cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
-
-  /* ---------- buka / tutup ---------- */
-  var draft = null, snap = null;
-  function setColor(k, c) {
-    draft[k] = c; cols[k].set(c); on = true; applyLook();
-    var i = document.getElementById('pmlIn-' + k); if (i) i.value = c;
-  }
-  function syncInputs() {
-    KEYS.forEach(function (k) { var i = document.getElementById('pmlIn-' + k); if (i) i.value = draft[k]; });
-  }
-  function openPanel() {
-    var m = mats();
-    snap = {};
-    KEYS.forEach(function (k) { snap[k] = m[k] ? '#' + m[k].color.getHexString() : DEF[k]; });
-    draft = Object.assign({}, snap);
-    syncInputs();
-    ov.className = 'on';
-    if (ensureRenderer()) { rebuildModel(); startLoop(); }
-  }
-  function closePanel(keep) {
-    ov.className = ''; stopLoop();
-    if (keep) return;
-    if (C.save && C.save.look) use(clean(C.save.look));
-    else {
-      on = false; var m = mats(); // balikin tampilan sebelum dibuka
-      KEYS.forEach(function (k) { if (m[k]) m[k].color.set(snap[k]); });
-    }
-  }
-  bSave.onclick = function () {
-    C.save.look = Object.assign({}, draft); C.persist();
-    C.toast('Warna karakter disimpan'); closePanel(true);
-  };
-  bReset.onclick = function () {
-    if (!confirm('Balik ke warna bawaan game?')) return;
-    delete C.save.look; C.persist(); location.reload();
-  };
-  bCancel.onclick = function () { closePanel(false); };
-  xb.onclick = function () { closePanel(false); };
-
-  window.PMLook = { open: openPanel, apply: applyLook };
-  var host = document.getElementById('menuPanel') || document.getElementById('hudPills');
-  if (host) {
-    var mb = el('button', 'hudPill'); mb.textContent = 'Warna Karakter';
-    mb.onclick = function () { var mp = document.getElementById('menuPanel'); if (mp) mp.classList.remove('show'); openPanel(); };
-    host.appendChild(mb);
-  }
-
-  /* ---------- cek username live (layar Buat Karakter) ---------- */
-  var nameIn = document.getElementById('mpName'), go = document.getElementById('mpGo');
-  if (nameIn && go) {
-    var cb = el('button'); cb.type = 'button'; cb.textContent = '\uD83C\uDFA8 Atur Warna Karakter';
-    cb.onclick = openPanel; go.parentNode.insertBefore(cb, go);
-    var st = el('div'); st.style.cssText = 'min-height:16px;font-size:13px;max-width:80vw';
-    nameIn.insertAdjacentElement('afterend', st);
-    var seq = 0, tm = 0;
-    var setSt = function (msg, col) { st.textContent = msg; st.style.color = col || '#a9c6cd'; };
-    var base = function () {
-      var s = null; try { s = localStorage.getItem('pm_server'); } catch (e) {}
-      return (s || 'wss://game.ahmadfivem.my.id').replace(/^ws/, 'http').replace(/\/+$/, '');
-    };
-    var check = function (n, my) {
-      var ctl2 = ('AbortController' in window) ? new AbortController() : null;
-      var to = setTimeout(function () { if (ctl2) ctl2.abort(); }, 6000);
-      fetch(base() + '/check?name=' + encodeURIComponent(n), { signal: ctl2 ? ctl2.signal : undefined })
-        .then(function (r) { return r.json(); })
-        .then(function (j) {
-          clearTimeout(to); if (my !== seq) return;
-          if (j && j.ok && typeof j.available === 'boolean') {
-            if (j.available) setSt('\u2714 "' + n + '" tersedia', '#4ce88a');
-            else { setSt('\u2718 "' + n + '" sudah dipakai', '#ff6b6b'); go.disabled = true; }
-          } else setSt('Cek live belum aktif di server, nama dicek saat Lanjut');
-        })
-        .catch(function () {
-          clearTimeout(to); if (my !== seq) return;
-          setSt('Server tidak terjangkau, nama dicek saat Lanjut');
-        });
-    };
-    nameIn.addEventListener('input', function () {
-      var n = nameIn.value.trim(); clearTimeout(tm); seq++; go.disabled = false;
-      if (!n) { setSt(''); return; }
-      if (!NAME_RE.test(n)) { setSt('3-16 karakter: huruf, angka, _', '#ff8a7a'); return; }
-      setSt('Mengecek...');
-      var my = seq; tm = setTimeout(function () { check(n, my); }, 450);
-    });
-  }
-})();
-
-</script>
-<!--PM-LOOK-END-->
-<!--PM-START-START-->
-<script>
-/* PM-START v1 - layar utama: preview karakter 3D, hadiah harian, tombol cepat, badge Discord */
-(function () {
-  'use strict';
-  var C = window.__PMC, T = window.THREE;
-  var ss = document.getElementById('startScreen'), btn = document.getElementById('startBtn');
-  if (!C || !ss || !btn || window.__pmStart) return;
-  window.__pmStart = true;
-
-  var DISCORD = 'https://discord.gg/t7Y6ChGtPq';
-  var SAVE_KEY = 'pancingmania_save_v1';
-  var DEFAULT_SERVER = 'wss://game.ahmadfivem.my.id';
-  var TIPS = [
-    'Lepas tombol pas marker di zona Perfect buat peluang ikan langka naik.',
-    'Malam hari dan hujan bikin ikan langka lebih gampang nyangkut.',
-    'Ikan Rahasia harus ditarik manual, Auto Mancing gak bisa.',
-    'Coba Mesin Gacha di plaza buat dapetin skin rod keren.',
-    'Cek Pasar tiap hari, harga ikan berubah-ubah.',
-    'Enchant rod di Altar buat nambah Luck dan Speed.',
-    'Rebirth ngasih bonus permanen buat Luck, Speed, harga jual, dan XP.'
-  ];
-  var DC_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 6Q12 3 19.5 6L22 16.5Q19 18.8 16.5 19.5L15.5 17.8Q12 19 8.5 17.8L7.5 19.5Q5 18.8 2 16.5Z" fill="#fff"/><circle cx="8.7" cy="12.3" r="1.8" fill="#5865F2"/><circle cx="15.3" cy="12.3" r="1.8" fill="#5865F2"/></svg>';
-
-  function $(id) { return document.getElementById(id); }
-  function el(tag, cls) { var e = document.createElement(tag); if (cls) e.className = cls; return e; }
-  function safe(fn) { try { fn(); } catch (e) { console.warn('PM-START:', e); } }
-  function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
-  function fmt(n) { return String(Math.round(+n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
-  function dstr(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
-  function vis() { return ss.style.display === 'flex'; }
-
-  /* ---------- CSS ---------- */
-  var css = document.createElement('style');
-  css.textContent = [
-    '#pmsSide{position:fixed;left:0;top:0;right:0;bottom:0;z-index:21;pointer-events:none;display:none}',
-    '.pmsCard{position:absolute;top:50%;transform:translateY(-50%);width:clamp(118px,19vw,176px);padding:8px;box-sizing:border-box;pointer-events:auto;background:linear-gradient(160deg,rgba(29,80,104,.93),rgba(12,40,54,.93));border:3px solid rgba(255,255,255,.92);border-radius:16px;box-shadow:0 5px 0 rgba(0,0,0,.32),0 10px 18px rgba(0,0,0,.4);color:#fff;text-align:center;font-family:inherit}',
-    '#pmsL{left:calc(10px + env(safe-area-inset-left,0px))}',
-    '#pmsR{right:calc(10px + env(safe-area-inset-right,0px))}',
-    '#pmsCv{display:block;width:100%;height:auto;border-radius:10px;background:radial-gradient(circle at 50% 35%,#2f6f8a,#0b1c28 78%);touch-action:none}',
-    '.pmsName{font-size:12.5px;font-weight:900;margin:6px 0 1px;word-break:break-word}',
-    '.pmsT{font-size:10.5px;font-weight:900;letter-spacing:.5px;color:var(--gold);text-transform:uppercase;margin-bottom:3px}',
-    '.pmsSub{font-size:10.5px;color:#cfe6ec;line-height:1.35}',
-    '.pmsBtn{width:100%;margin-top:6px;padding:7px 6px;border-radius:999px;border:2px solid #fff;font-weight:900;font-size:11.5px;color:#052730;background:linear-gradient(90deg,#37d1c8,#2f9fc9);box-shadow:0 3px 0 rgba(0,80,90,.45);font-family:inherit}',
-    '.pmsBtn.gold{background:linear-gradient(160deg,#ffcf4d,#e0982a);color:#4a2600;box-shadow:0 3px 0 rgba(120,70,0,.5)}',
-    '.pmsBtn:disabled{opacity:.55;box-shadow:none}',
-    '.pmsBtn:active:not(:disabled){transform:translateY(2px)}',
-    '.pmsDots{display:flex;justify-content:center;gap:4px;margin:4px 0}',
-    '.pmsDots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.4)}',
-    '.pmsDots i.on{background:var(--gold);border-color:#fff}',
-    '.pmsBar{height:8px;border-radius:999px;background:rgba(0,0,0,.45);border:1.5px solid rgba(255,255,255,.5);overflow:hidden;margin:3px 0}',
-    '.pmsBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#7fe8ff);transition:width .3s}',
-    '.pmsNet{display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.38);border:1.5px solid rgba(255,255,255,.4);margin-bottom:6px}',
-    '.pmsNews{display:none;margin-top:6px;font-size:10px;line-height:1.35;color:#ffe9a8;word-break:break-word}',
-    '#pmsQuick{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:min(92vw,400px)}',
-    '.pmsQ{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;border:2px solid #fff;background:linear-gradient(160deg,#2fb8d1,#196c81);color:#fff;font-size:10.5px;font-weight:800;text-decoration:none;box-shadow:0 2px 0 rgba(0,0,0,.35),0 4px 8px rgba(0,0,0,.3);font-family:inherit;cursor:pointer;white-space:nowrap}',
-    '.pmsQ:active{transform:translateY(2px)}',
-    '.pmsDc{background:linear-gradient(160deg,#7983f5,#4752c4)}',
-    '.pmsDc svg{width:14px;height:14px}',
-    '#startScreen{padding-bottom:28px!important}',
-    '#startSub{text-shadow:0 1px 4px rgba(0,0,0,.85)!important}',
-    '#startTips.pmsTip1{padding:6px 14px!important;font-size:10.5px!important;line-height:1.4!important;max-width:min(92vw,360px)!important;border-radius:999px!important}',
-    '.pmsStar{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.8;animation:pmsTw 3s ease-in-out infinite}',
-    '@keyframes pmsTw{50%{opacity:.2}}',
-    '@media (prefers-reduced-motion:reduce){.pmsStar{animation:none}}',
-    '@media (orientation:landscape) and (max-height:520px){#startTitle img{height:min(25vh,112px)!important}#startScreen{gap:6px!important}#startSub{font-size:12px!important;line-height:1.3!important;max-width:min(92vw,420px)!important}.pmsCard{width:clamp(112px,18vw,160px);padding:6px}}',
-    '@media (max-aspect-ratio:1/1){#pmsL,#pmsR{display:none}}'
-  ].join('');
-  document.body.appendChild(css);
-
-  /* ---------- akses tombol asli (Menu) ---------- */
-  function origBtn(id, prefix) {
-    var b = id ? $(id) : null;
-    if (b) return b;
-    var list = document.querySelectorAll('#menuPanel button, #hudPills button');
-    for (var i = 0; i < list.length; i++) if ((list[i].textContent || '').trim().indexOf(prefix) === 0) return list[i];
-    return null;
-  }
-  function openLB() {
-    if (typeof window.PMOpenLB === 'function') window.PMOpenLB();
-    else C.toast('Peringkat belum tersedia');
-  }
-
-  /* ---------- kartu kiri & kanan ---------- */
-  var side = el('div'); side.id = 'pmsSide';
-  var L = el('div', 'pmsCard'); L.id = 'pmsL';
-  L.innerHTML = '<canvas id="pmsCv" width="150" height="180"></canvas><div class="pmsName" id="pmsName"></div><div class="pmsSub" id="pmsTitle"></div><div class="pmsSub" id="pmsMeta"></div>';
-  var bLook = el('button', 'pmsBtn'); bLook.type = 'button'; bLook.textContent = 'Warna Karakter';
-  L.appendChild(bLook);
-  var R = el('div', 'pmsCard'); R.id = 'pmsR';
-  R.innerHTML = '<div class="pmsNet" id="pmsNet">Mengecek server...</div><div class="pmsT">Hadiah Harian</div><div class="pmsSub" id="pmsDay"></div><div class="pmsDots" id="pmsDots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="pmsSub" id="pmsCoin"></div>';
-  var bClaim = el('button', 'pmsBtn gold'); bClaim.type = 'button'; R.appendChild(bClaim);
-  var qh = el('div', 'pmsT'); qh.style.marginTop = '8px'; qh.textContent = 'Misi Harian'; R.appendChild(qh);
-  var bar = el('div', 'pmsBar'); bar.innerHTML = '<i id="pmsBarFill"></i>'; R.appendChild(bar);
-  var qs = el('div', 'pmsSub'); qs.id = 'pmsQuest'; R.appendChild(qs);
-  var news = el('div', 'pmsNews'); news.id = 'pmsNews'; R.appendChild(news);
-  side.appendChild(L); side.appendChild(R); document.body.appendChild(side);
-
-  bLook.onclick = function () {
-    if (window.PMLook && window.PMLook.open) window.PMLook.open();
-    else { var o = origBtn(null, 'Warna Karakter'); if (o) o.click(); }
-  };
-
-  /* ---------- hadiah harian (rumus sama dengan bonus login lama) ---------- */
-  function daily() {
-    var s = C.save, today = dstr(new Date()), yest = dstr(new Date(Date.now() - 86400000));
-    var claimed = s.loginDay === today;
-    var streak = claimed ? (s.loginStreak || 1) : (s.loginDay === yest ? (s.loginStreak || 0) + 1 : 1);
-    return { claimed: claimed, streak: streak, coins: 40 * Math.min(streak, 7) + 10 * (s.level || 1) };
-  }
-  function claim() {
-    var d = daily(); if (d.claimed) return;
-    var s = C.save;
-    s.loginStreak = d.streak; s.loginDay = dstr(new Date()); s.coins += d.coins;
-    C.persist(); C.refresh();
-    C.Sfx.sell(); C.toast('Bonus login hari ke-' + d.streak + ': +' + d.coins + ' koin');
-    render();
-  }
-  bClaim.onclick = claim;
-  function quests() {
-    var q = C.save.quests, today = dstr(new Date());
-    if (q && q.v === 2 && q.day === today && q.list) {
-      var done = 0; q.list.forEach(function (m) { if (m.done) done++; });
-      return { done: done, total: q.list.length, fresh: false };
-    }
-    return { done: 0, total: 4, fresh: true };
-  }
-
-  /* ---------- chip status di tengah ---------- */
-  var stats = el('div'); stats.id = 'startStats';
-  var oldStats = $('startStats');
-  if (oldStats) { oldStats.id = 'startStatsOld'; oldStats.style.display = 'none'; ss.insertBefore(stats, oldStats); }
-  else ss.insertBefore(stats, btn);
-  function chip(text) { var s = el('span'); s.textContent = text; stats.appendChild(s); }
-
-  function render() {
-    safe(function () {
-      var s = C.save, n = Object.keys(s.discovered || {}).length;
-      stats.textContent = '';
-      chip('Level ' + s.level); chip(fmt(s.coins) + ' koin'); chip('Koleksi ' + n + '/' + C.FISH_TABLE.length);
-
-      var prof = null; try { prof = JSON.parse(ls('pm_profile') || 'null'); } catch (e) {}
-      $('pmsName').textContent = (prof && prof.name) || 'Tamu';
-      $('pmsTitle').textContent = (typeof window.PMTitle === 'function') ? window.PMTitle() : '';
-      var meta = [], ct = (s.stats && s.stats.catches) || 0;
-      if (s.rebirth) meta.push('Rebirth ' + s.rebirth);
-      if (ct) meta.push(fmt(ct) + ' tangkapan');
-      $('pmsMeta').textContent = meta.join(' \u2022 ');
-
-      var d = daily(), q = quests(), i, dots = $('pmsDots').children, done = d.claimed ? d.streak : d.streak - 1;
-      $('pmsDay').textContent = 'Login hari ke-' + d.streak;
-      for (i = 0; i < dots.length; i++) dots[i].className = i < Math.min(done, 7) ? 'on' : '';
-      $('pmsCoin').textContent = d.claimed ? 'Sudah diklaim. Balik lagi besok!' : 'Bonus hari ini +' + fmt(d.coins) + ' koin';
-      bClaim.textContent = d.claimed ? 'Sudah diklaim' : 'Klaim +' + fmt(d.coins);
-      bClaim.disabled = d.claimed;
-      $('pmsBarFill').style.width = (q.total ? q.done / q.total * 100 : 0) + '%';
-      $('pmsQuest').textContent = q.fresh ? 'Misi baru menunggu (0/' + q.total + ')' : q.done + '/' + q.total + ' selesai';
-    });
-  }
-
-  /* ---------- baris tombol cepat + badge Discord ---------- */
-  var quick = el('div'); quick.id = 'pmsQuick';
-  function qbtn(label, fn) { var b = el('button', 'pmsQ'); b.type = 'button'; b.textContent = label; b.onclick = fn; quick.appendChild(b); return b; }
-  var qSnd, qVib, qUp;
-  function sync() {
-    var o = origBtn('btnSound', 'Suara'); if (o && qSnd) qSnd.textContent = o.textContent;
-    o = origBtn(null, 'Getar'); if (o && qVib) qVib.textContent = o.textContent;
-    o = origBtn('btnUpdInfo', 'Info Update'); if (o && qUp) qUp.textContent = o.textContent;
-  }
-  qbtn('Peringkat', openLB);
-  qSnd = qbtn('Suara', function () { var o = origBtn('btnSound', 'Suara'); if (o) o.click(); sync(); });
-  qVib = qbtn('Getar', function () { var o = origBtn(null, 'Getar'); if (o) o.click(); sync(); });
-  qbtn('Backup', function () { var o = origBtn(null, 'Backup'); if (o) o.click(); });
-  qUp = qbtn('Info Update', function () { var o = origBtn('btnUpdInfo', 'Info Update'); if (o) o.click(); sync(); });
-  var qDc = el('a', 'pmsQ pmsDc'); qDc.href = DISCORD; qDc.target = '_blank'; qDc.rel = 'noopener noreferrer';
-  qDc.innerHTML = DC_SVG + '<span>Discord</span>'; quick.appendChild(qDc);
-  var tipsEl = $('startTips');
-  ss.insertBefore(quick, tipsEl || null);
-
-  /* ---------- tambahan di Menu dalam game ---------- */
-  safe(function () {
-    var menu = $('menuPanel'); if (!menu) return;
-    var mLb = el('button', 'hudPill'); mLb.textContent = 'Peringkat';
-    mLb.onclick = function () { menu.classList.remove('show'); openLB(); };
-    var mDc = el('a', 'hudPill'); mDc.textContent = 'Discord'; mDc.href = DISCORD; mDc.target = '_blank'; mDc.rel = 'noopener noreferrer';
-    mDc.style.cssText = 'text-decoration:none;background:linear-gradient(160deg,#7983f5,#4752c4);color:#fff;text-shadow:none';
-    menu.appendChild(mLb); menu.appendChild(mDc);
-  });
-
-  /* ---------- LANJUTKAN vs MULAI ---------- */
-  safe(function () {
-    var s = C.save, has = !!s && (s.level > 1 || s.xp > 0 || Object.keys(s.discovered || {}).length > 0 || ((s.stats && s.stats.catches) || 0) > 0);
-    btn.textContent = has ? '\u25B6 LANJUTKAN' : '\u25B6 MULAI MANCING';
-  });
-
-  /* ---------- tips: lengkap sekali, lalu satu baris ---------- */
-  var tipI = Math.floor(Math.random() * TIPS.length);
-  function showTip() { if (tipsEl) tipsEl.textContent = 'Tips: ' + TIPS[tipI % TIPS.length]; }
-  if (tipsEl && ls('pm_tips_seen') === '1') { tipsEl.classList.add('pmsTip1'); showTip(); }
-  setInterval(function () {
-    if (vis() && tipsEl && tipsEl.classList.contains('pmsTip1')) { tipI++; showTip(); }
-  }, 7000);
-
-  /* ---------- langit mengikuti jam perangkat ---------- */
-  var PAL = {
-    dawn: { bg: 'linear-gradient(180deg,#2b3f7c 0%,#8a79b8 28%,#ffb08a 54%,#ffe0a8 66%,#2a6a8a 66.2%,#0b3a55 100%)', l: '50%', t: '66%', half: true, sun: 'radial-gradient(circle at 40% 35%,#fffbe0,#ffe08a 55%,#ffb24a)', glow: 'rgba(255,200,120,.5)' },
-    day: { bg: 'linear-gradient(180deg,#1e6fd6 0%,#5aa9ec 36%,#a9d8fa 62%,#dff2ff 66%,#2a93c4 66.2%,#0d5f8c 100%)', l: '72%', t: '20%', half: false, sun: 'radial-gradient(circle at 40% 35%,#ffffff,#fff3b0 55%,#ffd24a)', glow: 'rgba(255,240,170,.6)' },
-    dusk: { bg: 'linear-gradient(180deg,#1c3f7a 0%,#6a5a9e 28%,#f08a6a 52%,#ffc98a 66%,#0f5577 66.2%,#083049 100%)', l: '50%', t: '66%', half: true, sun: 'radial-gradient(circle at 40% 35%,#fff6c9,#ffd27a 55%,#ff9e4a)', glow: 'rgba(255,190,110,.5)' },
-    night: { bg: 'linear-gradient(180deg,#050a1e 0%,#0b1836 40%,#1a2a4a 62%,#24385c 66%,#0a2a40 66.2%,#04131f 100%)', l: '80%', t: '20%', half: false, sun: 'radial-gradient(circle at 38% 36%,#ffffff,#dfe8ff 60%,#aebde6)', glow: 'rgba(170,190,255,.45)' }
-  };
-  var todNow = '';
-  function applyTod() {
-    var deco = $('startDeco'); if (!deco) return;
-    var h = new Date().getHours();
-    var k = (h >= 5 && h < 9) ? 'dawn' : (h >= 9 && h < 16) ? 'day' : (h >= 16 && h < 19) ? 'dusk' : 'night';
-    if (k === todNow) return; todNow = k;
-    var p = PAL[k], sun = deco.querySelector('.sun'), sz = 'clamp(64px,24vh,120px)', i;
-    deco.style.background = p.bg;
-    if (sun) {
-      sun.style.cssText = 'left:' + p.l + ';top:' + p.t + ';margin:0;transform:translate(-50%,-50%);width:' + sz + ';height:' + sz + ';background:' + p.sun + ';box-shadow:0 0 60px 20px ' + p.glow + ';' + (p.half ? 'clip-path:inset(-120px -120px 50% -120px);' : 'animation:none;');
-    }
-    var old = deco.querySelectorAll('.pmsStar'); for (i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
-    if (k === 'night') {
-      for (i = 0; i < 26; i++) {
-        var st = el('i', 'pmsStar');
-        st.style.left = (Math.random() * 100).toFixed(1) + '%'; st.style.top = (Math.random() * 58).toFixed(1) + '%';
-        st.style.animationDelay = '-' + (Math.random() * 3).toFixed(1) + 's';
-        deco.appendChild(st);
-      }
-    }
-  }
-  safe(applyTod);
-  setInterval(function () { safe(applyTod); }, 300000);
-
-  /* ---------- status server: online / maintenance / pengumuman ---------- */
-  function srvBase() { return (ls('pm_server') || DEFAULT_SERVER).replace(/^ws/, 'http').replace(/\/+$/, ''); }
-  function setNet(text, color) { var n = $('pmsNet'); n.textContent = text; n.style.color = color; }
-  function setNews(t) { var n = $('pmsNews'); n.textContent = t ? '\uD83D\uDCE2 ' + t : ''; n.style.display = t ? 'block' : 'none'; }
-  function poll() {
-    if (!vis()) return;
-    var ctl = ('AbortController' in window) ? new AbortController() : null;
-    var to = setTimeout(function () { if (ctl) ctl.abort(); }, 5000);
-    fetch(srvBase() + '/status', { signal: ctl ? ctl.signal : undefined })
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        clearTimeout(to);
-        if (j && j.maint) setNet('Maintenance', '#ffd24a');
-        else if (j && typeof j.online === 'number') setNet(j.online + ' online', '#7bf08a');
-        else setNet('Server aktif', '#7bf08a');
-        setNews(j && typeof j.news === 'string' ? j.news.slice(0, 140) : '');
-      })
-      .catch(function () { clearTimeout(to); setNet('Server offline', '#ff9a8a'); setNews(''); });
-  }
-  setInterval(poll, 30000);
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
-
-  /* ---------- preview karakter 3D ---------- */
-  var pv = { r: null, sc: null, cam: null, pivot: null, run: false, raf: 0, last: 0, drag: false, dx: 0, failed: false };
-  function pvModel() {
-    var P = C.player;
-    while (pv.pivot.children.length) pv.pivot.remove(pv.pivot.children[0]);
-    var g = P.clone(true); // material dibagi dengan karakter asli, jadi warna ikut live
-    g.position.set(0, 0, 0); g.rotation.set(0, 0, 0); g.scale.set(1, 1, 1);
-    g.traverse(function (o) {
-      if (o.isSprite) { o.visible = false; return; }
-      var gm = o.geometry, p = gm && gm.parameters;
-      if (o.isMesh && p && gm.type === 'CylinderGeometry' && p.radiusTop === 0.014 && p.radiusBottom === 0.03) o.visible = false; // joran
-    });
-    g.children.forEach(function (o) { // pose berdiri lurus
-      var gm = o.geometry, p = gm && gm.parameters;
-      if (o.isMesh && p && gm.type === 'CylinderGeometry' && (p.radiusTop === 0.105 || (p.radiusTop === 0.08 && p.radiusBottom === 0.07))) {
-        o.rotation.set(0, 0, 0);
-        o.children.forEach(function (c) { if (c.isGroup) c.rotation.set(0, 0, 0); });
-      } else if (o.isGroup && Math.abs(o.position.y - 1.3) < 0.03) o.rotation.set(0, 0, 0); // kepala
-    });
-    pv.pivot.add(g); pv.pivot.rotation.y = 0.5;
-  }
-  function pvInit() {
-    if (pv.r) return true;
-    if (pv.failed || !T) return false;
-    var cv = $('pmsCv');
-    try { pv.r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); }
-    catch (e) { pv.failed = true; cv.style.display = 'none'; return false; }
-    pv.r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    pv.r.setSize(150, 180, false);
-    pv.r.setClearColor(0x000000, 0);
-    pv.r.toneMapping = T.NoToneMapping;
-    pv.sc = new T.Scene();
-    pv.sc.add(new T.HemisphereLight(0xfff0dd, 0x3a4a5a, 1.0));
-    var dl = new T.DirectionalLight(0xffe2c0, 0.55); dl.position.set(3, 5, 4); pv.sc.add(dl);
-    pv.cam = new T.PerspectiveCamera(30, 150 / 180, 0.1, 50);
-    pv.cam.position.set(0, 1.2, 4.6); pv.cam.lookAt(new T.Vector3(0, 0.95, 0));
-    pv.pivot = new T.Group(); pv.sc.add(pv.pivot);
-    pvModel();
-    return true;
-  }
-  function pvFrame(t) {
-    if (!pv.run) return;
-    pv.raf = requestAnimationFrame(pvFrame);
-    if (t - pv.last < 33) return; // ~30 fps cukup buat preview
-    var dt = pv.last ? Math.min(0.1, (t - pv.last) / 1000) : 0; pv.last = t;
-    if (!pv.drag) pv.pivot.rotation.y += dt * 0.9;
-    pv.r.render(pv.sc, pv.cam);
-  }
-  function pvStart() {
-    if (pv.run || !pvInit()) return;
-    if (window.PMLook && window.PMLook.apply) window.PMLook.apply();
-    pv.run = true; pv.last = 0; pv.raf = requestAnimationFrame(pvFrame);
-  }
-  function pvDispose() {
-    pv.run = false; cancelAnimationFrame(pv.raf);
-    if (pv.r) { pv.r.dispose(); if (pv.r.forceContextLoss) pv.r.forceContextLoss(); pv.r = null; }
-    pv.failed = true; // layar utama tidak muncul lagi, jangan bikin ulang
-  }
-  var cvEl = $('pmsCv');
-  cvEl.addEventListener('pointerdown', function (e) { pv.drag = true; pv.dx = e.clientX; try { cvEl.setPointerCapture(e.pointerId); } catch (x) {} });
-  cvEl.addEventListener('pointermove', function (e) { if (pv.drag && pv.pivot) { pv.pivot.rotation.y += (e.clientX - pv.dx) * 0.012; pv.dx = e.clientX; } });
-  function pvEnd() { pv.drag = false; }
-  cvEl.addEventListener('pointerup', pvEnd); cvEl.addEventListener('pointercancel', pvEnd);
-
-  /* ---------- tampil / sembunyi ---------- */
-  function onShow() {
-    var v = vis();
-    side.style.display = v ? 'block' : 'none';
-    if (v) { safe(render); safe(sync); safe(pvStart); safe(poll); }
-    else safe(pvDispose);
-  }
-  new MutationObserver(onShow).observe(ss, { attributes: true, attributeFilter: ['style'] });
-  btn.addEventListener('click', function () {
-    ls('pm_tips_seen', '1');
-    safe(claim); // hadiah harian diklaim otomatis kalau belum; bonus login lama jadi no-op
-  });
-  onShow();
-})();
-
-</script>
-<!--PM-START-END-->
-<!--PM-GACHA-START-->
-<script>
-/* PM-GACHA v3 (v4.13) - Mesin Gacha 3D, panggung HD, skin rod 3D beraura */
-(function () {
-  'use strict';
-  var C = window.__PMC, T = window.THREE;
-  if (!C || !T || window.__pmGacha) return;
-  window.__pmGacha = true;
-  var PI = Math.PI;
-
-  /* ---------- setelan ---------- */
-  var COST1 = 100, COST10 = 900, PITY_MAX = 60;
-  var ORDER = ['common', 'rare', 'epic', 'legendary'];
-  var TIER = {
-    common: { n: 'Common', c: '#9fb4bd', w: 60, d: '10-50 koin / Bait' },
-    rare: { n: 'Rare', c: '#4aa8ff', w: 25, d: '100-300 koin / Skin Rod Biasa' },
-    epic: { n: 'Epic', c: '#b56bff', w: 12, d: '500 koin / Skin Rod Efek Cahaya' },
-    legendary: { n: 'Legendary', c: '#ffc233', w: 3, d: '2.000 koin / Skin Rod Animasi Unik' }
-  };
-  var COIN_CHANCE = { rare: 0.30, epic: 0.25, legendary: 0.15 };
-  var DUP = { rare: 30, epic: 75, legendary: 200 };
-  var KIND_LABEL = { solid: 'Skin Biasa', glow: 'Efek Cahaya', rainbow: 'Animasi Unik', fire: 'Animasi Unik', galaxy: 'Animasi Unik' };
-  var SKINS = [
-    { id: 's_merah', n: 'Merah Karang', t: 'rare', k: 'solid', c: '#d8302a' },
-    { id: 's_hijau', n: 'Hijau Zamrud', t: 'rare', k: 'solid', c: '#1fae5a' },
-    { id: 's_ungu', n: 'Ungu Anggur', t: 'rare', k: 'solid', c: '#7a3fc4' },
-    { id: 's_oranye', n: 'Oranye Senja', t: 'rare', k: 'solid', c: '#f08a2a' },
-    { id: 's_hitam', n: 'Hitam Arang', t: 'rare', k: 'solid', c: '#23262b' },
-    { id: 's_putih', n: 'Putih Salju', t: 'rare', k: 'solid', c: '#eef2f5' },
-    { id: 'e_biru', n: 'Neon Biru', t: 'epic', k: 'glow', c: '#2fd8ff' },
-    { id: 'e_pink', n: 'Neon Pink', t: 'epic', k: 'glow', c: '#ff4fd8' },
-    { id: 'e_hijau', n: 'Neon Hijau', t: 'epic', k: 'glow', c: '#5bff7a' },
-    { id: 'e_emas', n: 'Cahaya Emas', t: 'epic', k: 'glow', c: '#ffd45a' },
-    { id: 'l_pelangi', n: 'Pelangi Abadi', t: 'legendary', k: 'rainbow', c: '#ff7ad9' },
-    { id: 'l_api', n: 'Api Naga', t: 'legendary', k: 'fire', c: '#ff6a1a' },
-    { id: 'l_galaksi', n: 'Galaksi', t: 'legendary', k: 'galaxy', c: '#7a5cff' }
-  ];
-  var NOSKIN = { id: 'none', n: 'Tanpa Skin', t: 'none', k: 'solid', c: '#8a929a' };
-  var OP = { solid: 0.3, glow: 0.6, rainbow: 0.7, fire: 0.85, galaxy: 0.8 };
-  var SPD = { solid: 0.15, glow: 0.35, rainbow: 0.5, fire: 1.1, galaxy: 0.12 };
-
-  /* ---------- util ---------- */
-  function $(id) { return document.getElementById(id); }
-  function fmt(n) { return String(Math.round(+n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
-  function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
-  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function skinById(id) { for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) return SKINS[i]; return null; }
-  function baitName(id) { var b = C.BAIT_TYPES.filter(function (x) { return x.id === id; })[0]; return b ? b.name : id; }
-  function swatch(sk) {
-    var c = sk.c;
-    if (sk.k === 'solid') return 'background:' + c;
-    if (sk.k === 'glow') return 'background:radial-gradient(circle at 40% 35%,#fff,' + c + ' 55%,#0a1e2c);box-shadow:0 0 12px ' + c;
-    if (sk.k === 'rainbow') return 'background:conic-gradient(#ff5a5a,#ffd45a,#5affb0,#5ab4ff,#c05aff,#ff5a5a);box-shadow:0 0 12px #ff7ad9';
-    if (sk.k === 'fire') return 'background:radial-gradient(circle at 50% 70%,#ffe27a,#ff6a1a 55%,#7a1200);box-shadow:0 0 12px #ff6a1a';
-    return 'background:linear-gradient(135deg,#1a1050,#7a5cff 55%,#2fd8ff);box-shadow:0 0 12px #7a5cff';
-  }
-  function rewardName(r) {
-    if (r.kind === 'coin') return '+' + fmt(r.coins) + ' koin';
-    if (r.kind === 'bait') return baitName(r.id);
-    var sk = skinById(r.id); return (sk ? sk.n : 'Skin') + (r.dup ? ' (duplikat +' + r.coins + ')' : '');
-  }
-  function cssCol(col, m) {
-    var c = new T.Color(col); c.r = Math.min(1, c.r * m); c.g = Math.min(1, c.g * m); c.b = Math.min(1, c.b * m);
-    return '#' + c.getHexString();
-  }
-  var dotT = null, rayT = null, starT = null;
-  function dotTex() {
-    if (dotT) return dotT;
-    var c = document.createElement('canvas'); c.width = c.height = 64;
-    var g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.45, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
-    dotT = new T.CanvasTexture(c); return dotT;
-  }
-  function rayTex() {
-    if (rayT) return rayT;
-    var c = document.createElement('canvas'); c.width = c.height = 256;
-    var g = c.getContext('2d'); g.translate(128, 128);
-    var gr = g.createRadialGradient(0, 0, 0, 0, 0, 128);
-    gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = gr;
-    for (var i = 0; i < 14; i++) {
-      g.save(); g.rotate(i * PI * 2 / 14);
-      g.beginPath(); g.moveTo(0, 0); g.lineTo(-11, -128); g.lineTo(11, -128); g.closePath(); g.fill(); g.restore();
-    }
-    rayT = new T.CanvasTexture(c); return rayT;
-  }
-  function starTex() {
-    if (starT) return starT;
-    var c = document.createElement('canvas'); c.width = c.height = 128;
-    var g = c.getContext('2d'); g.translate(64, 64);
-    var gr = g.createRadialGradient(0, 0, 0, 0, 0, 64);
-    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = gr;
-    g.beginPath(); g.moveTo(0, -62); g.quadraticCurveTo(5, -5, 62, 0); g.quadraticCurveTo(5, 5, 0, 62); g.quadraticCurveTo(-5, 5, -62, 0); g.quadraticCurveTo(-5, -5, 0, -62); g.closePath(); g.fill();
-    g.beginPath(); g.arc(0, 0, 14, 0, PI * 2); g.fill();
-    starT = new T.CanvasTexture(c); return starT;
-  }
-  var CV = {};
-  function cvas(key, w, h, draw) {
-    if (!CV[key]) { var c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); CV[key] = c; }
-    return CV[key];
-  }
-  function mkTex(c, rx, ry) {
-    var t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(rx || 1, ry || 1); t.needsUpdate = true; return t;
-  }
-
-  /* ---------- tekstur batang & aura per skin ---------- */
-  function shaftCanvas(sk) {
-    return cvas('sh_' + sk.id, 64, 256, function (g, w, h) {
-      var k = sk.k, i, x, y, j, gr, rr;
-      if (k === 'rainbow') {
-        for (i = 0; i < h; i++) { g.fillStyle = 'hsl(' + Math.round(i / h * 360) + ',85%,58%)'; g.fillRect(0, i, w, 1); }
-      } else if (k === 'fire') {
-        gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#2a0e06'); gr.addColorStop(0.5, '#150805'); gr.addColorStop(1, '#0a0402');
-        g.fillStyle = gr; g.fillRect(0, 0, w, h); g.lineCap = 'round';
-        for (i = 0; i < 18; i++) {
-          x = Math.random() * w; y = Math.random() * h;
-          g.strokeStyle = 'rgba(255,' + Math.round(110 + Math.random() * 100) + ',20,' + (0.5 + Math.random() * 0.5) + ')';
-          g.lineWidth = 1 + Math.random() * 2; g.beginPath(); g.moveTo(x, y);
-          for (j = 0; j < 5; j++) { x += Math.random() * 14 - 7; y += Math.random() * 26 - 4; g.lineTo(x, y); }
-          g.stroke();
-        }
-      } else if (k === 'galaxy') {
-        gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0a0b36'); gr.addColorStop(0.5, '#2b1a80'); gr.addColorStop(1, '#0a2d63');
-        g.fillStyle = gr; g.fillRect(0, 0, w, h);
-        for (i = 0; i < 7; i++) {
-          x = Math.random() * w; y = Math.random() * h; rr = 30 + Math.random() * 40;
-          gr = g.createRadialGradient(x, y, 0, x, y, rr);
-          gr.addColorStop(0, i % 2 ? 'rgba(160,100,255,.55)' : 'rgba(70,210,255,.4)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
-          g.fillStyle = gr; g.fillRect(x - rr, y - rr, rr * 2, rr * 2);
-        }
-        for (i = 0; i < 70; i++) {
-          g.fillStyle = 'rgba(255,255,255,' + (0.5 + Math.random() * 0.5) + ')';
-          g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 0.6 + Math.random() * 1.2, 0, PI * 2); g.fill();
-        }
-      } else {
-        gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, cssCol(sk.c, 1.35)); gr.addColorStop(1, cssCol(sk.c, 0.55));
-        g.fillStyle = gr; g.fillRect(0, 0, w, h);
-      }
-      if (k !== 'fire' && k !== 'galaxy') {
-        g.lineWidth = 2;
-        for (i = -h; i < w + h; i += 14) {
-          g.strokeStyle = 'rgba(255,255,255,.09)'; g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 90, h); g.stroke();
-          g.strokeStyle = 'rgba(0,0,0,.12)'; g.beginPath(); g.moveTo(i + 7, 0); g.lineTo(i + 97, h); g.stroke();
-        }
-      }
-    });
-  }
-  function auraCanvas(sk) {
-    return cvas('au_' + sk.id, 64, 256, function (g, w, h) {
-      var k = sk.k, i, x, y, gr, hh, ww, len, rr;
-      if (k === 'fire') {
-        for (i = 0; i < 22; i++) {
-          x = Math.random() * w; hh = 80 + Math.random() * 170; ww = 6 + Math.random() * 10;
-          gr = g.createLinearGradient(0, h, 0, h - hh);
-          gr.addColorStop(0, 'rgba(255,235,130,.95)'); gr.addColorStop(0.45, 'rgba(255,120,20,.75)'); gr.addColorStop(1, 'rgba(150,15,0,0)');
-          g.fillStyle = gr; g.beginPath(); g.moveTo(x - ww, h);
-          g.quadraticCurveTo(x - ww * 0.3, h - hh * 0.55, x, h - hh);
-          g.quadraticCurveTo(x + ww * 0.3, h - hh * 0.55, x + ww, h); g.closePath(); g.fill();
-        }
-      } else if (k === 'rainbow') {
-        for (i = 0; i < h; i++) { g.fillStyle = 'hsla(' + Math.round(i / h * 360) + ',100%,60%,.5)'; g.fillRect(0, i, w, 1); }
-        for (i = 0; i < 24; i++) {
-          x = Math.random() * w; y = Math.random() * h; len = 30 + Math.random() * 120;
-          g.strokeStyle = 'rgba(255,255,255,' + (0.3 + Math.random() * 0.5) + ')'; g.lineWidth = 1 + Math.random() * 2;
-          g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + len); g.stroke();
-        }
-      } else if (k === 'galaxy') {
-        for (i = 0; i < 9; i++) {
-          x = Math.random() * w; y = Math.random() * h; rr = 25 + Math.random() * 45;
-          gr = g.createRadialGradient(x, y, 0, x, y, rr);
-          gr.addColorStop(0, i % 2 ? 'rgba(150,90,255,.6)' : 'rgba(60,200,255,.45)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
-          g.fillStyle = gr; g.fillRect(x - rr, y - rr, rr * 2, rr * 2);
-        }
-        for (i = 0; i < 40; i++) {
-          g.fillStyle = 'rgba(255,255,255,' + (0.6 + Math.random() * 0.4) + ')';
-          g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 1.4, 0, PI * 2); g.fill();
-        }
-      } else {
-        var cc = new T.Color(sk.c), rgb = [Math.round((cc.r * 0.6 + 0.4) * 255), Math.round((cc.g * 0.6 + 0.4) * 255), Math.round((cc.b * 0.6 + 0.4) * 255)];
-        g.fillStyle = 'rgba(' + rgb.join(',') + ',.16)'; g.fillRect(0, 0, w, h);
-        for (i = 0; i < 34; i++) {
-          x = Math.random() * w; y = Math.random() * h; len = 40 + Math.random() * 170;
-          g.strokeStyle = 'rgba(' + rgb.join(',') + ',' + (0.25 + Math.random() * 0.6) + ')'; g.lineWidth = 1 + Math.random() * 3;
-          g.beginPath(); g.moveTo(x, y); g.lineTo(x + (Math.random() * 6 - 3), y + len); g.stroke();
-        }
-      }
-    });
-  }
-
-  /* ---------- joran skin 3D + aura (dipakai di tangan, panggung, dan ikon) ---------- */
-  function makeSkinRod(sk, full, o) {
-    o = o || {};
-    var noAura = !!o.noAura, k = sk.k, tier = sk.t, isL = tier === 'legendary';
-    var N = k === 'solid' ? 10 : (tier === 'epic' ? 18 : (o.pN || 26)), psize = o.psize || 0.09;
-    var texes = [], geos = [], mats = [], i;
-    function tx(c, rx, ry) { var t = mkTex(c, rx, ry); texes.push(t); return t; }
-
-    var shT = tx(shaftCanvas(sk), 1, 1);
-    var m = new T.MeshStandardMaterial({ color: 0xffffff, map: shT, roughness: 0.28, metalness: 0.55 }); mats.push(m);
-    if (k === 'solid') { m.emissive.set(sk.c); m.emissiveIntensity = 0.08; }
-    else if (k === 'glow') { m.emissive.set(sk.c); m.emissiveIntensity = 0.5; m.roughness = 0.22; }
-    else { m.emissive.setHex(0xffffff); m.emissiveMap = shT; m.emissiveIntensity = k === 'rainbow' ? 0.45 : (k === 'fire' ? 0.9 : 0.8); }
-
-    var root = new T.Group(), shaft = new T.Group(), tip = new T.Group(), tipPv = new T.Group();
-    root.add(shaft); tipPv.position.y = 0.55; root.add(tipPv); tipPv.add(tip);
-    var gs = new T.Mesh(new T.CylinderGeometry(0.0155, 0.0325, 1.1, 18), m); gs.castShadow = true; shaft.add(gs); geos.push(gs.geometry);
-    var gt = new T.Mesh(new T.CylinderGeometry(0.0095, 0.0155, 0.42, 12).translate(0, 0.21, 0), m); tip.add(gt); geos.push(gt.geometry);
-    var ringM = new T.MeshStandardMaterial({ color: (isL || tier === 'epic') ? 0xd9b25a : 0xcfd6dc, metalness: 0.85, roughness: 0.28 }); mats.push(ringM);
-    [-0.32, 0, 0.32].forEach(function (y) {
-      var r = 0.0325 - 0.017 * (y + 0.55) / 1.1 + 0.004;
-      var tr = new T.Mesh(new T.TorusGeometry(r, 0.0045, 6, 18), ringM); tr.rotation.x = PI / 2; tr.position.y = y; shaft.add(tr); geos.push(tr.geometry);
-    });
-    if (full) {
-      var gm = new T.MeshStandardMaterial({ color: 0x2a2018, roughness: 0.9 }); mats.push(gm);
-      var grip = new T.Mesh(new T.CylinderGeometry(0.038, 0.038, 0.24, 14), gm); grip.position.y = -0.4; shaft.add(grip); geos.push(grip.geometry);
-      var steel = new T.MeshStandardMaterial({ color: 0xcfd6dc, metalness: 0.8, roughness: 0.28 }); mats.push(steel);
-      var reel = new T.Mesh(new T.CylinderGeometry(0.055, 0.055, 0.06, 18), steel); reel.rotation.z = PI / 2; reel.position.set(0.05, -0.2, 0); shaft.add(reel); geos.push(reel.geometry);
-      [0.05, 0.28, 0.48].forEach(function (y) {
-        var g2 = new T.Mesh(new T.TorusGeometry(0.013, 0.003, 6, 12), steel);
-        g2.position.set(0, y, 0.0325 - 0.017 * (y + 0.55) / 1.1 + 0.009); g2.rotation.x = PI / 2; shaft.add(g2); geos.push(g2.geometry);
-      });
-    }
-
-    var auT = null, sleeveM = null, halos = [], flare = null, fs = isL ? 0.7 : 0.5, pg = null, pp = null, pc = null;
-    var baseCol = new T.Color(sk.c), tc = new T.Color();
-    if (!noAura) {
-      auT = tx(auraCanvas(sk), 1, 2);
-      sleeveM = new T.MeshBasicMaterial({ map: auT, transparent: true, opacity: OP[k], blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, fog: false }); mats.push(sleeveM);
-      var s1 = new T.Mesh(new T.CylinderGeometry(0.05, 0.082, 1.1, 18, 1, true), sleeveM);
-      var s2 = new T.Mesh(new T.CylinderGeometry(0.032, 0.05, 0.42, 12, 1, true).translate(0, 0.21, 0), sleeveM);
-      s1.renderOrder = s2.renderOrder = 3; shaft.add(s1); tip.add(s2); geos.push(s1.geometry); geos.push(s2.geometry);
-      var hc = k === 'fire' ? '#ff7a1a' : (k === 'galaxy' ? '#8a6cff' : sk.c);
-      var halo = function (par, y, sz) {
-        var s = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: hc, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.8, fog: false }));
-        s.position.set(0, y, 0); s.scale.set(sz, sz, 1); par.add(s); halos.push({ s: s, sz: sz, ph: Math.random() * 6 }); mats.push(s.material);
-      };
-      if (k === 'solid') halo(tip, 0.42, 0.3);
-      else { halo(tip, 0.42, isL ? 0.75 : 0.55); halo(shaft, 0.1, isL ? 0.55 : 0.38); halo(shaft, -0.38, isL ? 0.5 : 0.34); }
-      if (k !== 'solid') {
-        flare = new T.Sprite(new T.SpriteMaterial({ map: starTex(), color: hc, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.9, fog: false }));
-        flare.position.set(0, 0.43, 0); flare.scale.set(fs, fs, 1); tip.add(flare); mats.push(flare.material);
-      }
-      pp = new Float32Array(N * 3); pc = new Float32Array(N * 3);
-      pg = new T.BufferGeometry();
-      pg.setAttribute('position', new T.BufferAttribute(pp, 3)); pg.setAttribute('color', new T.BufferAttribute(pc, 3));
-      var pm = new T.PointsMaterial({ size: psize, map: dotTex(), vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending, sizeAttenuation: true, fog: false });
-      var pts = new T.Points(pg, pm); pts.frustumCulled = false; shaft.add(pts); geos.push(pg); mats.push(pm);
-    }
-
-    function update(t, dt) {
-      var i, u, a, f, p, r, tw, w, h;
-      if (k === 'rainbow') shT.offset.y -= 0.25 * dt;
-      else if (k === 'fire') m.emissiveIntensity = 0.7 + 0.3 * Math.sin(t * 17) * Math.sin(t * 5.3);
-      else if (k === 'galaxy') { shT.offset.y -= 0.03 * dt; m.emissiveIntensity = 0.65 + 0.2 * Math.sin(t * 1.7); }
-      else if (k === 'glow') m.emissiveIntensity = 0.42 + 0.3 * Math.sin(t * 3);
-      if (noAura) return;
-      auT.offset.y -= SPD[k] * dt;
-      sleeveM.opacity = OP[k] * (0.8 + 0.2 * Math.sin(t * (k === 'fire' ? 14 : 3)));
-      for (i = 0; i < halos.length; i++) {
-        h = halos[i]; f = 1 + 0.15 * Math.sin(t * 3 + h.ph);
-        if (k === 'fire') f = 1 + 0.25 * Math.sin(t * 13 + h.ph) * Math.sin(t * 4.1 + h.ph);
-        h.s.scale.set(h.sz * f, h.sz * f, 1);
-        if (k === 'rainbow') h.s.material.color.setHSL((t * 0.25 + h.ph * 0.05) % 1, 1, 0.6);
-      }
-      if (flare) {
-        flare.material.rotation = t * (k === 'fire' ? 0.5 : 1.2);
-        f = fs * (1 + 0.2 * Math.sin(t * 4)); flare.scale.set(f, f, 1);
-        if (k === 'rainbow') flare.material.color.setHSL((t * 0.3) % 1, 1, 0.65);
-      }
-      for (i = 0; i < N; i++) {
-        u = i / N; p = i * 3;
-        if (k === 'rainbow') {
-          a = t * 2.6 + u * PI * 4;
-          pp[p] = Math.cos(a) * 0.075; pp[p + 1] = -0.5 + u * 1.45; pp[p + 2] = Math.sin(a) * 0.075;
-          tc.setHSL((u + t * 0.25) % 1, 1, 0.6); pc[p] = tc.r; pc[p + 1] = tc.g; pc[p + 2] = tc.b;
-        } else if (k === 'fire') {
-          f = (t * 0.85 + u) % 1; w = 1 - f;
-          pp[p] = Math.sin(i * 7.3 + t * 4) * 0.05 * (0.3 + f); pp[p + 1] = -0.25 + f * 1.2; pp[p + 2] = Math.cos(i * 5.1 + t * 3.1) * 0.05 * (0.3 + f);
-          pc[p] = w; pc[p + 1] = 0.75 * w * w; pc[p + 2] = 0.2 * w * w * w;
-        } else if (k === 'galaxy') {
-          a = t * (0.6 + (i % 4) * 0.35) + u * PI * 2; r = 0.06 + (i % 5) * 0.02; tw = 0.5 + 0.5 * Math.sin(t * 5 + i * 1.7);
-          pp[p] = Math.cos(a) * r; pp[p + 1] = -0.5 + ((i * 0.37 + t * 0.06) % 1) * 1.45; pp[p + 2] = Math.sin(a) * r;
-          tc.setHSL(0.55 + 0.2 * ((i * 0.31) % 1), 0.8, 0.55 + 0.3 * tw);
-          w = 0.3 + 0.7 * tw; pc[p] = tc.r * w; pc[p + 1] = tc.g * w; pc[p + 2] = tc.b * w;
-        } else if (k === 'glow') {
-          a = t * (1.2 + (i % 3) * 0.4) + u * PI * 2; r = 0.09 + (i % 3) * 0.015; tw = 0.5 + 0.5 * Math.sin(t * 4 + i * 1.3);
-          pp[p] = Math.cos(a) * r; pp[p + 1] = -0.45 + ((i * 0.37 + t * 0.18) % 1) * 1.4; pp[p + 2] = Math.sin(a) * r;
-          tc.copy(baseCol).multiplyScalar(0.4 + 0.9 * tw); pc[p] = tc.r; pc[p + 1] = tc.g; pc[p + 2] = tc.b;
-        } else {
-          f = (t * 0.22 + u) % 1; a = u * PI * 2 + t * 0.8; r = 0.08 + 0.03 * f; w = Math.sin(f * PI) * 1.2;
-          pp[p] = Math.cos(a) * r; pp[p + 1] = -0.4 + f * 1.3; pp[p + 2] = Math.sin(a) * r;
-          pc[p] = baseCol.r * w; pc[p + 1] = baseCol.g * w; pc[p + 2] = baseCol.b * w;
-        }
-      }
-      pg.attributes.position.needsUpdate = true; pg.attributes.color.needsUpdate = true;
-    }
-    function dispose() {
-      geos.forEach(function (g) { g.dispose(); }); mats.forEach(function (x) { x.dispose(); }); texes.forEach(function (x) { x.dispose(); });
-    }
-    return { root: root, shaft: shaft, tip: tip, update: update, dispose: dispose };
-  }
-
-  /* ---------- ikon skin 3D (dirender sekali, dicache) ---------- */
-  var thumbs = {}, thumbTried = false;
-  function makeThumbs() {
-    if (thumbTried) return; thumbTried = true;
-    var r = null;
-    try {
-      var W = 144, cv = document.createElement('canvas'); cv.width = cv.height = W;
-      r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: true });
-      r.setPixelRatio(1); r.setSize(W, W, false); r.setClearColor(0x000000, 0);
-      var sc = new T.Scene(); sc.add(new T.HemisphereLight(0xe6f4ff, 0x3b4650, 1.0));
-      var dl = new T.DirectionalLight(0xfff0d0, 1.2); dl.position.set(2, 4, 5); sc.add(dl);
-      var cam = new T.PerspectiveCamera(30, 1, 0.1, 50); cam.position.set(0.1, 0.2, 3.7); cam.lookAt(0.1, 0.17, 0);
-      [null].concat(SKINS).forEach(function (sk) {
-        var rod = makeSkinRod(sk || NOSKIN, true, { noAura: !sk, pN: 30, psize: 0.14 });
-        rod.root.rotation.z = -0.62; rod.root.rotation.y = -0.4; sc.add(rod.root);
-        rod.update(1.4, 0.016); rod.update(1.45, 0.05);
-        r.render(sc, cam); thumbs[sk ? sk.id : ''] = cv.toDataURL('image/png');
-        sc.remove(rod.root); rod.dispose();
-      });
-    } catch (e) { console.warn('ikon skin 3D gagal', e); thumbs = {}; }
-    if (r) { try { r.dispose(); if (r.forceContextLoss) r.forceContextLoss(); } catch (e) {} }
-  }
-  function thumbHtml(sk) {
-    var t = TIER[sk.t];
-    if (thumbs[sk.id]) return '<img class="gcTh" alt="" src="' + thumbs[sk.id] + '" style="--rc:' + t.c + '">';
-    return '<div class="gcSw" style="' + swatch(sk) + '"></div>';
-  }
-
-  /* ---------- logika gacha ---------- */
-  function rollTier(min) {
-    var r = Math.random() * 100, acc = 0, t = 'common';
-    for (var i = 0; i < ORDER.length; i++) { acc += TIER[ORDER[i]].w; if (r < acc) { t = ORDER[i]; break; } }
-    if (ORDER.indexOf(t) < ORDER.indexOf(min)) t = min;
-    return t;
-  }
-  function reward(tier) {
-    var s = C.save, r = Math.random();
-    if (tier === 'common') {
-      if (r < 0.75) return { tier: tier, kind: 'coin', coins: rnd(10, 50) };
-      var pool = ['luck', 'midnight'].filter(function (id) { return !(s.baitStock && s.baitStock[id] > 0); });
-      if (pool.length) return { tier: tier, kind: 'bait', id: pick(pool) };
-      return { tier: tier, kind: 'coin', coins: 15, note: 'Bait sudah dimiliki' };
-    }
-    if (r < COIN_CHANCE[tier]) return { tier: tier, kind: 'coin', coins: tier === 'rare' ? rnd(100, 300) : (tier === 'epic' ? 500 : 2000) };
-    var sk = pick(SKINS.filter(function (x) { return x.t === tier; }));
-    if (s.skins && s.skins[sk.id]) return { tier: tier, kind: 'skin', id: sk.id, dup: true, coins: DUP[tier] };
-    return { tier: tier, kind: 'skin', id: sk.id };
-  }
-  function apply(res) {
-    var s = C.save;
-    s.skins = s.skins || {}; s.baitStock = s.baitStock || {};
-    if (res.kind === 'coin') s.coins += res.coins;
-    else if (res.kind === 'bait') s.baitStock[res.id] = Math.max(1, s.baitStock[res.id] || 0);
-    else if (res.dup) s.coins += res.coins;
-    else s.skins[res.id] = 1;
-  }
-
-  var busy = false, animT = 0, safeT = 0;
-  var st = { tab: 'pull', anim: false, last: null, best: 'common', bestRes: null };
-
-  function pull(n) {
-    var s = C.save, cost = n === 1 ? COST1 : COST10;
-    if (busy) return;
-    if (s.coins < cost) { C.toast('Koin kurang, butuh ' + fmt(cost)); return; }
-    s.coins -= cost;
-    var g = s.gacha = s.gacha || { pity: 0, total: 0 }, out = [], best = 0, bi = 0, i;
-    for (i = 0; i < n; i++) {
-      g.pity++; g.total++;
-      var t = g.pity >= PITY_MAX ? 'legendary' : rollTier(n === 10 && i === 9 ? 'rare' : 'common');
-      if (t === 'legendary') g.pity = 0;
-      var r = reward(t); apply(r); out.push(r);
-      if (ORDER.indexOf(t) > best) { best = ORDER.indexOf(t); bi = i; }
-    }
-    C.persist(); C.refresh(); C.Sfx.tap();
-    st.last = out; st.best = ORDER[best]; st.bestRes = out[bi]; st.anim = true; busy = true;
-    render();
-    clearTimeout(animT);
-    if (!stagePlay(out[bi])) animT = setTimeout(finish, 900);
-    clearTimeout(safeT); safeT = setTimeout(finish, 7000);
-  }
-  function finish() {
-    if (!st.anim) return;
-    clearTimeout(animT); clearTimeout(safeT);
-    st.anim = false; busy = false;
-    if (!S3.played) {
-      C.Sfx.catchFish(st.best);
-      C.vibe(st.best === 'legendary' ? [100, 50, 100, 50, 160] : (st.best === 'epic' ? [60, 40, 60] : [30]));
-    }
-    render();
-  }
-  function skip() {
-    if (!st.anim) return;
-    if (S3.mode === 'cap') S3.t = Math.max(S3.t, 2.5);
-    else if (S3.mode === 'reveal') S3.fast = true;
-    else finish();
-  }
-  function equip(id) {
-    var s = C.save;
-    if (id && !(s.skins && s.skins[id])) return;
-    s.skin = id; C.persist(); C.Sfx.tap();
-    C.toast(id ? 'Skin ' + skinById(id).n + ' dipakai' : 'Skin dilepas');
-    if (st.tab === 'skin' && S3.r && !st.anim) stagePreview(id);
-    render();
-  }
-
-  /* ---------- UI ---------- */
-  var css = document.createElement('style');
-  css.textContent = [
-    '.gcBox{width:min(96vw,880px)!important;max-height:92vh;max-height:92dvh}',
-    '#gcMain{display:flex;flex-direction:column;flex:1;min-height:0}',
-    '#gcStageCol{flex:none;padding:6px 14px 0}',
-    '#gcStage{position:relative;width:100%;padding-top:62%;border-radius:16px;overflow:hidden;background:radial-gradient(circle at 50% 38%,#2f6f8a,#0b1c28 78%);touch-action:manipulation}',
-    '#gcStage canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}',
-    '.gcNo{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-dim);padding:10px;text-align:center}',
-    '#gcRName{min-height:22px;margin-top:6px;font-size:14px;font-weight:900;letter-spacing:.5px;text-align:center;text-shadow:0 2px 0 rgba(0,0,0,.55);color:#fff}',
-    '#gcSide{flex:1;min-height:0;display:flex;flex-direction:column}',
-    '#gcSide .modalBody{flex:1;min-height:0}',
-    '@media (min-aspect-ratio:1/1){#gcMain{flex-direction:row}#gcStageCol{flex:0 0 44%;display:flex;flex-direction:column;justify-content:center;padding:8px 6px 8px 14px;box-sizing:border-box}#gcStage{padding-top:78%}}',
-    '.gcTabs{display:flex;gap:7px;padding:8px 16px 10px}',
-    '.gcTab{flex:1;padding:9px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:var(--text-dim);font-size:12px;font-weight:700;font-family:inherit}',
-    '.gcTab.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#052730;border-color:#fff;box-shadow:0 4px 0 rgba(0,80,90,.4)}',
-    '.gcRates{display:grid;gap:5px;margin-bottom:10px}',
-    '.gcRate{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:12px;border:2px solid var(--rc);background:rgba(0,0,0,.25);font-size:11px;line-height:1.3}',
-    '.gcRate b{color:var(--rc);min-width:76px;font-size:12px}',
-    '.gcRate .p{margin-left:auto;font-weight:900;font-size:13px}',
-    '.gcBtns{display:flex;gap:8px;margin-bottom:8px}',
-    '.gcPull{flex:1;padding:11px 6px;border-radius:18px;border:3px solid #fff;font-family:inherit;font-weight:900;font-size:14px;line-height:1.2;color:#052730;background:linear-gradient(90deg,#37d1c8,#2f9fc9);box-shadow:0 5px 0 rgba(0,80,90,.5),0 8px 14px rgba(0,0,0,.3)}',
-    '.gcPull.gold{background:linear-gradient(160deg,#ffcf4d,#e0982a);color:#4a2600;box-shadow:0 5px 0 rgba(120,70,0,.55),0 8px 14px rgba(0,0,0,.3)}',
-    '.gcPull small{display:block;font-size:10.5px;font-weight:800;opacity:.85;margin-top:2px}',
-    '.gcPull:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)}',
-    '.gcPull:disabled{opacity:.5}',
-    '.gcInfo{text-align:center;font-size:11px;color:var(--text-dim);line-height:1.5;margin-bottom:8px}',
-    '.gcH{font-size:12px;font-weight:900;color:var(--gold);margin:4px 0 6px}',
-    '.gcGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}',
-    '.gcCard{border:2.5px solid var(--rc);border-radius:14px;padding:8px 4px;text-align:center;background:linear-gradient(165deg,rgba(255,255,255,.07),rgba(0,0,0,.3));box-shadow:0 0 9px var(--rc);animation:gcPop .35s both}',
-    '.gcTier{font-size:10px;font-weight:900;color:var(--rc)}',
-    '.gcBig{font-size:13px;font-weight:900;line-height:1.2;margin:3px 0}',
-    '.gcSub{font-size:10px;color:var(--text-dim)}',
-    '.gcTh{display:block;width:58px;height:58px;margin:4px auto 0;flex-shrink:0;border-radius:12px;border:2px solid var(--rc);object-fit:contain;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.14),#0b1c28 78%)}',
-    '.rowItem .gcTh{margin:0}',
-    '.gcSw{position:relative;width:44px;height:44px;border-radius:12px;border:2px solid rgba(255,255,255,.75);flex-shrink:0;margin:4px auto 0}',
-    '.gcSw::after{content:"";position:absolute;left:7px;right:7px;top:50%;height:4px;border-radius:2px;background:rgba(255,255,255,.88);transform:rotate(-35deg)}',
-    '.rowItem .gcSw{margin:0}',
-    '.gcLocked .gcTh,.gcLocked .gcSw{filter:grayscale(1) brightness(.4)}',
-    '@keyframes gcPop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}',
-    '@media (prefers-reduced-motion:reduce){.gcCard{animation:none!important;opacity:1}}'
-  ].join('');
-  document.head.appendChild(css);
-
-  var ov = document.createElement('div'); ov.className = 'modalOverlay'; ov.id = 'modalGacha';
-  ov.innerHTML = '<div class="modalBox gcBox"><div class="modalHead"><h2>Mesin Gacha Rod</h2><button class="modalClose" id="gcX" type="button">\u2715</button></div>' +
-    '<div id="gcMain"><div id="gcStageCol"><div id="gcStage"></div><div id="gcRName"></div></div>' +
-    '<div id="gcSide"><div class="gcTabs" id="gcTabs"><button class="gcTab on" data-tab="pull" type="button">Gacha</button><button class="gcTab" data-tab="skin" type="button">Skin Saya</button></div>' +
-    '<div class="modalBody" id="gcBody"></div></div></div>' +
-    '<div class="modalFoot"><span id="gcFoot"></span><span id="gcCoins"></span></div></div>';
-  document.body.appendChild(ov);
-  var body = $('gcBody');
-  $('gcX').onclick = function () { ov.classList.remove('show'); };
-  $('gcStage').addEventListener('pointerdown', skip);
-  $('gcTabs').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-tab]'); if (!b) return;
-    st.tab = b.getAttribute('data-tab'); render();
-    if (!S3.r || st.anim) return;
-    if (st.tab === 'skin') stagePreview(C.save.skin || ''); else stageIdle();
-  });
-  body.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
-    var a = b.getAttribute('data-act');
-    if (a === 'p1') pull(1); else if (a === 'p10') pull(10);
-    else if (a === 'eq') equip(b.getAttribute('data-id'));
-    else if (a === 'un') equip('');
-    else if (a === 'pv') {
-      var id = b.getAttribute('data-id');
-      if (C.save.skins && C.save.skins[id]) { if (S3.r && !st.anim) stagePreview(id); }
-      else C.toast('Skin belum dimiliki');
-    }
-  });
-  new MutationObserver(function () {
-    if (ov.classList.contains('show')) return;
-    if (st.anim) { st.anim = false; busy = false; clearTimeout(animT); clearTimeout(safeT); }
-    s3dispose();
-  }).observe(ov, { attributes: true, attributeFilter: ['class'] });
-
-  function card(r, i) {
-    var t = TIER[r.tier], big, sub, sw = '';
-    if (r.kind === 'coin') { big = '+' + fmt(r.coins); sub = r.note || 'Koin'; }
-    else if (r.kind === 'bait') { big = baitName(r.id); sub = 'Bait baru!'; }
-    else {
-      var sk = skinById(r.id);
-      sw = thumbHtml(sk);
-      big = sk.n; sub = r.dup ? 'Duplikat +' + r.coins + ' koin' : 'SKIN BARU!';
-    }
-    return '<div class="gcCard" style="--rc:' + t.c + ';animation-delay:' + (i * 0.09).toFixed(2) + 's"><div class="gcTier">' + t.n + '</div>' + sw + '<div class="gcBig">' + big + '</div><div class="gcSub">' + sub + '</div></div>';
-  }
-
-  function render() {
-    var s = C.save, g = s.gacha || { pity: 0, total: 0 }, h = '', i;
-    var tp = ov.querySelectorAll('.gcTab');
-    for (i = 0; i < tp.length; i++) tp[i].className = 'gcTab' + (tp[i].getAttribute('data-tab') === st.tab ? ' on' : '');
-    if (st.tab === 'pull') {
-      h += '<div class="gcRates">';
-      ORDER.forEach(function (key) { var t = TIER[key]; h += '<div class="gcRate" style="--rc:' + t.c + '"><b>' + t.n + '</b><span>' + t.d + '</span><span class="p">' + t.w + '%</span></div>'; });
-      h += '</div>';
-      h += '<div class="gcBtns"><button class="gcPull" type="button" data-act="p1"' + ((busy || s.coins < COST1) ? ' disabled' : '') + '>Gacha 1x<small>' + fmt(COST1) + ' koin</small></button>' +
-        '<button class="gcPull gold" type="button" data-act="p10"' + ((busy || s.coins < COST10) ? ' disabled' : '') + '>Gacha 10x<small>' + fmt(COST10) + ' koin (Hemat!)</small><small>Garansi minimal Rare di pull ke-10</small></button></div>';
-      h += '<div class="gcInfo">Pity: <b>' + g.pity + '/' + PITY_MAX + '</b> \u2022 Legendary dijamin di pull ke-' + PITY_MAX + '<br>Skin duplikat jadi koin (Rare ' + DUP.rare + ', Epic ' + DUP.epic + ', Legendary ' + DUP.legendary + '). Skin berlaku di semua rod.</div>';
-      if (st.anim) {
-        h += '<div class="gcInfo"><b>Mengundi...</b> ketuk panggung buat lewati</div>';
-      } else if (st.last) {
-        h += '<div class="gcH">Hasil terakhir</div><div class="gcGrid">';
-        for (i = 0; i < st.last.length; i++) h += card(st.last[i], i);
-        h += '</div>';
-      }
-      $('gcFoot').textContent = 'Total pull: ' + fmt(g.total);
-    } else {
-      var owned = 0;
-      h += '<div class="gcInfo">Ketuk skin yang dimiliki buat lihat preview 3D-nya di panggung.</div>';
-      h += '<button class="rowBtn" type="button" data-act="un"' + (s.skin ? '' : ' disabled') + ' style="width:100%;margin-bottom:8px">Tanpa Skin</button>';
-      SKINS.forEach(function (sk) {
-        var has = !!(s.skins && s.skins[sk.id]), on = s.skin === sk.id, t = TIER[sk.t];
-        if (has) owned++;
-        h += '<div class="rowItem' + (has ? '' : ' gcLocked') + '" data-act="pv" data-id="' + sk.id + '" style="border-color:' + t.c + '">' + thumbHtml(sk) +
-          '<div class="rowInfo"><div class="rowName" style="color:' + t.c + '">' + (has ? sk.n : '???') + '</div><div class="rowSub">' + t.n + ' \u2022 ' + KIND_LABEL[sk.k] + '</div></div>' +
-          '<button class="rowBtn' + (on ? ' owned' : '') + '" type="button"' + (has && !on ? ' data-act="eq" data-id="' + sk.id + '"' : ' disabled') + '>' + (on ? 'Dipakai' : (has ? 'Pakai' : 'Terkunci')) + '</button></div>';
-      });
-      $('gcFoot').textContent = 'Terkumpul ' + owned + '/' + SKINS.length;
-    }
-    $('gcCoins').textContent = 'Koin: ' + fmt(s.coins);
-    body.innerHTML = h;
-  }
-
-  /* ---------- panggung 3D (canvas baru tiap dibuka, dibuang saat ditutup) ---------- */
-  var S3 = {};
-  function dropObj(o) {
-    if (!o) return;
-    if (o.parent) o.parent.remove(o);
-    o.traverse(function (x) {
-      if (x.geometry && !x.isSprite) x.geometry.dispose();
-      var mm = x.material;
-      if (mm) { if (mm.length) mm.forEach(function (q) { q.dispose(); }); else mm.dispose(); }
-    });
-  }
-  function s3clearObjs() {
-    if (!S3.root) return;
-    while (S3.root.children.length) dropObj(S3.root.children[0]);
-    (S3.disp || []).forEach(function (f) { try { f(); } catch (e) {} });
-    S3.disp = []; S3.cap = S3.rew = null;
-  }
-  function setCol(col) {
-    S3.col = col;
-    S3.glow.material.color.copy(col); S3.rays.material.color.copy(col); S3.pl.color.copy(col);
-    S3.floor.material.color.copy(col); S3.flash.material.color.copy(col); S3.shock.material.color.copy(col);
-    S3.ringM.color.copy(col); S3.beam.material.color.copy(col);
-  }
-  function s3init() {
-    if (S3.r) return true;
-    if (S3.fail) return false;
-    var host = $('gcStage'); if (!host) return false;
-    var cv = document.createElement('canvas'); host.innerHTML = ''; host.appendChild(cv);
-    try { S3.r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); }
-    catch (e) { S3.r = null; S3.fail = true; host.innerHTML = '<div class="gcNo">3D tidak didukung di perangkat ini</div>'; return false; }
-    cv.addEventListener('webglcontextlost', function (ev) { ev.preventDefault(); });
-    var r = S3.r; S3.cv = cv; S3.w = 0; S3.h = 0;
-    r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    r.setClearColor(0x000000, 0);
-    var sc = S3.sc = new T.Scene();
-    sc.add(new T.HemisphereLight(0xe6f4ff, 0x2a3a4a, 0.95));
-    var dl = new T.DirectionalLight(0xfff0d8, 1.1); dl.position.set(2.5, 4, 4); sc.add(dl);
-    S3.pl = new T.PointLight(0xffffff, 0, 9); S3.pl.position.set(0, 0.6, 2); sc.add(S3.pl);
-    S3.cam = new T.PerspectiveCamera(36, 4 / 3, 0.1, 50);
-    S3.cam.position.set(0, 0.8, 6.2); S3.cam.lookAt(0, 0.35, 0);
-    S3.root = new T.Group(); sc.add(S3.root);
-    var pb = new T.Mesh(new T.CylinderGeometry(1.55, 1.75, 0.22, 48), new T.MeshStandardMaterial({ color: 0x1c2b38, roughness: 0.5, metalness: 0.7 })); pb.position.y = -1.05; sc.add(pb);
-    var pd = new T.Mesh(new T.CylinderGeometry(1.3, 1.35, 0.08, 48), new T.MeshStandardMaterial({ color: 0x2a3d4d, roughness: 0.35, metalness: 0.8 })); pd.position.y = -0.91; sc.add(pd);
-    S3.ringM = new T.MeshBasicMaterial({ color: 0x37d1c8 });
-    var rg = new T.Mesh(new T.TorusGeometry(1.28, 0.035, 8, 64), S3.ringM); rg.rotation.x = PI / 2; rg.position.y = -0.86; sc.add(rg);
-    S3.beam = new T.Mesh(new T.CylinderGeometry(1.0, 1.3, 4.6, 32, 1, true), new T.MeshBasicMaterial({ color: 0x37d1c8, transparent: true, opacity: 0.1, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }));
-    S3.beam.position.y = 1.4; sc.add(S3.beam);
-    S3.floor = new T.Mesh(new T.RingGeometry(0.9, 1.6, 48).rotateX(-PI / 2), new T.MeshBasicMaterial({ color: 0x37d1c8, transparent: true, opacity: 0.25, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending }));
-    S3.floor.position.y = -0.85; sc.add(S3.floor);
-    S3.rays = new T.Mesh(new T.PlaneGeometry(8, 8), new T.MeshBasicMaterial({ map: rayTex(), color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }));
-    S3.rays.position.set(0, 0.3, -1); sc.add(S3.rays);
-    S3.glow = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending }));
-    S3.glow.position.set(0, 0.2, 0.3); sc.add(S3.glow);
-    S3.flash = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending }));
-    S3.flash.position.set(0, 0.2, 0.9); sc.add(S3.flash);
-    S3.shock = new T.Mesh(new T.RingGeometry(0.92, 1, 56), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }));
-    S3.shock.position.set(0, 0.2, 0.2); sc.add(S3.shock);
-    var PN = 150; S3.PN = PN;
-    S3.pp = new Float32Array(PN * 3); S3.pcol = new Float32Array(PN * 3); S3.pvel = new Float32Array(PN * 3);
-    S3.plife = new Float32Array(PN); S3.pmax = new Float32Array(PN); S3.pbase = new Float32Array(PN * 3);
-    for (var i = 0; i < PN; i++) S3.pp[i * 3 + 1] = -999;
-    S3.pgeo = new T.BufferGeometry();
-    S3.pgeo.setAttribute('position', new T.BufferAttribute(S3.pp, 3));
-    S3.pgeo.setAttribute('color', new T.BufferAttribute(S3.pcol, 3));
-    var pts = new T.Points(S3.pgeo, new T.PointsMaterial({ size: 0.16, map: dotTex(), vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending }));
-    pts.frustumCulled = false; sc.add(pts);
-    S3.disp = []; S3.t = 0; S3.run = false;
-    return true;
-  }
-  function s3dispose() {
-    if (S3.raf) cancelAnimationFrame(S3.raf);
-    S3.run = false;
-    if (S3.r) { try { s3clearObjs(); S3.r.dispose(); if (S3.r.forceContextLoss) S3.r.forceContextLoss(); } catch (e) {} }
-    var host = $('gcStage'); if (host) host.innerHTML = '';
-    S3 = {};
-  }
-  function s3run() { if (S3.run) return; S3.run = true; S3.last = 0; S3.raf = requestAnimationFrame(s3frame); }
-  function emit(x, y, z, n, spd, up, col) {
-    var c = 0;
-    for (var i = 0; i < S3.PN && c < n; i++) {
-      if (S3.plife[i] > 0) continue;
-      var a = Math.random() * PI * 2, sp = spd * (0.35 + Math.random() * 0.65), j = i * 3;
-      S3.pp[j] = x; S3.pp[j + 1] = y; S3.pp[j + 2] = z;
-      S3.pvel[j] = Math.cos(a) * sp; S3.pvel[j + 1] = up * (0.4 + Math.random()); S3.pvel[j + 2] = Math.sin(a) * sp * 0.6;
-      S3.pmax[i] = S3.plife[i] = 0.7 + Math.random() * 0.8;
-      S3.pbase[j] = col.r; S3.pbase[j + 1] = col.g; S3.pbase[j + 2] = col.b; c++;
-    }
-  }
-  function stepP(dt) {
-    var i, j, f;
-    for (i = 0; i < S3.PN; i++) {
-      if (S3.plife[i] <= 0) continue;
-      j = i * 3; S3.plife[i] -= dt;
-      if (S3.plife[i] <= 0) { S3.pp[j + 1] = -999; S3.pcol[j] = S3.pcol[j + 1] = S3.pcol[j + 2] = 0; continue; }
-      S3.pvel[j + 1] -= 4 * dt;
-      S3.pp[j] += S3.pvel[j] * dt; S3.pp[j + 1] += S3.pvel[j + 1] * dt; S3.pp[j + 2] += S3.pvel[j + 2] * dt;
-      f = S3.plife[i] / S3.pmax[i];
-      S3.pcol[j] = S3.pbase[j] * f; S3.pcol[j + 1] = S3.pbase[j + 1] * f; S3.pcol[j + 2] = S3.pbase[j + 2] * f;
-    }
-    S3.pgeo.attributes.position.needsUpdate = true; S3.pgeo.attributes.color.needsUpdate = true;
-  }
-
-  function mkCapsule(hex) {
-    var g = new T.Group();
-    var mt = new T.MeshStandardMaterial({ color: hex, roughness: 0.22, metalness: 0.15, emissive: hex, emissiveIntensity: 0.18, side: T.DoubleSide });
-    var mw = new T.MeshStandardMaterial({ color: 0xf2f4f6, roughness: 0.22, metalness: 0.1, side: T.DoubleSide });
-    var top = new T.Group(), bot = new T.Group();
-    top.add(new T.Mesh(new T.SphereGeometry(0.5, 28, 14, 0, PI * 2, 0, PI / 2), mt));
-    bot.add(new T.Mesh(new T.SphereGeometry(0.5, 28, 14, 0, PI * 2, PI / 2, PI / 2), mw));
-    var band = new T.Mesh(new T.TorusGeometry(0.5, 0.03, 8, 40), new T.MeshStandardMaterial({ color: 0xd9b25a, metalness: 0.7, roughness: 0.3 }));
-    band.rotation.x = PI / 2;
-    g.add(top); g.add(bot); g.add(band);
-    g.userData = { top: top, bot: bot, band: band };
-    return g;
-  }
-  function buildReward(res) {
-    var group = new T.Group(), spin = new T.Group(); group.add(spin);
-    var o = { group: group, spin: spin, base: 1, update: null, noSpin: false, disp: null };
-    if (res.kind === 'skin') {
-      var sk = res.id ? skinById(res.id) : NOSKIN;
-      var rod = makeSkinRod(sk, true, { noAura: !res.id, pN: 60, psize: 0.2 }), tilt = new T.Group();
-      tilt.rotation.z = 0.4; rod.root.position.y = -0.22; tilt.add(rod.root); spin.add(tilt); o.base = 1.45;
-      o.disp = rod.dispose; o.update = function (t, dt) { rod.update(t, dt); };
-    } else if (res.kind === 'coin') {
-      var gm = new T.MeshStandardMaterial({ color: 0xffd24a, roughness: 0.25, metalness: 0.6, emissive: 0x7a4a00, emissiveIntensity: 0.35 });
-      var dk = new T.MeshStandardMaterial({ color: 0xc8901c, roughness: 0.35, metalness: 0.6 });
-      var pivs = [];
-      [[-0.6, -0.1, 0.9], [0.6, 0.05, 0.0], [0, 0.4, 1.8]].forEach(function (p) {
-        var pv = new T.Group(); pv.position.set(p[0], p[1], 0); pv.rotation.y = p[2];
-        var coin = new T.Mesh(new T.CylinderGeometry(0.42, 0.42, 0.09, 32), gm); coin.rotation.x = PI / 2; pv.add(coin);
-        var r1 = new T.Mesh(new T.TorusGeometry(0.34, 0.025, 8, 32), dk); r1.position.z = 0.05; pv.add(r1);
-        var r2 = new T.Mesh(new T.TorusGeometry(0.34, 0.025, 8, 32), dk); r2.position.z = -0.05; pv.add(r2);
-        spin.add(pv); pivs.push(pv);
-      });
-      o.noSpin = true;
-      o.update = function (t, dt) { for (var i = 0; i < pivs.length; i++) pivs[i].rotation.y += dt * (2 + i * 0.6); };
-    } else {
-      var bc = (C.GEAR_COLORS.bait && C.GEAR_COLORS.bait[res.id]) || '#5fd36b';
-      var om = new T.MeshStandardMaterial({ color: bc, roughness: 0.2, metalness: 0.2, emissive: bc, emissiveIntensity: 0.6 });
-      spin.add(new T.Mesh(new T.SphereGeometry(0.42, 24, 16), om));
-      var rm = new T.MeshStandardMaterial({ color: 0xffffff, emissive: bc, emissiveIntensity: 0.8 });
-      var ra = new T.Mesh(new T.TorusGeometry(0.7, 0.03, 8, 40), rm); ra.rotation.x = 1.2; spin.add(ra);
-      var rb = new T.Mesh(new T.TorusGeometry(0.6, 0.025, 8, 40), rm); rb.rotation.x = -0.7; spin.add(rb);
-      o.update = function (t) { om.emissiveIntensity = 0.5 + 0.3 * Math.sin(t * 4); ra.rotation.z = t * 1.5; rb.rotation.z = -t * 1.2; };
-    }
-    return o;
-  }
-
-  function stageReset() {
-    s3clearObjs();
-    S3.t = 0; S3.burst = false; S3.done = false; S3.landed = false; S3.fast = false; S3.played = false;
-    S3.rays.material.opacity = 0; S3.flash.material.opacity = 0; S3.shock.material.opacity = 0; S3.glow.material.opacity = 0; S3.pl.intensity = 0;
-    S3.floor.material.opacity = 0.25;
-  }
-  function stageIdle() {
-    if (!s3init()) return;
-    stageReset(); S3.mode = 'idle';
-    var col = new T.Color(0x37d1c8); setCol(col);
-    S3.cap = mkCapsule(col.getHex()); S3.cap.scale.setScalar(1.5); S3.root.add(S3.cap);
-    var n = $('gcRName'); n.textContent = ''; n.style.color = '#fff';
-    s3run();
-  }
-  function stagePlay(res) {
-    if (!s3init()) return false;
-    stageReset(); S3.mode = 'cap'; S3.res = res;
-    var col = new T.Color(TIER[res.tier].c); setCol(col);
-    S3.cap = mkCapsule(col.getHex()); S3.cap.scale.setScalar(1.5); S3.cap.position.set(0, 3, 0); S3.root.add(S3.cap);
-    var n = $('gcRName'); n.textContent = 'Mengundi...'; n.style.color = '#fff';
-    s3run();
-    return true;
-  }
-  function stagePreview(id) {
-    if (!s3init()) return;
-    stageReset(); S3.mode = 'preview';
-    var sk = id ? skinById(id) : null;
-    setCol(new T.Color(sk ? TIER[sk.t].c : '#9fb4bd'));
-    S3.pvTier = sk ? ORDER.indexOf(sk.t) : 0;
-    S3.rew = buildReward({ kind: 'skin', id: id || '' });
-    if (S3.rew.disp) S3.disp.push(S3.rew.disp);
-    S3.rew.group.scale.setScalar(S3.rew.base); S3.root.add(S3.rew.group);
-    S3.pl.intensity = 0.8;
-    var n = $('gcRName'); n.textContent = sk ? sk.n + ' (' + TIER[sk.t].n + ')' : 'Tanpa Skin'; n.style.color = sk ? TIER[sk.t].c : '#cfe6ec';
-    s3run();
-  }
-  function burst() {
-    var res = S3.res, ti = ORDER.indexOf(res.tier), col = S3.col;
-    S3.mode = 'reveal'; S3.bt = S3.t; S3.burst = true; S3.played = true;
-    S3.vtop = new T.Vector3(-1.4, 3.2, 0.4); S3.vbot = new T.Vector3(1.0, 0.4, 0.4);
-    if (S3.cap) S3.cap.userData.band.visible = false;
-    S3.rew = buildReward(res); if (S3.rew.disp) S3.disp.push(S3.rew.disp);
-    S3.rew.group.scale.setScalar(0.01); S3.root.add(S3.rew.group);
-    emit(0, 0.1, 0, 50 + ti * 30, 3.2 + ti * 0.8, 4.5, col);
-    if (ti >= 2) emit(0, 0.1, 0, 30, 4, 5, new T.Color(0xffffff));
-    S3.shake = 0.15 + ti * 0.08;
-    C.Sfx.catchFish(res.tier);
-    C.vibe(res.tier === 'legendary' ? [100, 50, 100, 50, 160] : (res.tier === 'epic' ? [60, 40, 60] : [30]));
-    var n = $('gcRName'); n.textContent = TIER[res.tier].n.toUpperCase() + ' \u2022 ' + rewardName(res); n.style.color = TIER[res.tier].c;
-  }
-  function backOut(u) { var c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2); }
-
-  function s3frame(ts) {
-    if (!S3.run || !S3.r) return;
-    S3.raf = requestAnimationFrame(s3frame);
-    var dt = S3.last ? Math.min(0.05, (ts - S3.last) / 1000) : 0; S3.last = ts;
-    var cw = S3.cv.clientWidth, ch = S3.cv.clientHeight;
-    if (cw && ch && (cw !== S3.w || ch !== S3.h)) { S3.w = cw; S3.h = ch; S3.r.setSize(cw, ch, false); S3.cam.aspect = cw / ch; S3.cam.updateProjectionMatrix(); }
-    if (!S3.w) return;
-    S3.t += dt;
-    var t = S3.t, m = S3.mode, cam = S3.cam, col = S3.col, u, b, y, k, ti, rw;
-    cam.position.set(0, 0.8, 6.2);
-    if (m === 'idle') {
-      if (S3.cap) { S3.cap.position.y = 0.1 + Math.sin(t * 1.8) * 0.12; S3.cap.rotation.y += dt * 0.8; S3.cap.rotation.z = Math.sin(t * 0.9) * 0.1; }
-      S3.glow.material.opacity = 0.25; S3.glow.scale.setScalar(2.2 + Math.sin(t * 2) * 0.2);
-    } else if (m === 'cap') {
-      var cp = S3.cap;
-      if (t < 0.8) { u = t / 0.8; y = -0.08 + 3.08 * (1 - u * u); }
-      else if (t < 1.5) y = -0.08 + Math.abs(Math.sin((t - 0.8) * 8)) * 0.3 * Math.exp(-(t - 0.8) * 3.5);
-      else y = -0.08;
-      if (t >= 0.8 && !S3.landed) { S3.landed = true; C.Sfx.tap(); emit(0, -0.8, 0, 12, 1.6, 1.2, col); }
-      k = t > 1.5 ? Math.min(1, (t - 1.5) / 1.0) : 0;
-      cp.position.set(Math.sin(t * 61) * 0.03 * k, y + Math.sin(t * 53) * 0.02 * k, 0);
-      cp.rotation.z = Math.sin(t * 38) * 0.18 * k; cp.rotation.y += dt * (0.6 + 4 * k);
-      S3.glow.material.opacity = 0.15 + 0.7 * k; S3.glow.scale.setScalar(1.6 + 1.8 * k);
-      S3.pl.intensity = 2.5 * k; S3.floor.material.opacity = 0.2 + 0.4 * k;
-      if (k > 0 && Math.random() < 0.4) emit((Math.random() - 0.5) * 1.4, -0.7, (Math.random() - 0.5) * 0.6, 1, 0.2, 1.6, col);
-      if (t >= 2.5) burst();
-    } else if (m === 'reveal') {
-      b = t - S3.bt; ti = ORDER.indexOf(S3.res.tier);
-      if (S3.cap) {
-        var ud = S3.cap.userData, sc2 = Math.max(0, 1 - b * 1.1);
-        S3.vtop.y -= 7 * dt; S3.vbot.y -= 7 * dt;
-        ud.top.position.addScaledVector(S3.vtop, dt); ud.bot.position.addScaledVector(S3.vbot, dt);
-        ud.top.rotation.z += dt * 5; ud.bot.rotation.z -= dt * 4;
-        S3.cap.scale.setScalar(Math.max(0.0001, 1.5 * sc2));
-        if (sc2 <= 0) { dropObj(S3.cap); S3.cap = null; }
-      }
-      rw = S3.rew;
-      if (rw) {
-        rw.group.scale.setScalar(Math.max(0.01, backOut(Math.min(1, b / 0.7)) * rw.base));
-        rw.group.position.y = 0.2 + Math.sin(t * 2.2) * 0.08;
-        if (!rw.noSpin) rw.spin.rotation.y += dt * 1.5;
-        if (rw.update) rw.update(t, dt);
-      }
-      S3.flash.material.opacity = Math.max(0, 1 - b * 2.2); S3.flash.scale.setScalar(2 + b * 9);
-      S3.shock.material.opacity = Math.max(0, 0.9 - b * 1.1); S3.shock.scale.setScalar(0.2 + b * 8);
-      S3.rays.material.opacity = (0.12 + 0.12 * ti) * Math.min(1, b * 3); S3.rays.rotation.z += dt * 0.35;
-      if (S3.res.tier === 'legendary') { S3.rays.material.color.setHSL((t * 0.2) % 1, 0.8, 0.6); S3.glow.material.color.setHSL((t * 0.2 + 0.1) % 1, 0.9, 0.6); }
-      S3.glow.material.opacity = 0.55; S3.glow.scale.setScalar(2.8 + Math.sin(t * 3) * 0.3);
-      S3.pl.intensity = Math.max(0.6, 2.5 - b * 2);
-      if (b < 0.5) { var sh = (0.5 - b) * S3.shake; cam.position.x += (Math.random() - 0.5) * sh; cam.position.y += (Math.random() - 0.5) * sh; }
-      if (ti >= 2 && Math.random() < 0.35) emit((Math.random() - 0.5) * 1.6, -0.3, (Math.random() - 0.5) * 0.6, 1, 0.3, 1.8, col);
-      if (!S3.done && b >= (S3.fast ? 0.4 : 1.1)) { S3.done = true; finish(); }
-    } else if (m === 'preview') {
-      rw = S3.rew;
-      if (rw) {
-        rw.spin.rotation.y += dt * 0.9; rw.group.position.y = 0.2 + Math.sin(t * 1.6) * 0.06;
-        if (rw.update) rw.update(t, dt);
-      }
-      S3.glow.material.opacity = 0.18; S3.glow.scale.setScalar(2.6);
-      S3.rays.material.opacity = S3.pvTier >= 2 ? 0.1 : 0; S3.rays.rotation.z += dt * 0.25;
-      if (S3.pvTier === 3) S3.rays.material.color.setHSL((t * 0.2) % 1, 0.8, 0.6);
-    }
-    stepP(dt);
-    S3.r.render(S3.sc, cam);
-  }
-
-  function openG() {
-    makeThumbs(); render(); ov.classList.add('show');
-    if (st.anim) return;
-    if (st.tab === 'skin') stagePreview(C.save.skin || ''); else stageIdle();
-  }
-  window.PMGacha = { open: openG };
-
-  /* ---------- Mesin Gacha 3D di plaza ---------- */
-  var MX = 4.5, MZ = 19;
-  var mach = new T.Group(); mach.position.set(MX, C.DECK_Y, MZ);
-  function MS(c, o) { o = o || {}; o.color = c; if (o.roughness === undefined) o.roughness = 0.45; return new T.MeshStandardMaterial(o); }
-  function mb(geo, mat, x, y, z) { var mm = new T.Mesh(geo, mat); mm.position.set(x, y, z); mm.castShadow = true; mm.receiveShadow = true; mach.add(mm); return mm; }
-  var mRed = MS(0xd8352a, { roughness: 0.35, metalness: 0.2 }), mSteel = MS(0xcfd6dc, { metalness: 0.8, roughness: 0.28 }),
-      mDark = MS(0x1c1f24, { roughness: 0.7 }), mGold = MS(0xd9b25a, { metalness: 0.85, roughness: 0.3 });
-  mb(new T.BoxGeometry(1.5, 1.0, 1.1), mRed, 0, 0.5, 0);
-  mb(new T.BoxGeometry(1.56, 0.1, 1.16), mGold, 0, 1.03, 0);
-  mb(new T.BoxGeometry(1.56, 0.1, 1.16), mGold, 0, 0.05, 0);
-  mb(new T.BoxGeometry(0.46, 0.3, 0.1), mDark, 0, 0.3, 0.55);
-  mb(new T.BoxGeometry(0.36, 0.2, 0.06), MS(0x050607), 0, 0.28, 0.6);
-  mb(new T.BoxGeometry(0.34, 0.34, 0.05), mSteel, 0.5, 0.68, 0.55);
-  mb(new T.BoxGeometry(0.2, 0.025, 0.02), mDark, 0.5, 0.74, 0.585);
-  var crank = new T.Group(); crank.position.set(-0.42, 0.68, 0.58); mach.add(crank);
-  var cDisc = new T.Mesh(new T.CylinderGeometry(0.2, 0.2, 0.06, 24), mSteel); cDisc.rotation.x = PI / 2; crank.add(cDisc);
-  var cArm = new T.Mesh(new T.BoxGeometry(0.34, 0.07, 0.07), mGold); cArm.position.set(0.12, 0, 0.07); crank.add(cArm);
-  var cKnob = new T.Mesh(new T.SphereGeometry(0.07, 12, 10), MS(0xe8432f)); cKnob.position.set(0.3, 0, 0.1); crank.add(cKnob);
-  mb(new T.CylinderGeometry(0.62, 0.7, 0.14, 28), mSteel, 0, 1.15, 0);
-  var dome = new T.Mesh(new T.SphereGeometry(0.8, 28, 20), new T.MeshStandardMaterial({ color: 0xbfeaff, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1, depthWrite: false, side: T.DoubleSide }));
-  dome.position.y = 1.95; dome.renderOrder = 2; mach.add(dome);
-  mb(new T.CylinderGeometry(0.3, 0.55, 0.25, 24), mGold, 0, 2.82, 0);
-  mb(new T.SphereGeometry(0.1, 12, 10), mGold, 0, 3.0, 0);
-  var capsIn = [], palette = [0xff5a5a, 0x4aa8ff, 0xb56bff, 0xffc233, 0x5bff7a, 0xffffff];
-  for (var ci = 0; ci < 18; ci++) {
-    var ca = ci * 2.4, cr = 0.12 + (ci % 5) * 0.085, cy = 1.5 + (ci % 4) * 0.12 + (ci % 3) * 0.04, pc0 = palette[ci % palette.length];
-    var cm = new T.Mesh(new T.SphereGeometry(0.14, 14, 10), MS(pc0, { roughness: 0.25, emissive: pc0, emissiveIntensity: 0.12 }));
-    var cx = Math.cos(ca) * cr, cz = Math.sin(ca) * cr * 0.9;
-    cm.position.set(cx, cy, cz); mach.add(cm); capsIn.push({ m: cm, x: cx, y: cy, ph: ci });
-  }
-  var bulbs = [];
-  for (var bi = 0; bi < 10; bi++) {
-    var ba = bi / 10 * PI * 2, bm = MS(0xffffff, { emissive: 0xffffff, emissiveIntensity: 1 });
-    var bl = new T.Mesh(new T.SphereGeometry(0.05, 10, 8), bm); bl.position.set(Math.cos(ba) * 0.68, 1.26, Math.sin(ba) * 0.68); mach.add(bl); bulbs.push(bm);
-  }
-  var starsM = [];
-  for (var si = 0; si < 3; si++) {
-    var sm = new T.Mesh(new T.OctahedronGeometry(0.1), MS(0xfff2a0, { emissive: 0xffd45a, emissiveIntensity: 1 }));
-    mach.add(sm); starsM.push(sm);
-  }
-  var mGlow = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: 0xffd45a, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.3, fog: false }));
-  mGlow.scale.set(3.4, 3.4, 1); mGlow.position.set(0, 2.0, -0.1); mach.add(mGlow);
-  var mSign = new T.Sprite(new T.SpriteMaterial({ map: C.makeSignTexture('GACHA ROD', '#b3262a'), fog: false }));
-  mSign.scale.set(2, 0.5, 1); mSign.position.set(0, 3.55, 0); mach.add(mSign);
-  C.town.add(mach);
-  C.TOWN_COLLIDERS.push({ x: MX, z: MZ, r: 1.25 });
-  C.TOWN_SHOPS.push({ id: 'gacha', name: 'GACHA', label: 'Main Gacha Rod', x: MX, z: MZ + 0.2, action: function () { openG(); } });
-  C.hookAnim(function (t) {
-    var i, c, a;
-    for (i = 0; i < capsIn.length; i++) {
-      c = capsIn[i];
-      c.m.position.y = c.y + Math.sin(t * 1.6 + c.ph) * 0.03 + (busy ? Math.sin(t * 30 + c.ph) * 0.04 : 0);
-      c.m.position.x = c.x + Math.sin(t * 0.9 + c.ph * 1.3) * 0.025;
-    }
-    for (i = 0; i < bulbs.length; i++) {
-      bulbs[i].emissive.setHSL((t * 0.3 + i / 10) % 1, 1, 0.5);
-      bulbs[i].emissiveIntensity = 0.4 + 0.8 * Math.max(0, Math.sin(t * 5 - i * 0.63));
-    }
-    for (i = 0; i < starsM.length; i++) {
-      a = t * 0.9 + i * 2.094;
-      starsM[i].position.set(Math.cos(a) * 1.15, 2.1 + Math.sin(t * 1.7 + i) * 0.2, Math.sin(a) * 1.15);
-      starsM[i].rotation.y = t * 2;
-    }
-    mGlow.material.opacity = 0.28 + 0.1 * Math.sin(t * 2);
-    crank.rotation.z = busy ? t * 9 : Math.sin(t * 0.8) * 0.12;
-  });
-
-  /* ---------- skin 3D beraura di joran yang dipegang karakter ---------- */
-  var rodM = C.rodMesh, curRod = null, skinId = null, lastT = 0;
-  function findTip() {
-    var kids = rodM.children;
-    for (var i = 0; i < kids.length; i++) {
-      var gm = kids[i].geometry;
-      if (gm && gm.type === 'CylinderGeometry' && gm.parameters && gm.parameters.radiusTop === 0.008) return kids[i];
-    }
-    return null;
-  }
-  function clearSkin() {
-    if (!curRod) return;
-    [curRod.shaft, curRod.tip].forEach(function (g) { if (g.parent) g.parent.remove(g); });
-    curRod.dispose(); curRod = null;
-  }
-  function buildSkin(sk) {
-    var tp = findTip();
-    curRod = makeSkinRod(sk, false, { pN: 28, psize: 0.075 });
-    rodM.add(curRod.shaft);
-    if (tp) tp.add(curRod.tip); else { curRod.tip.position.y = 0.55; rodM.add(curRod.tip); }
-  }
-  C.hookAnim(function (t) {
-    var dt = Math.min(0.1, Math.max(0.001, t - lastT)); lastT = t;
-    var s = C.save, id = (s && s.skin && s.skins && s.skins[s.skin]) ? s.skin : '';
-    if (id !== skinId) { skinId = id; clearSkin(); var sk = id ? skinById(id) : null; if (sk) buildSkin(sk); }
-    if (curRod) curRod.update(t, dt);
-  });
-})();
-
-</script>
-<!--PM-GACHA-END-->
 </body>
 </html>

@@ -1,0 +1,126 @@
+=== SAVE 1300-1345
+    rod: { bambu: '#9fb4bd', kayu: '#b7c4ca', karbon: '#5fd36b', perak: '#4aa8ff', emas: '#b56bff', legendaris: '#ffc233' },
+    bait: { biasa: '#9fb4bd', midnight: '#4aa8ff', super: '#b56bff', chroma: '#ffc233', ajaib: '#ff4d6d' }
+  };
+  const SAVE_KEY = 'pancingmania_save_v1';
+  function defaultSave() {
+    return { coins: 20, xp: 0, level: 1, rod: 'bambu', bait: 'biasa', ownedRods: ['bambu'], baitStock: { biasa: 999 }, inventory: {}, discovered: {}, autoFish: false, muted: false };
+  }
+  let save = defaultSave();
+  function loadSave() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (raw) save = Object.assign(defaultSave(), JSON.parse(raw));
+      save.discovered = save.discovered || {};
+      for (const k in save.inventory) { const e = save.inventory[k]; if (e && e.fish) save.discovered[e.fish.id] = true; }
+    } catch (e) { console.warn('Gagal muat save, mulai baru:', e); save = defaultSave(); }
+  }
+  let saveTimer = null;
+  function persistSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { console.warn('Gagal simpan:', e); }
+    }, 600);
+  }
+
+  function xpForLevel(lv) { return Math.round(40 * Math.pow(lv, 1.55)); }
+  function addXp(amount) {
+    save.xp += amount;
+    let need = xpForLevel(save.level);
+    while (save.xp >= need) { save.xp -= need; save.level++; need = xpForLevel(save.level); showToast('Naik ke Level ' + save.level + '!'); Sfx.levelUp(); vibe([40, 30, 40]); }
+  }
+  function currentRod() {
+    const r = ROD_TIERS.find(x => x.id === save.rod) || ROD_TIERS[0];
+    const en = save.enchants && save.enchants[r.id];
+    if (!en) return r;
+    return Object.assign({}, r, { rarityBoost: r.rarityBoost + (en.luck || 0), biteSpeed: r.biteSpeed * (1 + (en.speed || 0)) });
+  }
+  /* ENCHANT_V38 */
+  function enchBonus(k) { const en = save.enchants && save.enchants[save.rod]; return (en && en[k]) || 0; }
+  function currentBait() { return BAIT_TYPES.find(b => b.id === save.bait) || BAIT_TYPES[0]; }
+  function totalBoost() { return currentRod().rarityBoost + currentBait().rarityBoost - 1; }
+
+  // ================= TOAST =================
+  function showToast(text, variant) {
+    const wrap = document.getElementById('toastWrap');
+    const el = document.createElement('div');
+    el.className = 'toast' + (variant ? ' toast-' + variant : ''); el.textContent = text;
+=== MENU 796-830
+      var dx = p.x - lx, dz = p.z - lz;
+      if (dx * dx + dz * dz > 1e-5) { var d = Math.atan2(dx, dz) - boat.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); boat.rotation.y += d * Math.min(1, dt * 6); }
+    }
+    lx = p.x; lz = p.z;
+    if (t - achT > 2) { achT = t; checkAch(); }
+  });
+  function addMenu() {
+    var host = $('menuPanel') || $('hudPills'); if (!host) return;
+    [['Trofi', renderT, mT], ['Karakter', renderChar, mC], ['Pasar', renderP, mP], ['Rekor', renderR, mR]].forEach(function (x) {
+      var b = document.createElement('button'); b.className = 'hudPill'; b.textContent = x[0];
+      b.onclick = function () { var mp = $('menuPanel'); if (mp) mp.classList.remove('show'); x[1](); x[2].open(); };
+      host.appendChild(b);
+    });
+  }
+  if (document.readyState === 'complete') addMenu(); else window.addEventListener('load', addMenu);
+};
+</script>
+<!-- /pm-ext -->
+<script src="three.min.js"></script>
+<script>window.THREE || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
+<script>
+// ================= PENGAMAN LOADING SCREEN (paling awal, di luar kode game) =================
+// Nangkep error apa pun yang bikin skrip berhenti sebelum boot() sempat jalan,
+// nampilin pesannya di layar loading (biar ketauan dari screenshot, gak perlu console),
+// dan maksa loading screen ilang setelah 12 detik walau ada yang gagal, biar gak nyangkut selamanya.
+(function () {
+  function showBootError(msg) {
+    const el = document.getElementById('loadingLabel');
+    if (el) { el.textContent = 'Error: ' + msg; el.style.color = '#ff8a7a'; }
+  }
+  window.addEventListener('error', (e) => showBootError((e.error && e.error.message) || e.message || 'gagal jalan'));
+  window.addEventListener('unhandledrejection', (e) => showBootError((e.reason && e.reason.message) || String(e.reason)));
+  setTimeout(() => {
+    const scr = document.getElementById('loadingScreen');
+    if (scr && scr.style.display !== 'none' && !scr.classList.contains('hidden')) {
+=== MODAL
+502:    <div class="modalHead"><h2><svg class="ico" style="width:17px;height:17px;"><use href="#ico-backpack"/></svg> Tas Ikan</h2><button class="modalClose" data-close="modalInventory">✕</button></div>
+510:    <div class="modalHead"><h2>Koleksi Ikan</h2><button class="modalClose" data-close="modalIndex">✕</button></div>
+518:    <div class="modalHead"><h2><svg class="ico" style="width:17px;height:17px;"><use href="#ico-cart"/></svg> Toko</h2><button class="modalClose" data-close="modalShop">✕</button></div>
+544:    return { ov: ov, body: ov.querySelector('.modalBody'), foot: ov.querySelector('.modalFoot span'), open: function () { ov.classList.add('show'); } };
+1223:    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+1398:    overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
+2119:  const ovE = document.createElement('div');
+2121:  ovE.innerHTML = '<div class="modalBox"><div class="modalHead"><h2>Altar Enchant</h2><button class="modalClose" data-close="modalEnchant">✕</button></div><div class="modalBody" id="enBody"></div><div cl
+2187:  function openEnchant() { renderEnchant(); ovE.classList.add('show'); }
+2907:    const ov = document.createElement('div');
+2923:      b.onclick = () => { render(); ov.classList.add('show'); };
+3924:  function openModal(id) { document.getElementById(id).classList.add('show'); if (id === 'modalInventory') renderInventory(); if (id === 'modalShop') renderShop(); if (id === 'modalIndex') renderIndex(); }
+=== TOWN_SHOPS 1891-1900
+  const TOWN_SHOPS = [
+    { id: 'bait', name: 'BAIT SHOP', label: 'Buka Bait Shop', x: 9, z: 26, face: -1, wall: 0x3aa89a, roof: 0x2a6f7a, awning: 0x2fd0c0, glow: 0xffe9a8, signBg: '#1f7d72', action: () => openShopTab('bait') },
+    { id: 'rod', name: 'ROD SHOP', label: 'Buka Rod Shop', x: -9, z: 26, face: 1, wall: 0xc4453c, roof: 0x7a2a2a, awning: 0xff6a5a, glow: 0xffe9a8, signBg: '#9c2f2a', action: () => openShopTab('rod') },
+    { id: 'sell', name: 'JUAL IKAN', label: 'Buka Tas / Jual Ikan', x: 9, z: 18, face: -1, wall: 0xd2b07a, roof: 0x6b4a8a, awning: 0xb07be0, glow: 0xffe9a8, signBg: '#6b4a8a', action: () => openModal('modalInve
+  ];
+  for (const sh of TOWN_SHOPS) {
+    const m = makeShop(sh);
+    m.position.set(sh.x, DECK_Y, sh.z);
+    m.rotation.y = sh.face * Math.PI / 2;
+    town.add(m);
+=== LUCK/SPEED
+1332:    const en = save.enchants && save.enchants[r.id];
+1334:    return Object.assign({}, r, { rarityBoost: r.rarityBoost + (en.luck || 0), biteSpeed: r.biteSpeed * (1 + (en.speed || 0)) });
+1337:  function enchBonus(k) { const en = save.enchants && save.enchants[save.rod]; return (en && en[k]) || 0; }
+2049:    if (e.luck) q.push('Luck +' + Math.round(e.luck * 100) + '%');
+2128:    const cur = save.enchants[rod.id];
+2155:    const cur = save.enchants && save.enchants[rod.id];
+2179:      save.enchants[pend.rodId] = { id: pend.ench.id, name: pend.ench.name, luck: pend.ench.luck || 0, speed: pend.ench.speed || 0, sell: pend.ench.sell || 0, xp: pend.ench.xp || 0 };
+3948:    document.getElementById('rodVal').textContent = currentRod().name + (save.enchants && save.enchants[save.rod] ? ' ✦' : ''); document.getElementById('rodChip').style.setProperty('--rc', GEAR_COLORS.ro
+=== LAIN
+1200:  function fmtKg(w) {
+1240:  const ROD_TIERS = [
+1259:  const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical', 'secret'];
+1324:  function xpForLevel(lv) { return Math.round(40 * Math.pow(lv, 1.55)); }
+1614:  function fishIconCanvas(fish, mutation, silhouette) {
+1638:  function fishIconCanvasOld(fish, mutation, silhouette) {
+1807:  function makeSignTexture(text, bg) {
+1825:  const town = new THREE.Group();
+2222:  const player = new THREE.Group();

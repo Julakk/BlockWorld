@@ -1,0 +1,77 @@
+390:  <div id="loadingLogo"><img src="data:image/webp;base64,UklGRgylAABXRUJQVlA4WAoAAAAQAAAAfwEAfwEAQUxQSBsSAAAB8Idtu2qrzf/dz3jGxolAPCFNgLi7l7i7EHd3dyGpN6kbcbe6uxdSdxcsD
+398:  <div id="startTitle"><img src="data:image/webp;base64,UklGRgylAABXRUJQVlA4WAoAAAAQAAAAfwEAfwEAQUxQSBsSAAAB8Idtu2qrzf/dz3jGxolAPCFNgLi7l7i7EHd3dyGpN6kbcbe6uxdSdxcsDW
+1327:  /* ENCHANT_V38 */
+1378:      try { showCatchReveal({ fish: { id: 'leviathan', name: 'Leviathan', rarity: 'mythical', value: 5500 }, mutation: {}, weight: 1, value: 5500 }); }
+1458:  function showCatchReveal(c) {
+1668:  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+1669:  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 2 : 2.5));
+1915:  // ================= ALTAR ENCHANT =================
+1916:  const altar = new THREE.Group();
+1918:  const altBase1 = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.7, 0.35, 16), stoneMat); altBase1.position.y = 0.17; altar.add(altBase1);
+1919:  const altBase2 = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.2, 0.3, 16), stoneMat); altBase2.position.y = 0.5; altar.add(altBase2);
+1923:    pil.position.set(Math.cos(a) * 1.3, 1.05, Math.sin(a) * 1.3); altar.add(pil);
+1926:  crystal.position.y = 1.65; altar.add(crystal);
+1928:  altGlow.scale.set(2.8, 2.8, 1); altGlow.position.y = 1.65; altar.add(altGlow);
+1929:  const altSign = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeSignTexture('ENCHANT', '#5a2a8a'), fog: false }));
+1930:  altSign.scale.set(2.0, 0.5, 1); altSign.position.y = 2.9; altar.add(altSign);
+1931:  altar.position.set(-10.5, DECK_Y, 19.5);
+1932:  town.add(altar);
+1944:  const ENCHANTS = [
+1969:  function enchColor(id) { const e = ENCHANTS.find(x => x.id === id); return e ? e.c : '#9fb4bd'; }
+1970:  function enchTier(id) { const e = ENCHANTS.find(x => x.id === id); return e ? e.t : 0; }
+1973:    const pool = ENCHANTS.filter(e => e.t >= minTier);
+1981:    const e = ENCHANTS.find(x => x.id === pp.id);
+1986:    let tot = 0; ENCHANTS.forEach(e => { tot += e.w; });
+1989:      let sum = 0; ENCHANTS.forEach(e => { if (e.t === t) sum += e.w; });
+2027:      const e = ENCHANTS[Math.floor(Math.random() * ENCHANTS.length)];
+2035:  ovE.innerHTML = '<div class="modalBox"><div class="modalHead"><h2>Altar Enchant</h2><button class="modalClose" data-close="modalEnchant">✕</button></div><div cla
+2102:  TOWN_SHOPS.push({ id: 'altar', name: 'ALTAR', label: 'Buka Altar Enchant', x: -10.5, z: 19.5, action: openEnchant });
+2158:  // ================= HD GRAFIS + KARAKTER + WAKTU/CUACA (v1.7) =================
+2200:  const PMHD = (function () {
+2206:    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+2220:      renderer.setPixelRatio(on ? Math.min(dpr, 2.5) : Math.min(dpr, isMobile ? 2 : 2.5));
+2222:      renderer.shadowMap.enabled = on;
+2231:      btn.textContent = 'Grafis: ' + (on ? 'HD' : 'Normal');
+2237:      showToast('Grafis ' + (hd ? 'HD' : 'Normal'));
+2243:      isHD: () => hd,
+2260:  // ===== PMReal: grafis realistis (cuma aktif di mode HD) =====
+2441:  window.PMReal.set(PMHD.isHD());
+2532:      PMHD.tick(raw);
+2555:      if (renderer.shadowMap.enabled) {
+2644:  let currentCatch = null;
+2725:    currentCatch = rollFish(castBoost * PMEnv.boost()); assignWeight(currentCatch);
+2726:    reelExpandRate = RARITY_REEL_RATE[currentCatch.fish.rarity] || 12;
+3174:    if (success && currentCatch) {
+3175:      const key = currentCatch.fish.id + '|' + currentCatch.mutation.id;
+3176:      save.inventory[key] = save.inventory[key] || { fish: currentCatch.fish, mutation: currentCatch.mutation, count: 0 };
+3177:      save.inventory[key].count++; Quest.on('catch', currentCatch);
+3178:      save.inventory[key].maxW = Math.max(save.inventory[key].maxW || 0, currentCatch.weight || 0);
+3179:      addXp(Math.round((Math.round(currentCatch.value / 4) + 5) * (1 + enchBonus('xp'))));
+3180:      save.discovered = save.discovered || {}; save.discovered[currentCatch.fish.id] = true;
+3181:      const label = currentCatch.mutation.name ? currentCatch.mutation.name + ' ' + currentCatch.fish.name : currentCatch.fish.name;
+3182:      if (currentCatch.fish.rarity === 'secret') {
+3183:        const cc = currentCatch;
+3190:        const done = function () { showCatchReveal(cc); };
+3193:        Sfx.catchFish(currentCatch.fish.rarity); vibe(CATCH_VIBE[currentCatch.fish.rarity] || [25]);
+3194:        showCatchReveal(currentCatch);
+3198:    } else if (currentCatch) {
+3201:    currentCatch = null;
+3320:    resetFishing(); showToast(msg); Sfx.fail(); vibe(120); currentCatch = null;
+3329:    if (tension >= 1) failReel(currentCatch && currentCatch.tooHeavy ? 'Tali putus! Ikan ' + fmtKg(currentCatch.weight) + ' kelewat berat buat rod ini.' : 'Tali putu
+3331:    else if (fDist <= 1.6 && !(currentCatch && currentCatch.tooHeavy)) win();
+3387:    currentCatch = rollFish(castBoost * PMEnv.boost()); assignWeight(currentCatch);
+3388:    fIdx = Math.max(0, RARITY_ORDER.indexOf(currentCatch.fish.rarity));
+3389:    fSp = (0.8 + 0.3 * fIdx) * (1 + 0.5 * Math.min(1, (currentCatch.weight || 0) / (ROD_WEIGHT[currentRod().id] || 10)));
+3499:      else if (reelProg <= 0) failReel(currentCatch && currentCatch.tooHeavy ? 'Ikan ' + fmtKg(currentCatch.weight) + ' kelewat berat buat rod ini.' : 'Ikannya lepas
+3524:    currentCatch = rollFish(castBoost * PMEnv.boost()); assignWeight(currentCatch);
+3525:    fIdx = Math.max(0, RARITY_ORDER.indexOf(currentCatch.fish.rarity));
+3527:    const h = Math.min(1, (currentCatch.weight || 0) / (ROD_WEIGHT[rod.id] || 10));
+3531:    if (currentCatch.tooHeavy) reelGain *= 0.25;
+3592:        if (currentCatch && currentCatch.fish.rarity === 'secret') { showToast('IKAN RAHASIA nyangkut! Tap manual!', 'secret'); vibe([100, 60, 100]); }
+3595:      if (currentCatch && currentCatch.fish.rarity === 'secret') return;
+3978:    hookFinish: function (w) { var o = finishReel; finishReel = function (ok) { var c = currentCatch; o(ok); w(ok, c); }; },
+4072:  var VER = 'v3.8', DATE = '3 Okt 2026', KEY = 'pm_seen_ver';
+4073:  var LOG = [
+4075:      "Altar Enchant dirombak: ada 14 enchant dengan 5 tier (Common, Rare, Epic, Legendary, Mythic).",
+4080:      "Peluang tiap tier sekarang ditampilkan langsung di altar."
+4503:  if (!arms.L || !arms.R || !legs.L || !legs.R || !headM) { console.warn('Karakter HD: bagian tidak ketemu'); return; }

@@ -1,0 +1,107 @@
+=== FILES
+total 5388
+drwxr-xr-x  8 root root    4096 Oct  2 18:51 .
+drwx------ 13 root root    4096 Oct  2 18:44 ..
+drwxr-xr-x  8 root root    4096 Oct  2 18:44 .git
+drwxr-xr-x  3 root root    4096 Oct  1 18:27 .github
+-rw-r--r--  1 root root     197 Oct  2 16:53 .gitignore
+-rw-r--r--  1 root root    9948 Oct  2 16:53 CHANGELOG.md
+-rw-r--r--  1 root root    4321 Oct  1 18:27 CHANGELOG.md.bak-release
+-rw-r--r--  1 root root    2850 Oct  1 18:27 README.md
+drwxr-xr-x  4 root root    4096 Oct  1 18:27 android
+drwxr-xr-x  2 root root    4096 Oct  1 18:27 android-twa
+-rw-r--r--  1 root root      92 Oct  1 18:27 capacitor.config.json
+-rw-r--r--  1 root root    6369 Oct  2 18:22 cari.txt
+-rw-r--r--  1 root root   14331 Oct  2 18:23 cari2.txt
+-rw-r--r--  1 root root      10 Oct  2 18:51 cari3.txt
+-rw-r--r--  1 root root   39547 Oct  1 20:32 icon-192.png
+-rw-r--r--  1 root root  209216 Oct  1 20:32 icon-512.png
+-rw-r--r--  1 root root  409902 Oct  2 18:44 index.html
+-rw-r--r--  1 root root  398940 Oct  2 18:01 index.html.bak-enchant
+-rw-r--r--  1 root root  409421 Oct  2 18:44 index.html.bak-malam
+-rw-r--r--  1 root root  139821 Oct  1 18:27 index.html.bak-release
+-rw-r--r--  1 root root  405210 Oct  2 18:28 index.html.bak-v39
+-rw-r--r--  1 root root  129145 Oct  1 18:27 index.html.bak2
+-rw-r--r--  1 root root  129325 Oct  1 18:27 index.html.bak3
+-rw-r--r--  1 root root  129572 Oct  1 18:27 index.html.bak4
+-rw-r--r--  1 root root  132246 Oct  1 18:27 index.html.bak5
+-rw-r--r--  1 root root  135828 Oct  1 18:27 index.html.bak6
+-rw-r--r--  1 root root  138271 Oct  1 18:27 index.html.bak7
+-rw-r--r--  1 root root  140299 Oct  1 18:27 index.html.bak8
+-rw-r--r--  1 root root  150748 Oct  1 18:27 index.html.bak9
+-rw-r-----  1 root root 1540218 Oct  1 20:31 logo-src.png
+-rw-r--r--  1 root root     506 Oct  1 18:27 manifest.json
+-rw-r--r--  1 root root   43978 Oct  1 18:27 package-lock.json
+-rw-r--r--  1 root root     271 Oct  1 18:27 package.json
+-rw-r--r--  1 root root   13883 Oct  2 18:01 patch_enchant.py
+-rw-r--r--  1 root root    4968 Oct  1 18:27 patch_landscape.py
+-rw-r--r--  1 root root    2363 Oct  2 18:44 patch_malam.py
+-rw-r--r--  1 root root    9837 Oct  1 18:48 patch_realistic.py
+-rw-r--r--  1 root root    4271 Oct  2 06:42 patch_secret_v34.py
+-rw-r--r--  1 root root   23304 Oct  1 18:27 patch_v25.py
+-rw-r--r--  1 root root   13164 Oct  2 18:28 patch_v39.py
+drwxr-xr-x  2 root root    4096 Oct  2 07:23 server
+-rw-r--r--  1 root root  603445 Oct  1 18:27 three.min.js
+drwxr-xr-x  2 root root    4096 Oct  2 18:02 www
+/root/BlockWorld/server/server.js
+=== PORT
+LISTEN 0      511                *:3010            *:*    users:(("node",pid=205735,fd=21))                                                    
+=== KODE
+229:  #hudPills { display: flex; flex-wrap: wrap; gap: 5px; margin-left: 6px; max-width: 220px; }
+252:#hudPills { position: fixed; top: calc(26px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); margin: 0; max-width: 90vw; flex-wrap: nowrap; justify-content: cent
+429:  <div id="hudPills">
+502:    <div class="modalHead"><h2><svg class="ico" style="width:17px;height:17px;"><use href="#ico-backpack"/></svg> Tas Ikan</h2><button class="modalClose" data-close="modalInventory">✕<
+510:    <div class="modalHead"><h2>Koleksi Ikan</h2><button class="modalClose" data-close="modalIndex">✕</button></div>
+518:    <div class="modalHead"><h2><svg class="ico" style="width:17px;height:17px;"><use href="#ico-cart"/></svg> Toko</h2><button class="modalClose" data-close="modalShop">✕</button></div
+755:  C.setWalkable(function (o, x, z) { if (!sailing) return o(x, z); var d = Math.hypot(x, z); return d > C.ISLAND_RADIUS + 1 && d < 260 && !(Math.abs(x) < 2.7 && z > 27); });
+803:    var host = $('menuPanel') || $('hudPills'); if (!host) return;
+1040:      try { why = 'menyambung ' + (LS('pm_server') || DEFAULT_SERVER).replace(/^wss?:\/\//, ''); setBadge(false); ws = new WebSocket(LS('pm_server') || DEFAULT_SERVER); } catch (e) { ws
+1303:  const SAVE_KEY = 'pancingmania_save_v1';
+1304:  function defaultSave() {
+1307:  let save = defaultSave();
+1308:  function loadSave() {
+1310:      const raw = localStorage.getItem(SAVE_KEY);
+1311:      if (raw) save = Object.assign(defaultSave(), JSON.parse(raw));
+1314:    } catch (e) { console.warn('Gagal muat save, mulai baru:', e); save = defaultSave(); }
+1317:  function persistSave() {
+1320:      try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { console.warn('Gagal simpan:', e); }
+1325:  function addXp(amount) {
+1326:    save.xp += amount;
+1327:    let need = xpForLevel(save.level);
+1328:    while (save.xp >= need) { save.xp -= need; save.level++; need = xpForLevel(save.level); showToast('Naik ke Level ' + save.level + '!'); Sfx.levelUp(); vibe([40, 30, 40]); }
+1342:  function showToast(text, variant) {
+1462:  function saveQuiet() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+1699:  const ISLAND_RADIUS = 34;
+1700:  const islandGeo = new THREE.CircleGeometry(ISLAND_RADIUS, 48, 0);
+1706:    const d = Math.sqrt(x * x + z * z) / ISLAND_RADIUS;
+1715:    const d = Math.sqrt(x * x + z * z) / ISLAND_RADIUS;
+1758:    const rad = ISLAND_RADIUS * (0.35 + treeRng() * 0.5);
+1768:  // rumah/gudang kecil dekat spawn (dekorasi + acuan arah)
+1785:  function inIsland(x, z) { return Math.hypot(x, z) < ISLAND_RADIUS - 0.6; }
+1891:  const TOWN_SHOPS = [
+2121:  ovE.innerHTML = '<div class="modalBox"><div class="modalHead"><h2>Altar Enchant</h2><button class="modalClose" data-close="modalEnchant">✕</button></div><div class="modalBody" id="e
+2187:  function openEnchant() { renderEnchant(); ovE.classList.add('show'); }
+2319:    const pills = document.getElementById('hudPills');
+2742:    return ISLAND_RADIUS - Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+2871:        const lv = save.level || 1;
+2919:    const pills = document.getElementById('hudPills');
+3364:  function spawnRipple(x, z, size) {
+3437:    spawnRipple(bobber.position.x, bobber.position.z, 1.8);
+3491:    spawnRipple(bobber.position.x, bobber.position.z, 1.1);
+3555:        spawnRipple(bobberTarget.x, bobberTarget.z, 1.6);
+3572:        nibbleIdx++; nibbleAnim = 0.35; spawnRipple(bx, bz, 0.6); Sfx.tap(); vibe(10);
+3588:      if (Math.random() < dt * 6) spawnRipple(bobber.position.x, bobber.position.z, 0.7);
+3604:      if (tapping && rippleT <= 0) { rippleT = 0.2; spawnRipple(px, pz, 0.8 + fIdx * 0.1); }
+3939:  function refreshHud() {
+3943:    if (prevLevelShown !== null && save.level !== prevLevelShown) pulseEl(levelValEl);
+3944:    prevCoinsShown = save.coins; prevLevelShown = save.level;
+3946:    document.getElementById('levelVal').textContent = save.level;
+3947:    document.getElementById('xpFill').style.width = Math.min(100, (save.xp / xpForLevel(save.level)) * 100) + '%';
+3949:    document.getElementById('xpText').textContent = save.xp + '/' + xpForLevel(save.level);
+4088:    GEAR_COLORS: GEAR_COLORS, ISLAND_RADIUS: ISLAND_RADIUS, DECK_Y: DECK_Y, fmtKg: fmtKg, get fishState() { return fishState; }, get tapCount() { return reelTapCount; },
+4143:  var pills = $('hudPills');
+4159:  var pills = document.getElementById('hudPills');
+4214:  var host = document.getElementById('menuPanel') || document.getElementById('hudPills');
+4253:  #hudPills { top: calc(8px + env(safe-area-inset-top, 0px)); left: auto; right: calc(70px + env(safe-area-inset-right, 0px)); transform: none; max-width: none; gap: 4px; }
+4375:  var host = document.getElementById('menuPanel') || document.getElementById('hudPills');
+4475:    var host = document.getElementById('menuPanel') || document.getElementById('hudPills');

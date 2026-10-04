@@ -1,0 +1,98 @@
+=== V40?
+2
+=== NET
+1029:    function sendChat() { var v = $('mpChatIn').value.trim(); if (v && ws) { send({ t: 'chat', text: v }); $('mpChatIn').value = ''; } }
+1075:    function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
+1079:      try { why = 'menyambung ' + (LS('pm_server') || DEFAULT_SERVER).replace(/^wss?:\/\//, ''); setBadge(false); ws = new WebSocket(LS('pm_server') || DEFAULT_SERVER); } catch (e) { ws = null; w
+1081:      me.onopen = function () { retry = 0; send({ t: 'join', name: profile && profile.name, gender: profile && profile.gender, token: devToken || undefined, cv: 2 }); };
+1088:      if (m.t === 'welcome') { myId = m.id; isDev = !!m.you.dev; pb.style.display = isDev ? 'block' : 'none'; maintOn = !!m.maint; setMaintBtn(); cb.style.display = 'block'; dressSelf(m.you); m.p
+1089:      else if (m.t === 'join') { addRemote(m.p); setBadge(true, m.n); }
+1090:      else if (m.t === 'leave') { removeRemote(m.id); setBadge(true, m.n); }
+1091:      else if (m.t === 'state') m.s.forEach(function (a) { var r = remotes[a[0]]; if (r) { r.x = a[1]; r.y = a[2]; r.z = a[3]; r.ry = a[4]; r.mv = a[5]; } });
+1092:      else if (m.t === 'say') C.toast('📢 ' + m.text);
+1093:      else if (m.t === 'chat') addChat(m);
+1094:      else if (m.t === 'secret') addSecret(m);
+1095:      else if (m.t === 'maint') { maintOn = !!m.on; setMaintBtn(); if (m.on && !isDev && !devToken) showGate('m', '🔧 Sedang maintenance', m.msg || 'Server lagi maintenance.', [['Coba lagi', fu
+1096:      else if (m.t === 'kicked') { blocked = true; C.toast(m.msg); }
+1097:      else if (m.t === 'err') {
+1109:      var p = pendSec.shift(); send({ t: 'cast' });
+1112:    window.PMNet = { cast: function () { if (ws && ws.readyState === 1) send({ t: 'cast' }); }, secret: function (o) {
+1113:      var p = { t: 'secret', id: o.id, w: Math.round((+o.w || 0) * 10) / 10, mut: o.mut ? String(o.mut).slice(0, 20) : '' };
+1179:      send({ t: 'pos', x: rd(p.x), y: rd(p.y), z: rd(p.z), ry: rd(ry), mv: moved > 0.03 ? 1 : 0 });
+=== NET CODE
+      var d = document.createElement('div'); d.className = 'mpS';
+      var b = document.createElement('b'); b.textContent = '🌟 ' + (m.dev ? '★ ' : '') + (m.id === myId ? 'Kamu' : m.name);
+      var s = document.createElement('span'); s.textContent = ' mendapatkan ' + (m.mut ? m.mut + ' ' : '') + m.fish + (m.w ? ' (' + m.w + ' kg)' : '') + '!';
+      var tm = document.createElement('small'); tm.textContent = hhmm(m.ts);
+      d.appendChild(b); d.appendChild(s); d.appendChild(tm); return d;
+    }
+    function renderFeed() {
+      var list = tab === 'chat' ? chatMsgs : secMsgs; feed.textContent = '';
+      if (!list.length) { var e = document.createElement('div'); e.className = 'mpEmpty'; e.textContent = tab === 'chat' ? 'Belum ada obrolan.' : 'Belum ada yang dapat ikan Secret.'; feed.appendChild(e); }
+      list.forEach(function (m) { feed.appendChild(tab === 'chat' ? chatRow(m) : secRow(m)); });
+      feed.scrollTop = feed.scrollHeight;
+    }
+    function syncUI() {
+      var o = isOpen(); if (o && tab === 'sec') unread = 0;
+      tabs.style.display = o ? 'flex' : 'none'; feed.style.display = o ? 'flex' : 'none'; cl.style.display = o ? 'none' : 'flex';
+      Array.prototype.forEach.call(tabs.querySelectorAll('button'), function (b) { b.className = b.getAttribute('data-k') === tab ? 'on' : ''; });
+      $('mpDot').style.display = unread && tab !== 'sec' ? 'inline-block' : 'none';
+      cb.className = unread && !o ? 'dot' : '';
+      if (o) renderFeed();
+    }
+    tabs.onclick = function (e) { var k = e.target && e.target.getAttribute && e.target.getAttribute('data-k'); if (!k) return; tab = k; syncUI(); };
+    cb.onclick = function () { cr.style.display = isOpen() ? 'none' : 'flex'; if (isOpen()) $('mpChatIn').focus(); syncUI(); };
+    function addSecret(m, silent) {
+      secMsgs.push(m); if (secMsgs.length > 40) secMsgs.shift();
+      if (silent) return;
+      if (isOpen() && tab === 'sec') renderFeed();
+      else { unread++; syncUI(); }
+      C.toast('🌟 ' + (m.id === myId ? 'Kamu' : m.name) + ' dapat ' + (m.mut ? m.mut + ' ' : '') + m.fish + (m.w ? ' (' + m.w + ' kg)' : '') + '!', 'secret');
+    }
+    function sendChat() { var v = $('mpChatIn').value.trim(); if (v && ws) { send({ t: 'chat', text: v }); $('mpChatIn').value = ''; } }
+    $('mpChatGo').onclick = sendChat;
+    $('mpChatIn').onkeydown = function (e) { e.stopPropagation(); if (e.key === 'Enter') sendChat(); };
+    function addChat(m) {
+      chatMsgs.push(m); if (chatMsgs.length > 60) chatMsgs.shift();
+      if (isOpen()) { if (tab === 'chat') renderFeed(); return; }
+      addChatFloat(m);
+    }
+    function addChatFloat(m) {
+      var d = document.createElement('div'); d.className = 'mpC';
+      var n = document.createElement('b'); n.textContent = (m.dev ? '★ ' : '') + m.name + ': '; if (m.dev) n.style.color = '#ffcf4d';
+      var t = document.createElement('span'); t.textContent = m.text; d.appendChild(n); d.appendChild(t); cl.appendChild(d);
+      while (cl.children.length > 6) cl.removeChild(cl.firstChild);
+      setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 15000);
+    }
+    var maintOn = false;
+    function setMaintBtn() { $('mpMaint').textContent = 'Maint: ' + (maintOn ? 'ON' : 'OFF'); }
+
+    // ---------- panel developer (cuma muncul kalau server nganggep lo developer) ----------
+    var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+    var pb = document.createElement('button'); pb.id = 'mpDevBtn'; pb.textContent = '🛠'; document.body.appendChild(pb);
+    var pn = document.createElement('div'); pn.id = 'mpDevPanel';
+    pn.innerHTML = '<div class="mpBox"><h3>🛠 Panel Developer</h3><div id="mpDevList"></div><div class="mpRow"><input id="mpSay" maxlength="120" placeholder="Pengumuman ke semua player"><button id="mpSayGo">Kirim</button></div><
+    document.body.appendChild(pn);
+    var lastH = '';
+    function renderPanel() {
+      var ids = Object.keys(remotes), h = '<div class="mpSm">Online: ' + (ids.length + 1) + ' (termasuk lo)</div>';
+      ids.forEach(function (id) { var r = remotes[id];
+        h += '<div class="mpP"><span>' + (r.gender === 'f' ? '♀ ' : '♂ ') + esc(r.name) + '</span><span><button data-a="tp" data-id="' + id + '">TP</button><button data-a="mute" data-id="' + id + '">Mute</button><button data-a
+      if (!ids.length) h += '<div class="mpSm">Belum ada player lain.</div>';
+      if (h !== lastH) { lastH = h; $('mpDevList').innerHTML = h; }
+    }
+    pb.onclick = function () { pn.style.display = 'flex'; renderPanel(); };
+    $('mpDevX').onclick = function () { pn.style.display = 'none'; };
+    setInterval(function () { if (pn.style.display === 'flex') renderPanel(); }, 1000);
+    $('mpDevList').onclick = function (e) {
+      var b = e.target, a = b.getAttribute && b.getAttribute('data-a'), id = b.getAttribute && b.getAttribute('data-id'), r = remotes[id];
+      if (!a || !r) return;
+      if (a === 'tp') { C.player.position.set(r.g.position.x + 1, r.g.position.y, r.g.position.z + 1); pn.style.display = 'none'; }
+      else if (a === 'mute') send({ t: 'mute', id: +id });
+      else if (confirm((a === 'ban' ? 'Ban ' : 'Kick ') + r.name + '?')) send({ t: a, id: +id });
+    };
+    $('mpSayGo').onclick = function () { var v = $('mpSay').value.trim(); if (v) { send({ t: 'say', text: v }); $('mpSay').value = ''; } };
+    $('mpMaint').onclick = function () { send({ t: 'maint', on: !maintOn, msg: $('mpMsg2').value.trim() }); };
+
+    // ---------- koneksi ----------
+    function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }

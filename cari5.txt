@@ -1,0 +1,17 @@
+=== EXT
+529:<!-- pm-ext -->
+570:    ['Aquarist', 'Pajang 6 ikan di Akuarium', 6, 600, function () { return (S().aqua || []).length; }]
+572:  function checkAch() {
+599:  function renderT() {
+608:  function renderR() {
+622:  window.PMP = function (id) { return Math.round((0.7 + (hash(dk() + id) % 1000) / 1000 * 0.9) * 100) / 100; };
+625:  function renderP() {
+667:  function renderChar() {
+687:  /* ===== AKUARIUM ===== */
+695:  var sg = new T.Sprite(new T.SpriteMaterial({ map: C.makeSignTexture('AKUARIUM', '#1f6f8f'), fog: false })); sg.scale.set(2, 0.5, 1); sg.position.y = 2.35; aq.add(sg);
+722:  var mA = mkModal('modalAqua', 'Akuarium');
+744:  C.TOWN_SHOPS.push({ id: 'aqua', name: 'AKUARIUM', label: 'Buka Akuarium', x: AQ.x, z: AQ.z, action: function () { renderA(); mA.open(); } });
+813:<!-- /pm-ext -->
+1015:    function renderPanel() {
+4573:      'Pajang ikan langka di Akuarium biar gak ikut kejual.',
+=== SAVE KEYS

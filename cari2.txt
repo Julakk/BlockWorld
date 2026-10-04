@@ -1,0 +1,241 @@
+=== REVEAL 1450-1510
+  })();
+  function vibe(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+  const CATCH_VIBE = { common: [25], uncommon: [35], rare: [50], epic: [60, 40, 60], legendary: [100, 50, 100, 50, 160], mythical: [150, 60, 150, 60, 260], secret: [200, 80, 200, 80, 200, 80, 450] };
+  function saveQuiet() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+
+  // ================= REVEAL IKAN LANGKA (epic ke atas, secret punya efek sendiri) =================
+  const REVEAL_SECS = { common: 1.3, uncommon: 1.4, rare: 1.6, epic: 1.9, legendary: 2.5, mythical: 3.6 };
+  let revealTimer = null;
+  function showCatchReveal(c) {
+    const dur = REVEAL_SECS[c.fish.rarity]; if (!dur) return;
+    const el = document.getElementById('catchReveal'), card = document.getElementById('catchRevealCard');
+    document.getElementById('catchRevealImg').src = fishIconCanvas(c.fish, c.mutation);
+    document.getElementById('catchRevealTier').textContent = RARITY_LABEL[c.fish.rarity] + (c.mutation.name ? ' • MUTASI ' + c.mutation.name : '');
+    document.getElementById('catchRevealName').textContent = (c.mutation.name ? c.mutation.name + ' ' : '') + c.fish.name;
+    document.getElementById('catchRevealVal').textContent = (c.weight ? fmtKg(c.weight) + ' • ' : '') + c.value + ' koin';
+    card.style.setProperty('--rc', RARITY_COLOR[c.fish.rarity]);
+    card.style.setProperty('--dur', dur + 's');
+    el.className = ''; void el.offsetWidth;
+    el.className = 'show tier-' + c.fish.rarity;
+    if (c.fish.rarity === 'mythical') cfxMythicFx();
+    clearTimeout(revealTimer);
+    revealTimer = setTimeout(() => { el.className = ''; }, dur * 1000 + 100);
+  }
+
+  // ================= GENERATOR TEKSTUR (canvas, pixel style) =================
+  function hashStr(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function makeRng(seed) { let s = (seed >>> 0) || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+
+  function makeSkyTexture() {
+    const c = document.createElement('canvas'); c.width = 2; c.height = 256;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0, '#2a5db5');
+    grad.addColorStop(0.18, '#9dc3e6');
+    grad.addColorStop(0.3, '#ffcf9e');
+    grad.addColorStop(1, '#ffdfae');
+    g.fillStyle = grad; g.fillRect(0, 0, 2, 256);
+    const t = new THREE.CanvasTexture(c);
+    t.needsUpdate = true;
+    return t;
+  }
+
+  function makeIslandTexture() {
+    const SZ = 256, HALF = SZ / 2;
+    const c = document.createElement('canvas'); c.width = c.height = SZ;
+    const g = c.getContext('2d');
+    const img = g.createImageData(SZ, SZ), d = img.data;
+    const rand = makeRng(777);
+    for (let y = 0; y < SZ; y++) for (let x = 0; x < SZ; x++) {
+      const cx = x - HALF, cy = y - HALF;
+      const dist = Math.sqrt(cx * cx + cy * cy) / HALF;
+      let col;
+      if (dist > 0.82) col = [232, 214, 168]; // pasir
+      else col = [86, 172, 78]; // rumput
+      const n = (rand() - 0.5) * 18;
+      const i = (y * SZ + x) * 4;
+      d[i] = col[0] + n; d[i + 1] = col[1] + n; d[i + 2] = col[2] + n; d[i + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
+=== ALTAR 1915-1935
+  // ================= ALTAR ENCHANT =================
+  const altar = new THREE.Group();
+  const stoneMat = new THREE.MeshLambertMaterial({ color: 0x8b8fa3 });
+  const altBase1 = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.7, 0.35, 16), stoneMat); altBase1.position.y = 0.17; altar.add(altBase1);
+  const altBase2 = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.2, 0.3, 16), stoneMat); altBase2.position.y = 0.5; altar.add(altBase2);
+  for (let k = 0; k < 4; k++) {
+    const a = k * Math.PI / 2 + Math.PI / 4;
+    const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 1.7, 8), stoneMat);
+    pil.position.set(Math.cos(a) * 1.3, 1.05, Math.sin(a) * 1.3); altar.add(pil);
+  }
+  const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.42), new THREE.MeshBasicMaterial({ color: 0xc58bff }));
+  crystal.position.y = 1.65; altar.add(crystal);
+  const altGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeGlowTexture(), color: 0xb56bff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
+  altGlow.scale.set(2.8, 2.8, 1); altGlow.position.y = 1.65; altar.add(altGlow);
+  const altSign = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeSignTexture('ENCHANT', '#5a2a8a'), fog: false }));
+  altSign.scale.set(2.0, 0.5, 1); altSign.position.y = 2.9; altar.add(altSign);
+  altar.position.set(-10.5, DECK_Y, 19.5);
+  town.add(altar);
+  TOWN_COLLIDERS.push({ x: -10.5, z: 19.5, r: 1.8 });
+  const _uta = updateTownAnim;
+  updateTownAnim = function (t) {
+=== HD 2200-2260
+  const PMHD = (function () {
+    let hd = true;
+    try { hd = localStorage.getItem('pm_hd') !== '0'; } catch (e) {}
+    const maxAniso = renderer.capabilities.getMaxAnisotropy();
+    const islandTex = islandMat.map;
+    scene.traverse(o => { if (o.isMesh && o !== water) { o.castShadow = true; o.receiveShadow = true; } });
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    sunLight.shadow.mapSize.set(2048, 2048);
+    const sc = sunLight.shadow.camera; sc.left = -28; sc.right = 28; sc.top = 28; sc.bottom = -28; sc.near = 1; sc.far = 160;
+    sunLight.shadow.bias = -0.0004; sunLight.shadow.normalBias = 0.03;
+    scene.add(sunLight.target);
+  
+    const btn = document.createElement('button');
+    btn.className = 'hudPill';
+    const pills = document.getElementById('hudPills');
+    if (pills) pills.appendChild(btn);
+  
+    function apply(on) {
+      hd = on;
+      const dpr = window.devicePixelRatio || 1;
+      renderer.setPixelRatio(on ? Math.min(dpr, 2.5) : Math.min(dpr, isMobile ? 2 : 2.5));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = on;
+      sunLight.castShadow = on;
+      islandTex.magFilter = on ? THREE.LinearFilter : THREE.NearestFilter;
+      islandTex.minFilter = on ? THREE.LinearMipmapLinearFilter : THREE.NearestFilter;
+      islandTex.needsUpdate = true;
+      scene.traverse(o => {
+        const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+        ms.forEach(m => { if (m.map) m.map.anisotropy = on ? maxAniso : 1; m.needsUpdate = true; });
+      });
+      btn.textContent = 'Grafis: ' + (on ? 'HD' : 'Normal');
+      if (window.PMReal) window.PMReal.set(on);
+    }
+    btn.onclick = () => {
+      apply(!hd);
+      try { localStorage.setItem('pm_hd', hd ? '1' : '0'); } catch (e) {}
+      showToast('Grafis ' + (hd ? 'HD' : 'Normal'));
+    };
+    apply(hd);
+  
+    let acc = 0, frames = 0, elapsed = 0, done = false;
+    return {
+      isHD: () => hd,
+      tick(dt) {
+        if (!hd || done || dt > 1) return;
+        elapsed += dt; if (elapsed < 10) return;
+        acc += dt; frames++;
+        if (acc >= 5) {
+          if (frames / acc < 30) {
+            done = true; apply(false);
+            try { localStorage.setItem('pm_hd', '0'); } catch (e) {}
+            showToast('FPS drop, grafis diturunin ke Normal (bisa balik lewat tombol Grafis)');
+          }
+          acc = 0; frames = 0;
+        }
+      }
+    };
+  })();
+  
+  // ===== PMReal: grafis realistis (cuma aktif di mode HD) =====
+=== TICK 2528-2560
+  
+    function update() {
+      const now = performance.now(), raw = (now - last) / 1000; last = now;
+      const dt = Math.min(0.1, raw);
+      PMHD.tick(raw);
+      tDay = (tDay + dt / CYCLE) % 1;
+  
+      const ns = now / 1000;
+      if (ns >= nextWx) {
+        if (rainTarget === 0) { rainTarget = 1; nextWx = ns + 45 + Math.random() * 55; showToast('Hujan turun! Ikan langka lebih gampang nyangkut'); }
+        else { rainTarget = 0; nextWx = ns + 100 + Math.random() * 80; showToast('Hujan reda'); }
+      }
+      rainLevel += (rainTarget - rainLevel) * Math.min(1, dt * 0.6);
+  
+      sample(tDay);
+      ['top', 'mid', 'hor', 'fog', 'sun', 'hs'].forEach(k => wet(cur[k], rainLevel));
+      sunLight.color.copy(cur.sun); sunLight.intensity = si * (1 - 0.45 * rainLevel);
+      hemiLight.color.copy(cur.hs); hemiLight.groundColor.copy(cur.hg); hemiLight.intensity = hi * (1 - 0.2 * rainLevel);
+      scene.fog.color.copy(cur.fog);
+      scene.fog.near = fogNear * (1 - 0.4 * rainLevel); scene.fog.far = fogFar * (1 - 0.35 * rainLevel);
+  
+      const night = Math.max(0, Math.min(1, (0.75 - hi) / 0.4));
+      glowMat.opacity = 0.35 + 0.65 * night;
+      starMat.opacity = night * (1 - rainLevel); stars.visible = starMat.opacity > 0.02;
+      stars.position.copy(camera.position);
+  
+      skyAcc += dt; if (skyAcc > 0.4) { skyAcc = 0; drawSky(); }
+      if (renderer.shadowMap.enabled) {
+        sunLight.target.position.copy(player.position);
+        sunLight.position.copy(player.position).add(SUNOFF);
+      }
+      updateRain(dt, rainLevel);
+  
+=== LOG 4066-4100
+#updSec ul { margin: 0 0 6px; padding-left: 18px; }
+#updSec li { font-size: 12px; line-height: 1.45; margin-bottom: 3px; color: var(--text); }
+#updVer { font-size: 11px; color: var(--text-dim); margin-bottom: 2px; }
+</style>
+<script>
+(function () {
+  var VER = 'v3.8', DATE = '3 Okt 2026', KEY = 'pm_seen_ver';
+  var LOG = [
+    ["Update v3.8", [
+      "Altar Enchant dirombak: ada 14 enchant dengan 5 tier (Common, Rare, Epic, Legendary, Mythic).",
+      "Efek baru: Harga Jual dan XP, selain Luck dan Speed. Enchant Mythic baru: Tycoon, Godhand, dan Omniscient.",
+      "Animasi undian enchant, dengan efek khusus untuk hasil Epic ke atas dan getar untuk Mythic.",
+      "Sistem Pity: setiap 20 roll tanpa Epic, roll berikutnya dijamin Epic ke atas.",
+      "Roll Kunci Tier (2x biaya): hasil dijamin tidak lebih rendah dari tier enchant yang sedang dipakai.",
+      "Peluang tiap tier sekarang ditampilkan langsung di altar."
+    ]],
+    ["Update v3.7", [
+      "Anti-curang tahap 2: server sekarang mengecek kecepatan gerak pemain. Gerak yang nggak wajar (speed hack atau teleport) ditahan di batas wajar, developer dapat peringatan, dan pelaku yang terus-terusan bisa dikelu
+      "Daftar ban, riwayat Info Secret, dan status maintenance sekarang tersimpan di server, jadi nggak hilang walau server di-restart.",
+      "Layar maintenance dirapihin: latar penuh, pesan lebih besar dan terbaca, dan layarnya hilang sendiri begitu server sudah buka lagi."
+    ]],
+    ["Update v3.6", [
+      "Anti-curang: server sekarang mengecek pengumuman ikan Secret. Harus ada lemparan pancing, jeda waktunya masuk akal, mutasi dan beratnya sesuai ikan, dan dibatasi per jam. Yang kedapatan palsu nggak diumumkan dan d
+      "Perbaikan tombol Download di notifikasi update: sebelumnya mengarah ke link yang salah, sekarang langsung ke APK terbaru.",
+      "Cek update dan status maintenance sekarang jalan otomatis tiap beberapa menit selama kamu main, bukan cuma pas game dibuka.",
+      "Tulisan waktu/cuaca, nomor versi, dan FPS di layar dibuat lebih jelas.",
+      "Berat ikan Secret di Info Secret nggak lagi terpotong di 99.999 kg."
+    ]],
+    ["Update v3.5", [
+      "HUD kiri atas diringkas: info joran, umpan, Luck, Speed, dan Weight digabung jadi satu baris, angka gede disingkat (misal 19,6K% dan 1B kg), jadi pemandangan lebih lega.",
+      "Label waktu dan cuaca di bawah layar nggak lagi numpuk sama nomor versi.",
+      "Nomor versi di layar sekarang ikut versi game (sebelumnya nyangkut di v3.1)."
+    ]],
+    ["Update v3.4", [
+      "Animasi ikan Secret dibikin lebih hidup: badan ikan meliuk kayak berenang, ekornya menyabet, dan lompatannya mengikuti gravitasi dengan efek slow-motion di puncak.",
+=== CSS reveal
+238:  #catchReveal { position: fixed; left: 50%; top: 34%; transform: translate(-50%, -50%); z-index: 45; display: none; pointer-events: none; }
+239:  #catchReveal.show { display: block; }
+240:  #catchRevealCard { --rc: #fff; display: flex; align-items: center; gap: 12px; padding: 12px 20px 12px 14px; border-radius: 22px; background: linear-gradient(160deg, #1d5068, #0a1e2c); border: 3p
+241:  #catchReveal.tier-legendary #catchRevealCard, #catchReveal.tier-mythical #catchRevealCard { padding: 16px 26px 16px 18px; box-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 0 34px var(--rc), 0 0 64px var(-
+242:  #catchRevealImg { width: 56px; height: 56px; border-radius: 14px; image-rendering: pixelated; background: rgba(255,255,255,0.08); }
+243:  #catchReveal.tier-legendary #catchRevealImg, #catchReveal.tier-mythical #catchRevealImg { width: 72px; height: 72px; }
+244:  #catchRevealTier { font-size: 11px; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase; color: var(--rc); }
+245:  #catchRevealName { font-size: 17px; font-weight: 900; color: #fff; }
+246:  #catchReveal.tier-mythical #catchRevealName { font-size: 20px; }
+247:  #catchRevealVal { font-size: 12px; font-weight: 700; color: var(--gold); }
+334:<style>.rowIcon,.fishCard .fcImg,#catchRevealImg{image-rendering:auto!important;object-fit:cover}.fishCard .fcImg{width:84px;height:84px}#catchRevealImg{width:76px;height:76px}#catchReveal.tier-le
+359:#catchReveal.tier-mythical #catchRevealCard { animation: revealPop var(--dur, 2s) cubic-bezier(.2,1.4,.4,1) forwards, mythGlowPulse .7s ease-in-out infinite alternate; }
+360:#catchReveal.tier-mythical #catchRevealName {
+473:<div id="catchReveal">
+474:  <div id="catchRevealCard">
+475:    <img id="catchRevealImg" alt="">
+477:      <div id="catchRevealTier"></div>
+478:      <div id="catchRevealName"></div>
+479:      <div id="catchRevealVal"></div>
+1460:    const el = document.getElementById('catchReveal'), card = document.getElementById('catchRevealCard');
+1461:    document.getElementById('catchRevealImg').src = fishIconCanvas(c.fish, c.mutation);
+1462:    document.getElementById('catchRevealTier').textContent = RARITY_LABEL[c.fish.rarity] + (c.mutation.name ? ' • MUTASI ' + c.mutation.name : '');
+1463:    document.getElementById('catchRevealName').textContent = (c.mutation.name ? c.mutation.name + ' ' : '') + c.fish.name;
+1464:    document.getElementById('catchRevealVal').textContent = (c.weight ? fmtKg(c.weight) + ' • ' : '') + c.value + ' koin';
