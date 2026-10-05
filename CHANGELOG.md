@@ -1,3 +1,12 @@
+# Update v4.20 (5 Okt 2026)
+
+- Laut Dalam: area di luar ring pelampung, 10 ikan zona baru (Layur, Kembung, Lentera, Todak, Pari Manta, Hiu Martil, Ikan Bulan, Cumi Raksasa, Paus Biru, Megalodon). Peluang ikan langka +15%.
+- Pulau Karang + mercusuar dengan sinar berputar di sebelah selatan; spot mancing dengan luck ekstra. Perahu tidak bisa menembus pulau.
+- Ring pelampung berkedip, papan LAUT DALAM, dan air lebih gelap sebagai penanda zona.
+- Paus biru berenang mengelilingi laut dalam, sesekali menyemburkan air.
+- Indeks Ikan: tab lokasi Laut Dalam. Bonus 500 koin untuk pertama kali dapat ikan zona dalam.
+- Trofi Ensiklopedia kini menghitung 25 spesies ikan.
+
 # Update v4.19 (5 Okt 2026)
 
 - Pet tampil 3D dan ikut jalan di belakang karakter: Camar, Kepiting, Kucing Dermaga, Penyu, Lumba-lumba, dan Naga Laut.

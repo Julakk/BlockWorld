@@ -593,7 +593,7 @@ window.PMExt = function (C) {
     ['Ilmuwan Mutasi', 'Tangkap 20 ikan mutasi', 20, 600, function () { return st().mut; }],
     ['Berkilau', 'Tangkap ikan Shiny', 1, 800, function () { return st().shiny; }],
     ['Kolektor', 'Temukan 15 jenis ikan', 15, 500, D],
-    ['Ensiklopedia', 'Lengkapi Koleksi', C.FISH_TABLE.length + 10, 8000, D],
+    ['Ensiklopedia', 'Lengkapi Koleksi', C.FISH_TABLE.length, 8000, D],
     ['Raksasa', 'Tangkap ikan 1.000 kg+', 1, 1000, function () { return st().heavy; }],
     ['Master Level', 'Capai Level 20', 20, 1500, function () { return S().level; }],
     ['Sultan Joran', 'Miliki Astral Rod', 1, 2000, function () { return (S().ownedRods || []).indexOf('legendaris') >= 0 ? 1 : 0; }],
@@ -4695,7 +4695,6 @@ const PMFish = (function () {
   // ================= UI: INDEKS IKAN (PM_V44) =================
   const FX_LOC = [
     { k: 'umum', n: 'Perairan Umum', bg: 'linear-gradient(135deg,#e9c27a,#5fb3a6 55%,#2b7fb8)', t: f => !f.zone },
-    { k: 'dalam', n: 'Laut Dalam', bg: 'linear-gradient(135deg,#1a6a9a,#0e3f66 55%,#041a2e)', t: f => f.zone === 'dalam' },
   ];
   let fxSel = 'umum';
   function renderIndex() {
@@ -5109,14 +5108,14 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.20', DATE = '5 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.19', DATE = '5 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
-    ["Update v4.20", [
-      "Laut Dalam: area laut di luar ring pelampung. Mancing dari perahu di sini dapat 10 ikan zona baru (Layur, Kembung, Lentera, Todak, Pari Manta, Hiu Martil, Ikan Bulan, Cumi Raksasa, Paus Biru, dan Megalodon sebagai Rahasia) dengan peluang ikan langka +15%.",
-      "Pulau Karang di sebelah selatan dengan mercusuar bersinar berputar. Mancing di dekatnya dapat bonus luck ekstra.",
-      "Ring pelampung berkedip, papan LAUT DALAM, dan air yang makin gelap menandai batas zona.",
-      "Paus biru berenang mengelilingi laut dalam dan sesekali menyemburkan air.",
-      "Indeks Ikan punya tab lokasi baru: Laut Dalam. Pertama kali dapat ikan zona dalam dapat bonus 500 koin."
+    ["Update v4.19", [
+      "Pet sekarang tampil 3D dan jalan ikut di belakang karakter: Camar, Kepiting, Kucing Dermaga, Penyu, Lumba-lumba, dan Naga Laut.",
+      "Makin tinggi bintang pet, makin besar modelnya, lengkap dengan label nama dan bintang di atasnya.",
+      "Pet Legendary, Mythic, atau bintang 5 punya aura bercahaya.",
+      "Pet loncat kecil saat ikan nyambar. Saat naik perahu, pet darat disembunyikan dan pet terbang tetap ikut.",
+      "Slot pet ke-2 ikut tampil setelah Rebirth 3."
     ]]
   ];
   var vb0 = document.getElementById('versionBadge'); if (vb0) vb0.textContent = VER; // badge versi ikut VER
@@ -8637,258 +8636,6 @@ const PMFish = (function () {
 })();
 </script>
 <!--PM-PETS-END-->
-<!--PM-DEEP-START-->
-<script>
-/* PM-DEEP v4.20 - Laut Dalam, Pulau Karang + mercusuar, paus biru */
-(function () {
-  'use strict';
-  var C = window.__PMC, T = window.THREE;
-  if (!C || !T || !C.hookAnim || !C.scene || window.__pmDeep) return;
-  window.__pmDeep = true;
-  var PI = Math.PI, scene = C.scene, P = C.player;
-  var IX = 0, IZ = 135, DEEP_R = 56, SPOT_R = 26, BLOCK_R = 11.5;
-  var seed = 4242;
-  function rr() { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; }
-  function rb(a, b) { return a + rr() * (b - a); }
-  function safe(n, f) { try { f(); } catch (e) { console.warn('PM-DEEP ' + n, e); } }
-
-  /* ---------- ikan zona dalam ---------- */
-  var DEEP = [
-    { id: 'layur', name: 'Ikan Layur', rarity: 'common', value: 16 },
-    { id: 'kembung', name: 'Ikan Kembung', rarity: 'common', value: 12 },
-    { id: 'lentera', name: 'Ikan Lentera', rarity: 'uncommon', value: 70 },
-    { id: 'todak', name: 'Ikan Todak', rarity: 'rare', value: 210 },
-    { id: 'pari_manta', name: 'Pari Manta', rarity: 'epic', value: 760 },
-    { id: 'hiu_martil', name: 'Hiu Martil', rarity: 'epic', value: 900 },
-    { id: 'cumi_raksasa', name: 'Cumi Raksasa', rarity: 'legendary', value: 3400 },
-    { id: 'ikan_bulan', name: 'Ikan Bulan', rarity: 'legendary', value: 2800 },
-    { id: 'paus_biru', name: 'Paus Biru', rarity: 'mythical', value: 11000 },
-    { id: 'megalodon', name: 'Megalodon', rarity: 'secret', value: 100000 }
-  ];
-  DEEP.forEach(function (f) {
-    f.zone = 'dalam';
-    if (!C.FISH_TABLE.some(function (x) { return x.id === f.id; })) C.FISH_TABLE.push(f);
-  });
-
-  /* ---------- util ---------- */
-  var hemi = null;
-  scene.children.forEach(function (o) { if (o.isHemisphereLight && !hemi) hemi = o; });
-  function night() { var hi = hemi ? hemi.intensity : 1; return Math.max(0, Math.min(1, (0.75 - hi) / 0.4)); }
-  function cv(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
-  var _dot = null;
-  function dotTex() {
-    if (_dot) return _dot;
-    var c = cv(64, 64), g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = gr; g.fillRect(0, 0, 64, 64); _dot = new T.CanvasTexture(c); return _dot;
-  }
-  function M(c, r, o) { o = o || {}; o.color = c; o.roughness = r === undefined ? 0.8 : r; return new T.MeshStandardMaterial(o); }
-  function mesh(par, geo, mat, x, y, z) { var m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; par.add(m); return m; }
-  function jit(g, amt) {
-    var p = g.attributes.position, i, x, y, z, h, k;
-    for (i = 0; i < p.count; i++) {
-      x = p.getX(i); y = p.getY(i); z = p.getZ(i);
-      h = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453; h = h - Math.floor(h);
-      k = 1 + amt * (h - 0.5) * 2; p.setXYZ(i, x * k, y * k, z * k);
-    }
-    g.computeVertexNormals(); return g;
-  }
-  function sph(par, mat, x, y, z, sx, sy, sz) {
-    var m = new T.Mesh(new T.SphereGeometry(1, 16, 12), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; par.add(m); return m;
-  }
-  var ticks = [];
-
-  /* ---------- Pulau Karang + mercusuar ---------- */
-  safe('island', function () {
-    var isl = new T.Group(); isl.position.set(IX, 0, IZ); scene.add(isl);
-    var rock = new T.MeshStandardMaterial({ color: 0x7d756b, roughness: 0.95, flatShading: true });
-    mesh(isl, jit(new T.IcosahedronGeometry(1, 2), 0.14), rock, 0, -0.6, 0).scale.set(9.5, 1.9, 9.5);
-    mesh(isl, jit(new T.IcosahedronGeometry(1, 2), 0.05), M(0xe2d3a1, 0.95, { flatShading: true }), 0, -0.5, 0).scale.set(10.6, 0.5, 10.6);
-    mesh(isl, jit(new T.IcosahedronGeometry(1, 2), 0.12), M(0x4f9a46, 0.9, { flatShading: true }), 0, 0.45, 0).scale.set(6.4, 1.05, 6.4);
-    var i, a, r;
-    for (i = 0; i < 9; i++) {
-      a = rr() * PI * 2; r = rb(10.8, 13);
-      var rk = mesh(isl, jit(new T.DodecahedronGeometry(1, 0), 0.2), rock, Math.cos(a) * r, -0.45, Math.sin(a) * r);
-      rk.scale.set(rb(0.9, 1.7), rb(0.7, 1.4), rb(0.9, 1.7)); rk.rotation.y = rr() * 3;
-    }
-    /* mercusuar */
-    var tc = cv(64, 256), tg = tc.getContext('2d');
-    for (i = 0; i < 4; i++) { tg.fillStyle = i % 2 ? '#f4f1e8' : '#c8372d'; tg.fillRect(0, i * 64, 64, 64); }
-    var lt = new T.Group(); lt.position.set(-0.6, 0, 0.4); isl.add(lt);
-    var tex = new T.CanvasTexture(tc);
-    mesh(lt, new T.CylinderGeometry(0.8, 1.15, 9, 20), new T.MeshStandardMaterial({ map: tex, roughness: 0.7 }), 0, 5.9, 0);
-    mesh(lt, new T.CylinderGeometry(1.25, 1.25, 0.18, 20), M(0x2a2d33, 0.6), 0, 10.45, 0);
-    var rail = mesh(lt, new T.TorusGeometry(1.15, 0.04, 6, 24), M(0x2a2d33, 0.5), 0, 10.78, 0); rail.rotation.x = PI / 2;
-    var lampM = new T.MeshStandardMaterial({ color: 0xfff2b0, emissive: 0xffc04a, emissiveIntensity: 0.2, roughness: 0.2, transparent: true, opacity: 0.9 });
-    mesh(lt, new T.CylinderGeometry(0.62, 0.62, 1.1, 16), lampM, 0, 11.09, 0);
-    mesh(lt, new T.ConeGeometry(0.85, 0.9, 16), M(0xc8372d, 0.6), 0, 12.09, 0);
-    mesh(lt, new T.SphereGeometry(0.12, 8, 6), M(0xd9b34a, 0.3, { metalness: 0.8 }), 0, 12.62, 0);
-    var door = mesh(lt, new T.BoxGeometry(0.42, 0.8, 0.1), M(0x3a2618), 0, 2.0, 1.04); door.rotation.y = 0;
-    /* sinar berputar */
-    var beamG = new T.Group(); beamG.position.set(0, 11.09, 0); lt.add(beamG);
-    var bm = [];
-    [0, PI].forEach(function (ang) {
-      var g = new T.ConeGeometry(2.4, 42, 16, 1, true); g.translate(0, -21, 0); g.rotateX(-PI / 2);
-      var m = new T.Mesh(g, new T.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide, fog: false, toneMapped: false }));
-      m.rotation.y = ang; beamG.add(m); bm.push(m);
-    });
-    var glow = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: 0xffd27a, transparent: true, depthWrite: false, blending: T.AdditiveBlending, opacity: 0, fog: false, toneMapped: false }));
-    glow.scale.set(6, 6, 1); glow.position.set(0, 11.09, 0); lt.add(glow);
-    /* palem */
-    [[3.0, -1.5], [-3.2, -2.2], [1.6, 3.6]].forEach(function (p, k) {
-      var g = new T.Group(); g.position.set(p[0], 1.15, p[1]); g.rotation.z = (k - 1) * 0.08; isl.add(g);
-      mesh(g, new T.CylinderGeometry(0.12, 0.2, 2.6, 8), M(0x7a5a34), 0, 1.3, 0);
-      var fm = [new T.MeshStandardMaterial({ color: 0x3d9a4a, roughness: 0.8 }), new T.MeshStandardMaterial({ color: 0x2f8640, roughness: 0.8 })];
-      for (var f = 0; f < 6; f++) {
-        var an = f / 6 * PI * 2, fr = mesh(g, new T.BoxGeometry(1.5, 0.04, 0.34), fm[f % 2], Math.cos(an) * 0.7, 2.55, Math.sin(an) * 0.7);
-        fr.rotation.y = -an; fr.rotation.z = -0.4;
-      }
-    });
-    var sg = new T.Sprite(new T.SpriteMaterial({ map: C.makeSignTexture('PULAU KARANG', '#6b4a28'), fog: false }));
-    sg.scale.set(7, 1.75, 1); sg.position.set(0, 14.4, 0); isl.add(sg);
-    ticks.push(function (t, n) {
-      beamG.rotation.y = t * 0.9;
-      lampM.emissiveIntensity = 0.2 + 1.8 * n;
-      bm[0].material.opacity = bm[1].material.opacity = 0.04 + 0.34 * n;
-      glow.material.opacity = 0.2 + 0.7 * n; glow.scale.setScalar(5 + 1.2 * n + 0.3 * Math.sin(t * 5));
-    });
-  });
-
-  /* perahu tidak bisa menembus pulau */
-  safe('walk', function () {
-    C.setWalkable(function (o, x, z) { if (Math.hypot(x - IX, z - IZ) < BLOCK_R) return false; return o(x, z); });
-  });
-
-  /* ---------- batas Laut Dalam: air gelap + pelampung + papan ---------- */
-  safe('zone', function () {
-    var c = cv(512, 512), g = c.getContext('2d'), r0 = (DEEP_R + 1) / 290;
-    var gr = g.createRadialGradient(256, 256, 256 * r0, 256, 256, 256);
-    gr.addColorStop(0, 'rgba(3,30,65,0)'); gr.addColorStop(0.25, 'rgba(3,30,65,.35)'); gr.addColorStop(1, 'rgba(2,20,50,.55)');
-    g.fillStyle = gr; g.fillRect(0, 0, 512, 512);
-    var ring = new T.Mesh(new T.RingGeometry(DEEP_R + 1, 290, 96, 1), new T.MeshBasicMaterial({ map: new T.CanvasTexture(c), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
-    ring.rotation.x = -PI / 2; ring.position.y = -0.29; ring.renderOrder = 1; scene.add(ring);
-    var NB = 48, d = new T.Object3D(), col = new T.Color(), i;
-    var buoys = new T.InstancedMesh(new T.SphereGeometry(0.34, 10, 8), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 }), NB);
-    var pp = new Float32Array(NB * 3), pc = new Float32Array(NB * 3);
-    for (i = 0; i < NB; i++) {
-      var a = i / NB * PI * 2, x = Math.cos(a) * DEEP_R, z = Math.sin(a) * DEEP_R;
-      d.position.set(x, -0.12, z); d.updateMatrix(); buoys.setMatrixAt(i, d.matrix);
-      col.setHex(i % 2 ? 0xe8432f : 0xffffff); buoys.setColorAt(i, col);
-      pp[i * 3] = x; pp[i * 3 + 1] = 0.5; pp[i * 3 + 2] = z;
-    }
-    buoys.frustumCulled = false; scene.add(buoys);
-    var pg = new T.BufferGeometry();
-    pg.setAttribute('position', new T.BufferAttribute(pp, 3)); pg.setAttribute('color', new T.BufferAttribute(pc, 3));
-    var pts = new T.Points(pg, new T.PointsMaterial({ size: 0.9, map: dotTex(), vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false, toneMapped: false }));
-    pts.frustumCulled = false; scene.add(pts);
-    [0, 1, 2, 3].forEach(function (k) {
-      var s = new T.Sprite(new T.SpriteMaterial({ map: C.makeSignTexture('LAUT DALAM', '#0e3f66'), fog: false }));
-      s.scale.set(7, 1.75, 1); s.position.set(Math.cos(k * PI / 2) * DEEP_R, 3.4, Math.sin(k * PI / 2) * DEEP_R); scene.add(s);
-    });
-    ticks.push(function (t, n) {
-      for (var j = 0; j < NB; j++) {
-        var b = n * (0.6 + 0.4 * Math.sin(t * 2.2 + j));
-        pc[j * 3] = b; pc[j * 3 + 1] = 0.7 * b; pc[j * 3 + 2] = 0.25 * b;
-      }
-      pg.attributes.color.needsUpdate = true; pts.visible = n > 0.03;
-    });
-  });
-
-  /* ---------- paus biru ---------- */
-  safe('whale', function () {
-    var wh = new T.Group(); scene.add(wh);
-    var wb = M(0x4a6f8f, 0.55), wl = M(0xcfe0ea, 0.6), bk = M(0x111111, 0.3);
-    var body = new T.Group(); wh.add(body);
-    sph(body, wb, 0, 0, 0, 1.7, 1.45, 5.4);
-    sph(body, wl, 0, -0.45, 0.4, 1.55, 1.0, 4.6);
-    [-1, 1].forEach(function (s) {
-      sph(body, bk, s * 1.3, 0.1, 3.9, 0.12, 0.12, 0.12);
-      var fl = sph(body, wb, s * 1.9, -0.6, 1.4, 1.2, 0.12, 0.5); fl.rotation.z = -s * 0.5;
-    });
-    sph(body, wb, 0, 1.55, -1.5, 0.12, 0.45, 0.9);
-    var tail = new T.Group(); tail.position.set(0, 0, -4.8); body.add(tail);
-    sph(tail, wb, 0, 0.1, -1.0, 0.7, 0.6, 1.8);
-    var fk = new T.Group(); fk.position.set(0, 0.1, -2.7); tail.add(fk);
-    [-1, 1].forEach(function (s) { var f = sph(fk, wb, s * 1.3, 0, 0, 1.7, 0.12, 0.8); f.rotation.y = s * 0.5; });
-    var sp = [];
-    for (var i = 0; i < 5; i++) {
-      var s = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: 0xe8f6ff, transparent: true, depthWrite: false, opacity: 0, fog: false }));
-      s.scale.set(1.2, 1.2, 1); body.add(s); sp.push(s);
-    }
-    wh.scale.setScalar(1.1);
-    ticks.push(function (t) {
-      var a = t * 0.035 + 1.2, rad = 88 + 6 * Math.sin(t * 0.05), x = Math.cos(a) * rad, z = Math.sin(a) * rad;
-      wh.position.set(x, -1.25 + 0.5 * Math.sin(t * 0.3), z);
-      wh.rotation.y = Math.atan2(-Math.sin(a), Math.cos(a));
-      body.rotation.x = 0.05 * Math.cos(t * 0.5);
-      tail.rotation.x = Math.sin(t * 1.4) * 0.25;
-      var u = (t % 12) / 12;
-      for (var k = 0; k < sp.length; k++) {
-        if (u < 0.15) { var q = u / 0.15; sp[k].position.set((k - 2) * 0.12, 1.5 + q * (2 + 0.3 * k), 4.8); sp[k].material.opacity = Math.sin(q * PI) * 0.7; }
-        else sp[k].material.opacity = 0;
-      }
-    });
-  });
-
-  /* ---------- efek ke mancing ---------- */
-  function zone() {
-    var p = P.position;
-    if (Math.hypot(p.x - IX, p.z - IZ) < SPOT_R) return 2;
-    if (Math.hypot(p.x, p.z) > DEEP_R) return 1;
-    return 0;
-  }
-  C.hookRoll(function (orig, boost) {
-    var z = zone(), b = boost;
-    if (z >= 1) b *= 1.15;
-    if (z === 2) b *= 1.2;
-    var r = orig(b);
-    if (z >= 1) {
-      var pool = DEEP.filter(function (f) { return f.rarity === r.fish.rarity; });
-      if (pool.length && Math.random() < 0.9) {
-        r.fish = pool[Math.floor(Math.random() * pool.length)];
-        r.value = Math.round(r.fish.value * r.mutation.mult);
-      }
-    }
-    return r;
-  });
-  C.hookFinish(function (ok, c) {
-    if (!ok || !c || !c.fish || c.fish.zone !== 'dalam') return;
-    var s = C.save; s.deepCatch = (s.deepCatch || 0) + 1;
-    if (!s.deepFirst) { s.deepFirst = 1; s.coins += 500; C.toast('Pertama kali di Laut Dalam! +500 koin'); C.Sfx.sell(); }
-    C.persist(); C.refresh();
-  });
-
-  /* ---------- HUD zona ---------- */
-  var css = document.createElement('style');
-  css.textContent = '#pmZone{position:fixed;top:calc(130px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:11;display:none;padding:3px 12px;border-radius:999px;font-size:11px;font-weight:900;color:#fff;border:2px solid #fff;text-shadow:1px 1px 2px #000;white-space:nowrap;pointer-events:none;background:linear-gradient(90deg,#0e3f66,#1a6a9a)}@media (orientation:landscape) and (max-height:520px){#pmZone{top:calc(34px + env(safe-area-inset-top,0px))}}';
-  document.head.appendChild(css);
-  var badge = document.createElement('div'); badge.id = 'pmZone'; document.body.appendChild(badge);
-  function banner(sm, big) {
-    var el = document.getElementById('pm4Welcome');
-    if (!el) { el = document.createElement('div'); el.id = 'pm4Welcome'; document.body.appendChild(el); }
-    el.innerHTML = '<small></small><b></b>'; el.firstChild.textContent = sm; el.lastChild.textContent = big;
-    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-    try { C.Sfx.levelUp(); } catch (e) {}
-  }
-  var curZ = 0;
-  ticks.push(function (t) {
-    var z = zone();
-    if (z === curZ) return;
-    curZ = z;
-    if (z === 0) { badge.style.display = 'none'; return; }
-    badge.textContent = z === 2 ? 'Spot Karang \u2022 luck ekstra' : 'Laut Dalam \u2022 ikan zona baru';
-    badge.style.display = 'block';
-    if (t > 8) banner('MEMASUKI', z === 2 ? 'Spot Karang' : 'Laut Dalam');
-  });
-
-  C.hookAnim(function (t) {
-    var n = night();
-    for (var i = 0; i < ticks.length; i++) { try { ticks[i](t, n); } catch (e) { ticks[i] = function () {}; console.warn('PM-DEEP tick', e); } }
-  });
-})();
-</script>
-<!--PM-DEEP-END-->
-
 
 </body>
 </html>
