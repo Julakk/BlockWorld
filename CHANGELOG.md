@@ -1,3 +1,12 @@
+# Update v4.21 (5 Okt 2026)
+
+- Laut Dalam dan penanda zonanya (ring pelampung, papan, air gelap, badge) dihapus.
+- Pulau Karang bisa didarat: dermaga karang di sisi utara, tombol Mendarat dari perahu, tombol Pulang ke Pulau Utama.
+- Mercusuar bersinar berputar, dermaga berlentera yang menyala malam hari.
+- Peti Harta harian di pulau (koin dan XP).
+- Bisa mancing dari tepi pulau dan dermaga; bonus luck dekat Pulau Karang.
+- Paus biru tetap berenang di laut lepas.
+
 # Update v4.20 (5 Okt 2026)
 
 - Laut Dalam: area di luar ring pelampung, 10 ikan zona baru (Layur, Kembung, Lentera, Todak, Pari Manta, Hiu Martil, Ikan Bulan, Cumi Raksasa, Paus Biru, Megalodon). Peluang ikan langka +15%.
