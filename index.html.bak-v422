@@ -593,7 +593,7 @@ window.PMExt = function (C) {
     ['Ilmuwan Mutasi', 'Tangkap 20 ikan mutasi', 20, 600, function () { return st().mut; }],
     ['Berkilau', 'Tangkap ikan Shiny', 1, 800, function () { return st().shiny; }],
     ['Kolektor', 'Temukan 15 jenis ikan', 15, 500, D],
-    ['Ensiklopedia', 'Lengkapi Koleksi', C.FISH_TABLE.length + 12, 8000, D],
+    ['Ensiklopedia', 'Lengkapi Koleksi', C.FISH_TABLE.length, 8000, D],
     ['Raksasa', 'Tangkap ikan 1.000 kg+', 1, 1000, function () { return st().heavy; }],
     ['Master Level', 'Capai Level 20', 20, 1500, function () { return S().level; }],
     ['Sultan Joran', 'Miliki Astral Rod', 1, 2000, function () { return (S().ownedRods || []).indexOf('legendaris') >= 0 ? 1 : 0; }],
@@ -938,15 +938,14 @@ function pmBuildBoat(id) {
     $('interactBtn').textContent = boatE.label;
     C.toast('Berlayar dengan ' + b.name + '!');
   }
-  function leaveBoat(stay) {
+  function leaveBoat() {
     var p = C.player.position;
-    sailing = false; if (!stay) { p.x = 0; p.z = 36; }
+    sailing = false; p.x = 0; p.z = 36;
     boat.visible = false; boat.position.x = dock.x; boat.position.z = dock.z; boat.rotation.y = dock.r;
     boatE.x = 9999; boatE.z = 9999; setSpeed(WALK_SPEED);
-    if (!stay) C.toast('Kembali ke dermaga');
+    C.toast('Kembali ke dermaga');
   }
   C.TOWN_SHOPS.push(boatE);
-  window.PMBoatAPI = { board: board, leave: leaveBoat, get: bget, id: function () { return bsave().boat; } };
 
   /* --- Toko Perahu (Pak Karto) --- */
   var bov = document.createElement('div');
@@ -1124,7 +1123,7 @@ function pmBuildBoat(id) {
       armL.rotation.z = -0.09 - Math.sin(t * 1.4 + 1) * 0.03;
     });
   })();
-  C.setWalkable(function (o, x, z) { if (!sailing) return o(x, z); var d = Math.hypot(x, z); return d > C.ISLAND_RADIUS + 1 && d < 260 && !(Math.abs(x) < 2.7 && z > 27 && z < 52) && !(Math.abs(Math.abs(x) - 11.5) < 2.3 && z > 27 && z < 43.6) && !(Math.abs(Math.abs(x) - 11.5) < 4.2 && z > 38.5 && z < 43.6) && !(Math.abs(x) < 6 && z > 46 && z < 51.2); });
+  C.setWalkable(function (o, x, z) { if (!sailing) return o(x, z); var d = Math.hypot(x, z); return d > C.ISLAND_RADIUS + 1 && d < 260 && !(Math.abs(x) < 2.7 && z > 27) && !(Math.abs(Math.abs(x) - 11.5) < 2.3 && z > 27 && z < 43.6) && !(Math.abs(Math.abs(x) - 11.5) < 4.2 && z > 38.5 && z < 43.6) && !(Math.abs(x) < 6 && z > 46 && z < 51.2); });
   C.setNearWater(function (o) { return sailing || o(); });
   C.setGround(function (o, x, z) { return sailing ? 0.24 : o(x, z); });
 
@@ -4696,7 +4695,6 @@ const PMFish = (function () {
   // ================= UI: INDEKS IKAN (PM_V44) =================
   const FX_LOC = [
     { k: 'umum', n: 'Perairan Umum', bg: 'linear-gradient(135deg,#e9c27a,#5fb3a6 55%,#2b7fb8)', t: f => !f.zone },
-    { k: 'karang', n: 'Pulau Karang', bg: 'linear-gradient(135deg,#e2d3a1,#4f9a46 45%,#1f6f8f)', t: f => f.zone === 'karang' },
   ];
   let fxSel = 'umum';
   function renderIndex() {
@@ -5110,14 +5108,14 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.22', DATE = '5 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.21', DATE = '5 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
-    ["Update v4.22", [
-      "Paus biru yang berenang dihapus.",
-      "Pulau Karang diperluas: pantai dan area rumput lebih lebar, lebih banyak pohon palem, dermaga dan peti harta digeser.",
-      "Indeks Ikan punya tab lokasi baru: Pulau Karang, berisi 12 ikan khusus (Bandeng, Belanak, Baronang, Kuda Laut, Ubur-ubur, Kerapu, Penyu, Pari Manta, Ikan Bulan, Cumi Raksasa, Paus Biru, dan Megalodon sebagai Rahasia).",
-      "Sistem perahu baru: saat mendarat, perahu yang kamu pakai tertambat di dermaga karang. Pulang ke pulau utama dengan menaiki perahu itu lagi. Fitur Pulang ke Pulau Utama dihapus.",
-      "Turun dari perahu kini hanya bisa di dekat dermaga. Dinding tak terlihat yang membelah laut juga sudah diperbaiki."
+    ["Update v4.21", [
+      "Laut Dalam dan penanda zonanya (ring pelampung, papan, air gelap) dihapus.",
+      "Pulau Karang kini bisa didarat. Naik perahu, dekati dermaga karang di sisi utara pulau, lalu tekan Mendarat di Pulau Karang.",
+      "Di pulau ada mercusuar bersinar berputar, dermaga berlentera, dan Peti Harta yang bisa dibuka sekali sehari (koin dan XP).",
+      "Bisa mancing dari tepi pulau dan dermaga. Mancing dekat Pulau Karang dapat bonus luck.",
+      "Pulang lewat tombol Pulang ke Pulau Utama di dermaga karang. Paus biru tetap berenang di laut lepas."
     ]]
   ];
   var vb0 = document.getElementById('versionBadge'); if (vb0) vb0.textContent = VER; // badge versi ikut VER
@@ -8640,53 +8638,19 @@ const PMFish = (function () {
 <!--PM-PETS-END-->
 <!--PM-ISLE-START-->
 <script>
-/* PM-ISLE v4.22 - Pulau Karang lebih luas, ikan khusus pulau, perahu tertambat */
+/* PM-ISLE v4.21 - Pulau Karang bisa didarat: dermaga, mercusuar, peti harta, paus biru */
 (function () {
   'use strict';
   var C = window.__PMC, T = window.THREE;
   if (!C || !T || !C.hookAnim || !C.scene || window.__pmIsle) return;
   window.__pmIsle = true;
   var PI = Math.PI, scene = C.scene, P = C.player, boat = C.boatMesh;
-  var IX = 0, IZ = 135, LAND_R = 13.4, GRASS_R = 10.4, TOP = 0.45, SAND = 0.35, DECK = 0.37;
-  var DOCK_Z0 = IZ - 22.6, DOCK_Z1 = IZ - 12.2, BLOCK_R = 17.6;
-  var MOOR_X = IX + 3.1, MOOR_Z = DOCK_Z0 + 4.5, FISH_R = 32;
+  var IX = 0, IZ = 135, LAND_R = 9.9, TOP = 0.45, SAND = 0.35, DOCK_Z0 = IZ - 18.4, DOCK_Z1 = IZ - 9;
   var seed = 4242;
   function rr() { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; }
   function rb(a, b) { return a + rr() * (b - a); }
   function safe(n, f) { try { f(); } catch (e) { console.warn('PM-ISLE ' + n, e); } }
   function dstr(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
-
-  /* ---------- ikan khusus Pulau Karang ---------- */
-  var FISH = [
-    { id: 'bandeng', name: 'Ikan Bandeng', rarity: 'common', value: 14 },
-    { id: 'belanak', name: 'Ikan Belanak', rarity: 'common', value: 12 },
-    { id: 'baronang', name: 'Ikan Baronang', rarity: 'uncommon', value: 45 },
-    { id: 'kuda_laut', name: 'Kuda Laut', rarity: 'uncommon', value: 60 },
-    { id: 'ubur', name: 'Ubur-ubur', rarity: 'rare', value: 150 },
-    { id: 'kerapu', name: 'Ikan Kerapu', rarity: 'rare', value: 190 },
-    { id: 'penyu', name: 'Penyu', rarity: 'epic', value: 650 },
-    { id: 'pari_manta', name: 'Pari Manta', rarity: 'epic', value: 780 },
-    { id: 'ikan_bulan', name: 'Ikan Bulan', rarity: 'legendary', value: 2600 },
-    { id: 'cumi_raksasa', name: 'Cumi Raksasa', rarity: 'legendary', value: 3200 },
-    { id: 'paus_biru', name: 'Paus Biru', rarity: 'mythical', value: 10000 },
-    { id: 'megalodon', name: 'Megalodon', rarity: 'secret', value: 100000 }
-  ];
-  FISH.forEach(function (f) {
-    f.zone = 'karang';
-    if (!C.FISH_TABLE.some(function (x) { return x.id === f.id; })) C.FISH_TABLE.push(f);
-  });
-  C.hookRoll(function (orig, boost) {
-    var p = P.position, near = Math.hypot(p.x - IX, p.z - IZ) < FISH_R;
-    var r = orig(near ? boost * 1.2 : boost);
-    if (near && Math.random() < 0.85) {
-      var pool = FISH.filter(function (f) { return f.rarity === r.fish.rarity; });
-      if (pool.length) {
-        r.fish = pool[Math.floor(Math.random() * pool.length)];
-        r.value = Math.round(r.fish.value * r.mutation.mult);
-      }
-    }
-    return r;
-  });
 
   /* ---------- util ---------- */
   var hemi = null;
@@ -8711,6 +8675,9 @@ const PMFish = (function () {
     }
     g.computeVertexNormals(); return g;
   }
+  function sph(par, mat, x, y, z, sx, sy, sz) {
+    var m = new T.Mesh(new T.SphereGeometry(1, 16, 12), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; par.add(m); return m;
+  }
   function woodTex(rx, ry) {
     var c = cv(128, 128), g = c.getContext('2d'), i;
     g.fillStyle = '#9a6a3a'; g.fillRect(0, 0, 128, 128);
@@ -8724,22 +8691,21 @@ const PMFish = (function () {
   function onLand(x, z) { return Math.hypot(x - IX, z - IZ) < LAND_R; }
   var COL = [
     { x: IX - 0.6, z: IZ + 0.4, r: 1.7 },
-    { x: IX + 5.5, z: IZ - 3.5, r: 0.55 }, { x: IX - 5.8, z: IZ - 3.8, r: 0.55 }, { x: IX + 3.2, z: IZ + 6.2, r: 0.55 },
-    { x: IX - 4.0, z: IZ + 5.5, r: 0.55 }, { x: IX + 7.4, z: IZ - 1.2, r: 0.55 }, { x: IX - 7.2, z: IZ + 0.8, r: 0.55 },
-    { x: IX + 6.0, z: IZ + 3.4, r: 0.8 }
+    { x: IX + 3.0, z: IZ - 1.5, r: 0.55 }, { x: IX - 3.2, z: IZ - 2.2, r: 0.55 }, { x: IX + 1.6, z: IZ + 3.6, r: 0.55 },
+    { x: IX + 3.6, z: IZ + 2.6, r: 0.8 }
   ];
   function blocked(x, z) { for (var i = 0; i < COL.length; i++) if (Math.hypot(x - COL[i].x, z - COL[i].z) < COL[i].r) return true; return false; }
-  function groundH(x, z) { return Math.hypot(x - IX, z - IZ) < GRASS_R - 0.2 ? TOP : SAND; }
+  function groundH(x, z) { return Math.hypot(x - IX, z - IZ) < 7.6 ? TOP : SAND; }
 
-  /* ---------- pulau, mercusuar, dermaga, peti ---------- */
+  /* ---------- pulau ---------- */
   safe('island', function () {
     var isl = new T.Group(); isl.position.set(IX, 0, IZ); scene.add(isl);
     var rock = new T.MeshStandardMaterial({ color: 0x7d756b, roughness: 0.95, flatShading: true }), i, a, r;
-    mesh(isl, jit(new T.IcosahedronGeometry(1, 2), 0.14), rock, 0, -0.95, 0).scale.set(15.6, 1.0, 15.6);
-    mesh(isl, new T.CylinderGeometry(13.4, 14.0, 0.5, 56), M(0xe2d3a1, 0.95), 0, 0.1, 0);
-    mesh(isl, new T.CylinderGeometry(10.4, 10.9, 0.25, 48), M(0x4f9a46, 0.9), 0, 0.325, 0);
-    for (i = 0; i < 12; i++) {
-      a = rr() * PI * 2; if (Math.abs(a - 1.5 * PI) < 0.55) a += 1.2; r = rb(14.6, 17.5);
+    mesh(isl, jit(new T.IcosahedronGeometry(1, 2), 0.14), rock, 0, -0.95, 0).scale.set(11.8, 1.0, 11.8);
+    mesh(isl, new T.CylinderGeometry(9.9, 10.4, 0.5, 44), M(0xe2d3a1, 0.95), 0, 0.1, 0);
+    mesh(isl, new T.CylinderGeometry(7.4, 7.9, 0.25, 40), M(0x4f9a46, 0.9), 0, 0.325, 0);
+    for (i = 0; i < 9; i++) {
+      a = rr() * PI * 2; r = rb(10.8, 13);
       var rk = mesh(isl, jit(new T.DodecahedronGeometry(1, 0), 0.2), rock, Math.cos(a) * r, -0.3, Math.sin(a) * r);
       rk.scale.set(rb(0.9, 1.7), rb(0.7, 1.4), rb(0.9, 1.7)); rk.rotation.y = rr() * 3;
     }
@@ -8771,8 +8737,8 @@ const PMFish = (function () {
       glow.material.opacity = 0.2 + 0.7 * n; glow.scale.setScalar(5 + 1.2 * n + 0.3 * Math.sin(t * 5));
     });
     /* palem */
-    [[5.5, -3.5], [-5.8, -3.8], [3.2, 6.2], [-4.0, 5.5], [7.4, -1.2], [-7.2, 0.8]].forEach(function (p, k) {
-      var g = new T.Group(); g.position.set(p[0], TOP, p[1]); g.rotation.z = ((k % 3) - 1) * 0.08; isl.add(g);
+    [[3.0, -1.5], [-3.2, -2.2], [1.6, 3.6]].forEach(function (p, k) {
+      var g = new T.Group(); g.position.set(p[0], TOP, p[1]); g.rotation.z = (k - 1) * 0.08; isl.add(g);
       mesh(g, new T.CylinderGeometry(0.12, 0.2, 2.6, 8), M(0x7a5a34), 0, 1.3, 0);
       var fm = [new T.MeshStandardMaterial({ color: 0x3d9a4a, roughness: 0.8 }), new T.MeshStandardMaterial({ color: 0x2f8640, roughness: 0.8 })];
       for (var f = 0; f < 6; f++) {
@@ -8785,24 +8751,25 @@ const PMFish = (function () {
 
     /* dermaga */
     var dk = new T.Group(); dk.position.set(IX, 0, IZ); scene.add(dk);
-    var zA = DOCK_Z0 - IZ, zB = DOCK_Z1 - IZ, len = zB - zA, zc = (zA + zB) / 2, wood = M(0x5a3a1e), z;
-    mesh(dk, new T.BoxGeometry(3.0, 0.3, len), new T.MeshStandardMaterial({ map: woodTex(1, len / 3), roughness: 0.85 }), 0, DECK - 0.15, zc);
-    for (z = zA + 0.9; z <= Math.min(zB - 0.4, -14.5); z += 3) [-1.35, 1.35].forEach(function (x) { mesh(dk, new T.CylinderGeometry(0.13, 0.15, 2.4, 8), wood, x, -0.85, z); });
-    for (z = zA + 0.2; z <= zB; z += 1.9) [-1.45, 1.45].forEach(function (x) { mesh(dk, new T.BoxGeometry(0.1, 0.9, 0.1), wood, x, DECK + 0.45, z); });
-    [-1.45, 1.45].forEach(function (x) { mesh(dk, new T.BoxGeometry(0.08, 0.08, len), wood, x, DECK + 0.9, zc); });
+    var zA = DOCK_Z0 - IZ, zB = DOCK_Z1 - IZ, len = zB - zA, zc = (zA + zB) / 2, wood = M(0x5a3a1e);
+    mesh(dk, new T.BoxGeometry(3.0, 0.3, len), new T.MeshStandardMaterial({ map: woodTex(1, len / 3), roughness: 0.85 }), 0, SAND - 0.15, zc);
+    var z;
+    for (z = zA + 0.9; z <= zB - 0.4; z += 3) [-1.35, 1.35].forEach(function (x) { mesh(dk, new T.CylinderGeometry(0.13, 0.15, 2.4, 8), wood, x, -0.85, z); });
+    for (z = zA + 0.2; z <= zB; z += 1.9) [-1.45, 1.45].forEach(function (x) { mesh(dk, new T.BoxGeometry(0.1, 0.9, 0.1), wood, x, SAND + 0.45, z); });
+    [-1.45, 1.45].forEach(function (x) { mesh(dk, new T.BoxGeometry(0.08, 0.08, len), wood, x, SAND + 0.9, zc); });
     [-1.45, 1.45].forEach(function (x) {
-      mesh(dk, new T.CylinderGeometry(0.06, 0.08, 2.2, 8), wood, x, DECK + 1.1, zA + 0.25);
+      mesh(dk, new T.CylinderGeometry(0.06, 0.08, 2.2, 8), wood, x, SAND + 1.1, zA + 0.25);
       var lm = new T.MeshStandardMaterial({ color: 0xf5d28a, emissive: 0xffa733, emissiveIntensity: 0.1, roughness: 0.4 });
-      mesh(dk, new T.BoxGeometry(0.2, 0.28, 0.2), lm, x, DECK + 2.3, zA + 0.25);
+      mesh(dk, new T.BoxGeometry(0.2, 0.28, 0.2), lm, x, SAND + 2.3, zA + 0.25);
       var gl = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: 0xffb347, transparent: true, depthWrite: false, blending: T.AdditiveBlending, opacity: 0, fog: false, toneMapped: false }));
-      gl.scale.set(2.2, 2.2, 1); gl.position.set(x, DECK + 2.3, zA + 0.25); dk.add(gl);
+      gl.scale.set(2.2, 2.2, 1); gl.position.set(x, SAND + 2.3, zA + 0.25); dk.add(gl);
       lanterns.push({ m: lm, s: gl });
     });
     var ds = new T.Sprite(new T.SpriteMaterial({ map: C.makeSignTexture('DERMAGA KARANG', '#1f6f8f'), fog: false }));
-    ds.scale.set(3.6, 0.9, 1); ds.position.set(0, DECK + 3.7, zA + 0.25); dk.add(ds);
+    ds.scale.set(3.6, 0.9, 1); ds.position.set(0, SAND + 3.7, zA + 0.25); dk.add(ds);
 
     /* peti harta */
-    var ch = new T.Group(); ch.position.set(IX + 6.0, TOP, IZ + 3.4); ch.rotation.y = -0.5; scene.add(ch);
+    var ch = new T.Group(); ch.position.set(IX + 3.6, TOP, IZ + 2.6); ch.rotation.y = -0.5; scene.add(ch);
     var cw = M(0x7a4a24), gold = M(0xd9b34a, 0.3, { metalness: 0.8, emissive: 0x3a2a00, emissiveIntensity: 0.3 });
     mesh(ch, new T.BoxGeometry(0.95, 0.5, 0.62), cw, 0, 0.25, 0);
     [-0.3, 0.3].forEach(function (x) { mesh(ch, new T.BoxGeometry(0.08, 0.52, 0.66), gold, x, 0.25, 0); });
@@ -8825,11 +8792,47 @@ const PMFish = (function () {
     }
   });
 
-  /* ---------- jalan di pulau, perahu tidak menembus pulau ---------- */
+  /* ---------- paus biru ---------- */
+  safe('whale', function () {
+    var wh = new T.Group(); scene.add(wh);
+    var wb = M(0x4a6f8f, 0.55), wl = M(0xcfe0ea, 0.6), bk = M(0x111111, 0.3);
+    var body = new T.Group(); wh.add(body);
+    sph(body, wb, 0, 0, 0, 1.7, 1.45, 5.4);
+    sph(body, wl, 0, -0.45, 0.4, 1.55, 1.0, 4.6);
+    [-1, 1].forEach(function (s) {
+      sph(body, bk, s * 1.3, 0.1, 3.9, 0.12, 0.12, 0.12);
+      var fl = sph(body, wb, s * 1.9, -0.6, 1.4, 1.2, 0.12, 0.5); fl.rotation.z = -s * 0.5;
+    });
+    sph(body, wb, 0, 1.55, -1.5, 0.12, 0.45, 0.9);
+    var tail = new T.Group(); tail.position.set(0, 0, -4.8); body.add(tail);
+    sph(tail, wb, 0, 0.1, -1.0, 0.7, 0.6, 1.8);
+    var fk = new T.Group(); fk.position.set(0, 0.1, -2.7); tail.add(fk);
+    [-1, 1].forEach(function (s) { var f = sph(fk, wb, s * 1.3, 0, 0, 1.7, 0.12, 0.8); f.rotation.y = s * 0.5; });
+    var sp = [];
+    for (var i = 0; i < 5; i++) {
+      var s2 = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: 0xe8f6ff, transparent: true, depthWrite: false, opacity: 0, fog: false }));
+      s2.scale.set(1.2, 1.2, 1); body.add(s2); sp.push(s2);
+    }
+    wh.scale.setScalar(1.1);
+    ticks.push(function (t) {
+      var a = t * 0.035 + 1.2, rad = 88 + 6 * Math.sin(t * 0.05), x = Math.cos(a) * rad, z = Math.sin(a) * rad;
+      wh.position.set(x, -1.25 + 0.5 * Math.sin(t * 0.3), z);
+      wh.rotation.y = Math.atan2(-Math.sin(a), Math.cos(a));
+      body.rotation.x = 0.05 * Math.cos(t * 0.5);
+      tail.rotation.x = Math.sin(t * 1.4) * 0.25;
+      var u = (t % 12) / 12;
+      for (var k = 0; k < sp.length; k++) {
+        if (u < 0.15) { var q = u / 0.15; sp[k].position.set((k - 2) * 0.12, 1.5 + q * (2 + 0.3 * k), 4.8); sp[k].material.opacity = Math.sin(q * PI) * 0.7; }
+        else sp[k].material.opacity = 0;
+      }
+    });
+  });
+
+  /* ---------- jalan di pulau, perahu tidak bisa menembus ---------- */
   safe('walk', function () {
     C.setWalkable(function (o, x, z) {
       if (boat.visible) {
-        if (Math.hypot(x - IX, z - IZ) < BLOCK_R || (Math.abs(x - IX) < 2.3 && z > DOCK_Z0 - 1.6 && z < DOCK_Z1)) return false;
+        if (Math.hypot(x - IX, z - IZ) < 11.6 || (Math.abs(x - IX) < 2.3 && z > DOCK_Z0 - 1.6 && z < DOCK_Z1)) return false;
         return o(x, z);
       }
       if (onDock(x, z) || onLand(x, z)) return !blocked(x, z);
@@ -8837,7 +8840,7 @@ const PMFish = (function () {
     });
     C.setGround(function (o, x, z) {
       if (boat.visible) return o(x, z);
-      if (onDock(x, z)) return DECK;
+      if (onDock(x, z)) return SAND;
       if (onLand(x, z)) return groundH(x, z);
       return o(x, z);
     });
@@ -8845,77 +8848,44 @@ const PMFish = (function () {
       if (o()) return true;
       if (boat.visible) return false;
       var p = P.position, d = Math.hypot(p.x - IX, p.z - IZ);
-      return (onDock(p.x, p.z) && p.z < IZ - 15) || (d > GRASS_R + 0.9 && d < LAND_R + 0.8);
+      return (onDock(p.x, p.z) && p.z < IZ - 11.5) || (d > 8.3 && d < LAND_R + 0.8);
     });
   });
 
-  /* ---------- sistem perahu: tambat, mendarat, naik lagi ---------- */
-  var api = window.PMBoatAPI, boatE = null, mooredName = 'Perahu';
-  C.TOWN_SHOPS.forEach(function (s) { if (s.id === 'boat') boatE = s; });
-  var moor = new T.Group(); moor.position.set(MOOR_X, -0.2, MOOR_Z); moor.visible = false; scene.add(moor);
+  /* ---------- mendarat dari perahu & pulang ---------- */
   function nearDock() { return boat.visible && Math.hypot(P.position.x - IX, P.position.z - (DOCK_Z0 - 1.6)) < 7; }
-  function nearMain() { var x = P.position.x, z = P.position.z; return boat.visible && (Math.hypot(x, z - 48) < 15 || Math.hypot(Math.abs(x) - 11.5, z - 44) < 9); }
-  function makeMoor() {
-    var found = null;
-    boat.children.forEach(function (c) { if (c.visible && c.userData && c.userData.pmBoat) found = c; });
-    if (!found) return;
-    var ud = found.userData; found.userData = {};
-    var cl = found.clone(true); found.userData = ud;
-    cl.position.set(0, found.position.y, 0); cl.rotation.set(0, 0, 0); cl.visible = true;
-    while (moor.children.length) moor.remove(moor.children[0]);
-    moor.add(cl); moor.visible = true;
-    try { mooredName = api.get(api.id()).name; } catch (e) {}
-  }
-  function landKarang() {
-    if (!api || !boat.visible) return;
-    safe('moor', makeMoor);
-    api.leave(true);
-    P.position.set(IX, DECK, DOCK_Z0 + 2.4); P.rotation.y = 0;
-    C.toast('Perahu ditambatkan di dermaga karang. Naik lagi dari sana buat pulang.'); C.Sfx.sell();
-  }
-  function boardKarang() {
-    if (!api || boat.visible) return;
-    var id = C.save.boat || 'sampan';
-    api.board(id);
-    P.position.x = MOOR_X; P.position.z = MOOR_Z;
-    boat.position.x = MOOR_X; boat.position.z = MOOR_Z; boat.rotation.y = 0;
-    moor.visible = false; C.Sfx.tap();
-  }
-  var moorE = { id: 'isle-boat', name: 'PERAHU', label: 'Naik Perahu', x: 9999, z: 9999, action: boardKarang };
-  C.TOWN_SHOPS.push(moorE);
-  C.TOWN_SHOPS.push({ id: 'isle-chest', name: 'PETI HARTA', label: 'Buka Peti Harta', x: IX + 6.0, z: IZ + 3.4, action: function () {
+  var boatE = null;
+  C.TOWN_SHOPS.forEach(function (s) { if (s.id === 'boat') boatE = s; });
+  safe('landing', function () {
+    if (!boatE) return;
+    var orig = boatE.action;
+    boatE.action = function () {
+      if (nearDock()) {
+        orig();
+        P.position.set(IX, SAND, DOCK_Z0 + 1.6); P.rotation.y = 0;
+        C.toast('Mendarat di Pulau Karang. Perahu menunggu di dermaga utama.'); C.Sfx.sell();
+      } else orig();
+    };
+  });
+  C.TOWN_SHOPS.push({ id: 'isle-home', name: 'DERMAGA KARANG', label: 'Pulang ke Pulau Utama', x: IX, z: DOCK_Z0 + 1.4, action: function () {
+    P.position.set(0, C.DECK_Y, 36); P.rotation.y = 0;
+    C.toast('Perahu mengantarmu pulang ke dermaga utama'); C.Sfx.tap();
+  } });
+  C.TOWN_SHOPS.push({ id: 'isle-chest', name: 'PETI HARTA', label: 'Buka Peti Harta', x: IX + 3.6, z: IZ + 2.6, action: function () {
     var s = C.save, today = dstr(new Date());
     if (s.chestDay === today) { C.toast('Peti sudah kosong. Balik lagi besok!'); return; }
     var lv = s.level || 1, coins = 150 + 40 * lv, xp = 40 + 10 * lv;
     s.chestDay = today; s.coins += coins; C.addXp(xp); C.persist(); C.refresh(); C.Sfx.sell(); C.vibe([30, 20, 50]);
     C.toast('Peti Harta: +' + coins + ' koin dan +' + xp + ' XP');
   } });
-  if (boatE) {
-    var orig = boatE.action;
-    boatE.action = function () {
-      if (nearDock()) landKarang();
-      else if (nearMain()) orig();
-    };
-  }
   var btn = document.getElementById('interactBtn');
-  ticks.push(function (t) {
-    var sail = boat.visible, p = P.position;
-    if (sail && moor.visible) moor.visible = false;
-    if (moor.visible) { moor.position.y = -0.2 + Math.sin(t * 1.3) * 0.05; moor.rotation.z = Math.sin(t * 1.1) * 0.04; }
-    if (sail && boatE) {
-      var atK = nearDock(), atM = nearMain();
-      if (!atK && !atM) { boatE.x = 9999; boatE.z = 9999; }
-      var lb = atK ? 'Tambatkan & Mendarat di Pulau Karang' : 'Turun ke Dermaga';
-      if (boatE.label !== lb) { boatE.label = lb; if (btn && btn.style.display !== 'none') btn.textContent = lb; }
-    }
-    if (!sail && Math.hypot(p.x - IX, p.z - IZ) < 26) {
-      var nm = moor.visible ? mooredName : 'Perahu';
-      if (!moor.visible && api) { try { nm = api.get(api.id()).name; } catch (e) {} }
-      moorE.x = IX + 1.0; moorE.z = MOOR_Z; moorE.label = 'Naik Perahu (' + nm + ')';
-    } else { moorE.x = 9999; moorE.z = 9999; }
+  ticks.push(function () {
+    if (!boatE || !boat.visible) return;
+    var lb = nearDock() ? 'Mendarat di Pulau Karang' : 'Turun ke Dermaga';
+    if (boatE.label !== lb) { boatE.label = lb; if (btn && btn.style.display !== 'none') btn.textContent = lb; }
   });
 
-  /* ---------- banner selamat datang ---------- */
+  /* ---------- banner selamat datang & bonus luck ---------- */
   function banner(sm, big) {
     var el = document.getElementById('pm4Welcome');
     if (!el) { el = document.createElement('div'); el.id = 'pm4Welcome'; document.body.appendChild(el); }
@@ -8925,9 +8895,13 @@ const PMFish = (function () {
   }
   var onIsle = false;
   ticks.push(function (t) {
-    var p = P.position, on = !boat.visible && Math.hypot(p.x - IX, p.z - IZ) < 24;
+    var p = P.position, on = !boat.visible && Math.hypot(p.x - IX, p.z - IZ) < 19.5;
     if (on === onIsle) return; onIsle = on;
     if (on && t > 8) banner('SELAMAT DATANG DI', 'Pulau Karang');
+  });
+  C.hookRoll(function (orig, boost) {
+    var p = P.position;
+    return orig(Math.hypot(p.x - IX, p.z - IZ) < 22 ? boost * 1.2 : boost);
   });
 
   C.hookAnim(function (t) {

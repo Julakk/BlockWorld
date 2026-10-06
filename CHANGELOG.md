@@ -1,3 +1,12 @@
+# Update v4.22 (5 Okt 2026)
+
+- Paus biru yang berenang dihapus.
+- Pulau Karang diperluas (pantai dan rumput lebih lebar, lebih banyak palem).
+- Indeks Ikan: tab lokasi Pulau Karang dengan 12 ikan khusus; keluar saat mancing dalam jarak 32 dari pulau.
+- Sistem perahu baru: perahu tertambat di dermaga karang setelah mendarat, naik lagi untuk pulang. Fitur Pulang ke Pulau Utama dihapus.
+- Turun dari perahu hanya di dekat dermaga (utama atau Karang).
+- Perbaikan: dinding tak terlihat sepanjang jalur dermaga utama yang membelah laut kini hanya selebar dermaga.
+
 # Update v4.21 (5 Okt 2026)
 
 - Laut Dalam dan penanda zonanya (ring pelampung, papan, air gelap, badge) dihapus.
