@@ -11,3 +11,5 @@ server/data.json
 server/data.json.tmp
 index.html.bak
 bump-version.py
+*.bak_v*
+patch_v*.py
