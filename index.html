@@ -5111,8 +5111,13 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.23', DATE = '7 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.24', DATE = '7 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v4.24", [
+      "Tier baru di Gacha: MYTHIC. Skin Mythic pertama: Eternal Dragon (Dragon Aura + Eternal Energy), joran hitam beraksen emas dengan naga api emas melilit dari gagang sampai ujung, mutiara api di ujung joran, bara dan cincin energi mengorbit.",
+      "Peluang Mythic 0,4% per pull, dijamin di pull ke-150. Skin duplikat jadi 1.500 koin.",
+      "Panggung gacha dapat efek khusus Mythic (cahaya api emas)."
+    ]],
     ["Update v4.23", [
       "Mesin Gacha Rod dan Papan Peringkat Ikan Ditangkap dipindah ke samping Jual Ikan, sejajar menghadap plaza.",
       "Pohon palem di samping Jual Ikan dihapus untuk memberi tempat."
@@ -6491,16 +6496,21 @@ const PMFish = (function () {
 
   /* ---------- setelan ---------- */
   var COST1 = 100, COST10 = 900, PITY_MAX = 60;
-  var ORDER = ['common', 'rare', 'epic', 'legendary'];
+  var ORDER = ['common', 'rare', 'epic', 'legendary', 'mythic'];
   var TIER = {
     common: { n: 'Common', c: '#9fb4bd', w: 60, d: '10-50 koin / Bait' },
     rare: { n: 'Rare', c: '#4aa8ff', w: 25, d: '100-300 koin / Skin Rod Biasa' },
     epic: { n: 'Epic', c: '#b56bff', w: 12, d: '500 koin / Skin Rod Efek Cahaya' },
-    legendary: { n: 'Legendary', c: '#ffc233', w: 3, d: '2.000 koin / Skin Rod Animasi Unik' }
+    legendary: { n: 'Legendary', c: '#ffc233', w: 3, d: '2.000 koin / Skin Rod Animasi Unik' },
+    mythic: { n: 'Mythic', c: '#ff5a36', w: 0.4, d: 'Skin Rod Mythic: Eternal Dragon' }
   };
-  var COIN_CHANCE = { rare: 0.30, epic: 0.25, legendary: 0.15 };
-  var DUP = { rare: 30, epic: 75, legendary: 200 };
-  var KIND_LABEL = { solid: 'Skin Biasa', glow: 'Efek Cahaya', rainbow: 'Animasi Unik', fire: 'Animasi Unik', galaxy: 'Animasi Unik' };
+  var COIN_CHANCE = { rare: 0.30, epic: 0.25, legendary: 0.15, mythic: 0 };
+  var DUP = { rare: 30, epic: 75, legendary: 200, mythic: 1500 };
+  var KIND_LABEL = { solid: 'Skin Biasa', glow: 'Efek Cahaya', rainbow: 'Animasi Unik', fire: 'Animasi Unik', galaxy: 'Animasi Unik', dragon: 'Dragon Aura + Eternal Energy' };
+  function sfxKey(t) { return t === 'mythic' ? 'mythical' : t; }
+  function vibeFor(t) { return t === 'mythic' ? [150, 60, 150, 60, 260] : (t === 'legendary' ? [100, 50, 100, 50, 160] : (t === 'epic' ? [60, 40, 60] : [30])); }
+  var MYTH_PITY = 150;
+
   var SKINS = [
     { id: 's_merah', n: 'Merah Karang', t: 'rare', k: 'solid', c: '#d8302a' },
     { id: 's_hijau', n: 'Hijau Zamrud', t: 'rare', k: 'solid', c: '#1fae5a' },
@@ -6514,11 +6524,12 @@ const PMFish = (function () {
     { id: 'e_emas', n: 'Cahaya Emas', t: 'epic', k: 'glow', c: '#ffd45a' },
     { id: 'l_pelangi', n: 'Pelangi Abadi', t: 'legendary', k: 'rainbow', c: '#ff7ad9' },
     { id: 'l_api', n: 'Api Naga', t: 'legendary', k: 'fire', c: '#ff6a1a' },
-    { id: 'l_galaksi', n: 'Galaksi', t: 'legendary', k: 'galaxy', c: '#7a5cff' }
+    { id: 'l_galaksi', n: 'Galaksi', t: 'legendary', k: 'galaxy', c: '#7a5cff' },
+    { id: 'm_naga', n: 'Eternal Dragon', t: 'mythic', k: 'dragon', c: '#ffb020' }
   ];
   var NOSKIN = { id: 'none', n: 'Tanpa Skin', t: 'none', k: 'solid', c: '#8a929a' };
-  var OP = { solid: 0.22, glow: 0.4, rainbow: 0.45, fire: 0.55, galaxy: 0.5 };
-  var SPD = { solid: 0.15, glow: 0.35, rainbow: 0.5, fire: 1.1, galaxy: 0.12 };
+  var OP = { solid: 0.22, glow: 0.4, rainbow: 0.45, fire: 0.55, galaxy: 0.5, dragon: 0.6 };
+  var SPD = { solid: 0.15, glow: 0.35, rainbow: 0.5, fire: 1.1, galaxy: 0.12, dragon: 0.9 };
 
   /* ---------- util ---------- */
   function $(id) { return document.getElementById(id); }
@@ -6533,6 +6544,7 @@ const PMFish = (function () {
     if (sk.k === 'glow') return 'background:radial-gradient(circle at 40% 35%,#fff,' + c + ' 55%,#0a1e2c);box-shadow:0 0 12px ' + c;
     if (sk.k === 'rainbow') return 'background:conic-gradient(#ff5a5a,#ffd45a,#5affb0,#5ab4ff,#c05aff,#ff5a5a);box-shadow:0 0 12px #ff7ad9';
     if (sk.k === 'fire') return 'background:radial-gradient(circle at 50% 70%,#ffe27a,#ff6a1a 55%,#7a1200);box-shadow:0 0 12px #ff6a1a';
+    if (sk.k === 'dragon') return 'background:radial-gradient(circle at 50% 60%,#fff2a8,#ffb020 45%,#b3260a 80%,#1a0808);box-shadow:0 0 14px #ff7a1a';
     return 'background:linear-gradient(135deg,#1a1050,#7a5cff 55%,#2fd8ff);box-shadow:0 0 12px #7a5cff';
   }
   function rewardName(r) {
@@ -6602,6 +6614,18 @@ const PMFish = (function () {
           for (j = 0; j < 5; j++) { x += Math.random() * 14 - 7; y += Math.random() * 26 - 4; g.lineTo(x, y); }
           g.stroke();
         }
+      } else if (k === 'dragon') {
+        gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#050506'); gr.addColorStop(0.5, '#25252c'); gr.addColorStop(1, '#050506');
+        g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        g.strokeStyle = 'rgba(255,200,90,.07)'; g.lineWidth = 1;
+        for (i = -h; i < w + h; i += 8) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 60, h); g.stroke(); }
+        [26, 92, 150, 212].forEach(function (y0) {
+          g.fillStyle = '#e0a526'; g.fillRect(0, y0, w, 5); g.fillStyle = '#6b3f06'; g.fillRect(0, y0 + 5, w, 2);
+          for (j = 0; j < 2; j++) {
+            g.fillStyle = '#d02a1a'; g.beginPath(); g.moveTo(16 + j * 32, y0 + 10); g.lineTo(21 + j * 32, y0 + 18);
+            g.lineTo(16 + j * 32, y0 + 26); g.lineTo(11 + j * 32, y0 + 18); g.closePath(); g.fill();
+          }
+        });
       } else if (k === 'galaxy') {
         gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0a0b36'); gr.addColorStop(0.5, '#2b1a80'); gr.addColorStop(1, '#0a2d63');
         g.fillStyle = gr; g.fillRect(0, 0, w, h);
@@ -6619,7 +6643,7 @@ const PMFish = (function () {
         gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, cssCol(sk.c, 1.35)); gr.addColorStop(1, cssCol(sk.c, 0.55));
         g.fillStyle = gr; g.fillRect(0, 0, w, h);
       }
-      if (k !== 'fire' && k !== 'galaxy') {
+      if (k !== 'fire' && k !== 'galaxy' && k !== 'dragon') {
         g.lineWidth = 2;
         for (i = -h; i < w + h; i += 14) {
           g.strokeStyle = 'rgba(255,255,255,.09)'; g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 90, h); g.stroke();
@@ -6647,6 +6671,20 @@ const PMFish = (function () {
           g.strokeStyle = 'rgba(255,255,255,' + (0.3 + Math.random() * 0.5) + ')'; g.lineWidth = 1 + Math.random() * 2;
           g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + len); g.stroke();
         }
+      } else if (k === 'dragon') {
+        for (i = 0; i < 26; i++) {
+          x = Math.random() * w; hh = 90 + Math.random() * 160; ww = 5 + Math.random() * 9;
+          gr = g.createLinearGradient(0, h, 0, h - hh);
+          gr.addColorStop(0, 'rgba(255,245,170,.95)'); gr.addColorStop(0.4, 'rgba(255,170,30,.8)'); gr.addColorStop(0.8, 'rgba(210,40,10,.45)'); gr.addColorStop(1, 'rgba(120,10,0,0)');
+          g.fillStyle = gr; g.beginPath(); g.moveTo(x - ww, h);
+          g.quadraticCurveTo(x - ww * 0.3, h - hh * 0.55, x, h - hh);
+          g.quadraticCurveTo(x + ww * 0.3, h - hh * 0.55, x + ww, h); g.closePath(); g.fill();
+        }
+        for (i = 0; i < 12; i++) {
+          x = Math.random() * w; y = Math.random() * h; len = 40 + Math.random() * 120;
+          g.strokeStyle = 'rgba(255,225,120,' + (0.3 + Math.random() * 0.5) + ')'; g.lineWidth = 1 + Math.random() * 2;
+          g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 8, y + len / 2, x, y + len); g.stroke();
+        }
       } else if (k === 'galaxy') {
         for (i = 0; i < 9; i++) {
           x = Math.random() * w; y = Math.random() * h; rr = 25 + Math.random() * 45;
@@ -6670,11 +6708,103 @@ const PMFish = (function () {
     });
   }
 
+  /* ---------- Eternal Dragon (v4.24): naga emas melilit joran + mutiara api di ujung ---------- */
+  function dragonScaleCanvas() {
+    return cvas('dr_scale', 256, 64, function (g, w, h) {
+      var gr = g.createLinearGradient(0, 0, 0, h), row, col, x, y;
+      gr.addColorStop(0, '#fff0a0'); gr.addColorStop(0.45, '#f0a020'); gr.addColorStop(1, '#8c2a06');
+      g.fillStyle = gr; g.fillRect(0, 0, w, h); g.lineWidth = 2;
+      for (row = 0; row < 7; row++) for (col = -1; col < 17; col++) {
+        x = col * 16 + (row % 2 ? 8 : 0); y = row * 10 + 3;
+        g.strokeStyle = 'rgba(80,22,0,.7)'; g.beginPath(); g.arc(x, y, 8, 0, PI); g.stroke();
+        g.strokeStyle = 'rgba(255,238,160,.5)'; g.beginPath(); g.arc(x, y - 1.5, 6.5, 0.12 * PI, 0.88 * PI); g.stroke();
+      }
+    });
+  }
+  function taperTube(curve, segs, r0, r1, uRep) {
+    var RR = 8, fr = curve.computeFrenetFrames(segs, false), pos = [], uv = [], idx = [], i, k, p, N, B, r, a, cs, sn, a0, b0;
+    for (i = 0; i <= segs; i++) {
+      p = curve.getPointAt(i / segs); N = fr.normals[i]; B = fr.binormals[i]; r = r0 + (r1 - r0) * (i / segs);
+      for (k = 0; k <= RR; k++) {
+        a = k / RR * PI * 2; cs = Math.cos(a); sn = Math.sin(a);
+        pos.push(p.x + (N.x * cs + B.x * sn) * r, p.y + (N.y * cs + B.y * sn) * r, p.z + (N.z * cs + B.z * sn) * r);
+        uv.push(i / segs * uRep, k / RR);
+      }
+    }
+    for (i = 0; i < segs; i++) for (k = 0; k < RR; k++) {
+      a0 = i * (RR + 1) + k; b0 = a0 + RR + 1;
+      idx.push(a0, b0, a0 + 1, b0, b0 + 1, a0 + 1);
+    }
+    var g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx); g.computeVertexNormals();
+    return g;
+  }
+  function makeDragon(shaft, tip, reg) {
+    var Y = new T.Vector3(0, 1, 0), pts = [], i, j, u, y, ang, R, rs, curve, p, rad, dir, sp, m;
+    var TURNS = 3.3, Y0 = -0.44, Y1 = 0.55, BR0 = 0.005, BR1 = 0.019;
+    for (i = 0; i <= 64; i++) {
+      u = i / 64; y = Y0 + u * (Y1 - Y0); ang = u * TURNS * PI * 2 - PI / 2;
+      rs = 0.0325 - 0.017 * (y + 0.55) / 1.1; R = rs + BR0 + (BR1 - BR0) * u + 0.003 + 0.004 * Math.sin(u * 20);
+      pts.push(new T.Vector3(Math.cos(ang) * R, y, Math.sin(ang) * R));
+    }
+    curve = new T.CatmullRomCurve3(pts);
+    var g = new T.Group(); shaft.add(g);
+    var tex = mkTex(dragonScaleCanvas(), 7, 1); reg.texes.push(tex);
+    var bodyM = new T.MeshStandardMaterial({ color: 0xffffff, map: tex, emissive: 0xff8a14, emissiveMap: tex, emissiveIntensity: 0.55, metalness: 0.6, roughness: 0.38 }); reg.mats.push(bodyM);
+    var geo = taperTube(curve, 120, BR0, BR1, 7); reg.geos.push(geo);
+    g.add(new T.Mesh(geo, bodyM));
+    /* duri punggung merah */
+    var spG = new T.ConeGeometry(0.0045, 0.022, 5); reg.geos.push(spG);
+    var spM = new T.MeshStandardMaterial({ color: 0xd8301a, emissive: 0xff2a08, emissiveIntensity: 0.6, roughness: 0.4 }); reg.mats.push(spM);
+    for (j = 0; j < 17; j++) {
+      u = 0.12 + j * 0.052; p = curve.getPointAt(u); rad = Math.hypot(p.x, p.z) || 1;
+      dir = new T.Vector3(p.x / rad, 0, p.z / rad);
+      sp = new T.Mesh(spG, spM); sp.position.set(p.x + dir.x * (BR0 + (BR1 - BR0) * u), p.y, p.z + dir.z * (BR0 + (BR1 - BR0) * u));
+      sp.quaternion.setFromUnitVectors(Y, dir); sp.scale.setScalar(0.6 + 0.7 * u); g.add(sp);
+    }
+    /* kepala */
+    var hd = new T.Group(), pe = curve.getPointAt(1), te = curve.getTangentAt(1), re = new T.Vector3(pe.x, 0, pe.z).normalize();
+    hd.position.copy(pe); hd.scale.setScalar(1.5); hd.quaternion.setFromUnitVectors(Y, te.clone().addScaledVector(re, 0.35).normalize()); g.add(hd);
+    var skG = new T.SphereGeometry(0.022, 10, 8), snG = new T.CylinderGeometry(0.011, 0.019, 0.05, 8), jwG = new T.ConeGeometry(0.012, 0.045, 6),
+        hnG = new T.ConeGeometry(0.0055, 0.075, 6), eyG = new T.SphereGeometry(0.0042, 6, 6), whG = new T.CylinderGeometry(0.0011, 0.0011, 0.1, 4);
+    [skG, snG, jwG, hnG, eyG, whG].forEach(function (x) { reg.geos.push(x); });
+    var eyM = new T.MeshBasicMaterial({ color: 0xfff6c0 }); reg.mats.push(eyM);
+    m = new T.Mesh(skG, bodyM); m.scale.set(1, 1.25, 1.1); hd.add(m);
+    m = new T.Mesh(snG, bodyM); m.position.y = 0.04; hd.add(m);
+    m = new T.Mesh(jwG, spM); m.position.set(0, 0.022, -0.012); m.rotation.x = 2.55; hd.add(m);
+    [-1, 1].forEach(function (sd) {
+      m = new T.Mesh(hnG, spM); m.position.set(sd * 0.013, -0.004, 0.006); m.rotation.z = -sd * 2.5; hd.add(m);
+      m = new T.Mesh(eyG, eyM); m.position.set(sd * 0.014, 0.012, 0.011); hd.add(m);
+      m = new T.Mesh(whG, bodyM); m.position.set(sd * 0.02, 0.05, 0); m.rotation.z = -sd * 1.15; hd.add(m);
+    });
+    function glowSprite(par, y, col) {
+      var s = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: col, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6, fog: false }));
+      s.position.set(0, y, 0); par.add(s); reg.mats.push(s.material); return s;
+    }
+    var mane = glowSprite(hd, 0.0, '#ffb020');
+    /* mutiara api di ujung joran */
+    var orbG = new T.SphereGeometry(0.0145, 12, 10); reg.geos.push(orbG);
+    var orbM = new T.MeshStandardMaterial({ color: 0xfff0a0, emissive: 0xffa414, emissiveIntensity: 1, roughness: 0.2 }); reg.mats.push(orbM);
+    var orb = new T.Mesh(orbG, orbM); orb.position.set(0, 0.435, 0); tip.add(orb);
+    var orbGlow = glowSprite(tip, 0.435, '#ffc030');
+    function update(t, dt) {
+      var f = 1 + 0.2 * Math.sin(t * 6.5) * Math.sin(t * 2.3), f2 = 1 + 0.25 * Math.sin(t * 5);
+      tex.offset.x -= 0.12 * dt;
+      bodyM.emissiveIntensity = 0.5 + 0.18 * Math.sin(t * 3.1) + 0.08 * Math.sin(t * 9.7);
+      g.rotation.y = 0.12 * Math.sin(t * 0.9);
+      orbM.emissiveIntensity = 0.9 + 0.5 * Math.sin(t * 5);
+      mane.scale.set(0.2 * f, 0.2 * f, 1); orbGlow.scale.set(0.16 * f2, 0.16 * f2, 1);
+    }
+    return { update: update };
+  }
+
   /* ---------- joran skin 3D + aura (dipakai di tangan, panggung, dan ikon) ---------- */
   function makeSkinRod(sk, full, o) {
     o = o || {};
-    var noAura = !!o.noAura, k = sk.k, tier = sk.t, isL = tier === 'legendary';
-    var N = k === 'solid' ? 10 : (tier === 'epic' ? 18 : (o.pN || 26)), psize = o.psize || 0.09;
+    var noAura = !!o.noAura, k = sk.k, tier = sk.t, isL = tier === 'legendary' || tier === 'mythic';
+    var N = (k === 'solid' ? 10 : (tier === 'epic' ? 18 : (o.pN || 26))) + (k === 'dragon' ? 12 : 0), psize = o.psize || 0.09;
     var texes = [], geos = [], mats = [], i;
     function tx(c, rx, ry) { var t = mkTex(c, rx, ry); texes.push(t); return t; }
 
@@ -6694,9 +6824,9 @@ const PMFish = (function () {
       var tr = new T.Mesh(new T.TorusGeometry(r, 0.0045, 6, 18), ringM); tr.rotation.x = PI / 2; tr.position.y = y; shaft.add(tr); geos.push(tr.geometry);
     });
     if (full) {
-      var gm = new T.MeshStandardMaterial({ color: 0x2a2018, roughness: 0.9 }); mats.push(gm);
+      var gm = new T.MeshStandardMaterial({ color: k === 'dragon' ? 0x0c0c10 : 0x2a2018, roughness: 0.9 }); mats.push(gm);
       var grip = new T.Mesh(new T.CylinderGeometry(0.038, 0.038, 0.24, 14), gm); grip.position.y = -0.4; shaft.add(grip); geos.push(grip.geometry);
-      var steel = new T.MeshStandardMaterial({ color: 0xcfd6dc, metalness: 0.8, roughness: 0.28 }); mats.push(steel);
+      var steel = new T.MeshStandardMaterial({ color: k === 'dragon' ? 0xd9a03a : 0xcfd6dc, metalness: 0.8, roughness: 0.28 }); mats.push(steel);
       var reel = new T.Mesh(new T.CylinderGeometry(0.055, 0.055, 0.06, 18), steel); reel.rotation.z = PI / 2; reel.position.set(0.05, -0.2, 0); shaft.add(reel); geos.push(reel.geometry);
       [0.05, 0.28, 0.48].forEach(function (y) {
         var g2 = new T.Mesh(new T.TorusGeometry(0.013, 0.003, 6, 12), steel);
@@ -6704,6 +6834,7 @@ const PMFish = (function () {
       });
     }
 
+    var dragon = k === 'dragon' ? makeDragon(shaft, tip, { geos: geos, mats: mats, texes: texes }) : null;
     var auT = null, sleeveM = null, halos = [], flare = null, fs = isL ? 0.45 : 0.32, pg = null, pp = null, pc = null;
     var baseCol = new T.Color(sk.c), tc = new T.Color();
     if (!noAura) {
@@ -6736,12 +6867,13 @@ const PMFish = (function () {
       else if (k === 'fire') m.emissiveIntensity = 0.45 + 0.15 * Math.sin(t * 17) * Math.sin(t * 5.3);
       else if (k === 'galaxy') { shT.offset.y -= 0.03 * dt; m.emissiveIntensity = 0.4 + 0.12 * Math.sin(t * 1.7); }
       else if (k === 'glow') m.emissiveIntensity = 0.3 + 0.18 * Math.sin(t * 3);
+      if (dragon) dragon.update(t, dt);
       if (noAura) return;
       auT.offset.y -= SPD[k] * dt;
-      sleeveM.opacity = OP[k] * (0.8 + 0.2 * Math.sin(t * (k === 'fire' ? 14 : 3)));
+      sleeveM.opacity = OP[k] * (0.8 + 0.2 * Math.sin(t * (k === 'fire' ? 14 : (k === 'dragon' ? 8 : 3))));
       for (i = 0; i < halos.length; i++) {
         h = halos[i]; f = 1 + 0.15 * Math.sin(t * 3 + h.ph);
-        if (k === 'fire') f = 1 + 0.25 * Math.sin(t * 13 + h.ph) * Math.sin(t * 4.1 + h.ph);
+        if (k === 'fire' || k === 'dragon') f = 1 + 0.25 * Math.sin(t * 13 + h.ph) * Math.sin(t * 4.1 + h.ph);
         h.s.scale.set(h.sz * f, h.sz * f, 1);
         if (k === 'rainbow') h.s.material.color.setHSL((t * 0.25 + h.ph * 0.05) % 1, 1, 0.6);
       }
@@ -6760,6 +6892,16 @@ const PMFish = (function () {
           f = (t * 0.85 + u) % 1; w = 1 - f;
           pp[p] = Math.sin(i * 7.3 + t * 4) * 0.05 * (0.3 + f); pp[p + 1] = -0.25 + f * 1.2; pp[p + 2] = Math.cos(i * 5.1 + t * 3.1) * 0.05 * (0.3 + f);
           pc[p] = w; pc[p + 1] = 0.75 * w * w; pc[p + 2] = 0.2 * w * w * w;
+        } else if (k === 'dragon') {
+          if (i % 3 === 0) {
+            a = t * 1.3 + i * 2.1; r = 0.13 + 0.025 * Math.sin(t * 2.4 + i); tw = 0.5 + 0.5 * Math.sin(t * 6 + i * 1.9);
+            pp[p] = Math.cos(a) * r; pp[p + 1] = 0.05 + 0.45 * Math.sin(t * 0.8 + i * 0.9); pp[p + 2] = Math.sin(a) * r;
+            pc[p] = 1.1 * tw; pc[p + 1] = 0.9 * tw; pc[p + 2] = 0.45 * tw;
+          } else {
+            f = (t * 0.55 + u * 3.7) % 1; w = 1 - f; a = i * 2.4 + t * 2.4 + f * 5; r = 0.08 + 0.05 * f;
+            pp[p] = Math.cos(a) * r; pp[p + 1] = -0.45 + f * 1.4; pp[p + 2] = Math.sin(a) * r;
+            pc[p] = 1.3 * w; pc[p + 1] = 0.8 * w * w; pc[p + 2] = 0.12 * w * w * w;
+          }
         } else if (k === 'galaxy') {
           a = t * (0.6 + (i % 4) * 0.35) + u * PI * 2; r = 0.06 + (i % 5) * 0.02; tw = 0.5 + 0.5 * Math.sin(t * 5 + i * 1.7);
           pp[p] = Math.cos(a) * r; pp[p + 1] = -0.5 + ((i * 0.37 + t * 0.06) % 1) * 1.45; pp[p + 2] = Math.sin(a) * r;
@@ -6816,7 +6958,7 @@ const PMFish = (function () {
   function rateNow(n) { // n = pull ke-berapa sejak Legendary terakhir
     var lw = TIER.legendary.w;
     if (n >= SOFT_START) lw = Math.min(50, lw + (n - SOFT_START + 1) * SOFT_STEP);
-    return { common: TIER.common.w - (lw - TIER.legendary.w), rare: TIER.rare.w, epic: TIER.epic.w, legendary: lw };
+    return { common: TIER.common.w - (lw - TIER.legendary.w) - TIER.mythic.w, rare: TIER.rare.w, epic: TIER.epic.w, legendary: lw, mythic: TIER.mythic.w };
   }
   function rollTier(min, n) {
     var w = rateNow(n), r = Math.random() * 100, acc = 0, t = 'common';
@@ -6855,13 +6997,14 @@ const PMFish = (function () {
     if (s.coins < cost) { C.toast('Koin kurang, butuh ' + fmt(cost)); return; }
     s.coins -= cost;
     var g = s.gacha = s.gacha || { pity: 0, total: 0 }, out = [], best = 0, bi = 0, i;
-    g.epicPity = g.epicPity || 0;
+    g.epicPity = g.epicPity || 0; g.mythPity = g.mythPity || 0;
     for (i = 0; i < n; i++) {
-      g.pity++; g.total++; g.epicPity++;
+      g.pity++; g.total++; g.epicPity++; g.mythPity++;
       var min = (n === 10 && i === 9) ? 'rare' : 'common';
       if (g.epicPity >= EPIC_PITY) min = 'epic';
-      var t = g.pity >= PITY_MAX ? 'legendary' : rollTier(min, g.pity);
-      if (t === 'legendary') g.pity = 0;
+      var t = g.mythPity >= MYTH_PITY ? 'mythic' : (g.pity >= PITY_MAX ? 'legendary' : rollTier(min, g.pity));
+      if (t === 'legendary' || t === 'mythic') g.pity = 0;
+      if (t === 'mythic') g.mythPity = 0;
       if (ORDER.indexOf(t) >= 2) g.epicPity = 0;
       var r = reward(t); apply(r); out.push(r);
       if (ORDER.indexOf(t) > best) { best = ORDER.indexOf(t); bi = i; }
@@ -6870,8 +7013,8 @@ const PMFish = (function () {
     st.last = out; st.best = ORDER[best]; st.bestRes = out[bi];
     if (s.gachaSkip) {
       st.anim = false; busy = false;
-      C.Sfx.catchFish(st.best);
-      C.vibe(st.best === 'legendary' ? [100, 50, 100, 50, 160] : (st.best === 'epic' ? [60, 40, 60] : [30]));
+      C.Sfx.catchFish(sfxKey(st.best));
+      C.vibe(vibeFor(st.best));
       stageShow(out[bi]); render();
       return;
     }
@@ -6886,8 +7029,8 @@ const PMFish = (function () {
     clearTimeout(animT); clearTimeout(safeT);
     st.anim = false; busy = false;
     if (!S3.played) {
-      C.Sfx.catchFish(st.best);
-      C.vibe(st.best === 'legendary' ? [100, 50, 100, 50, 160] : (st.best === 'epic' ? [60, 40, 60] : [30]));
+      C.Sfx.catchFish(sfxKey(st.best));
+      C.vibe(vibeFor(st.best));
     }
     render();
   }
@@ -7046,13 +7189,13 @@ const PMFish = (function () {
   }
   function render() {
     var s = C.save, g = s.gacha || { pity: 0, total: 0 }, h = '', a = '', i;
-    var gp = g.pity || 0, ep = g.epicPity || 0, rt = rateNow(gp + 1);
+    var gp = g.pity || 0, ep = g.epicPity || 0, mp = g.mythPity || 0, rt = rateNow(gp + 1);
     var tp = ov.querySelectorAll('.gcTab');
     for (i = 0; i < tp.length; i++) tp[i].className = 'gcTab' + (tp[i].getAttribute('data-tab') === st.tab ? ' on' : '');
     if (st.tab === 'pull') {
       h += '<div class="gcPity">' +
         '<div class="gcPb"><span><b style="color:' + TIER.legendary.c + '">Legendary</b><em>' + gp + '/' + PITY_MAX + '</em></span><div class="bar"><i style="width:' + Math.min(100, gp / PITY_MAX * 100) + '%;background:' + TIER.legendary.c + '"></i></div></div>' +
-        '<div class="gcPb"><span><b style="color:' + TIER.epic.c + '">Epic+</b><em>' + ep + '/' + EPIC_PITY + '</em></span><div class="bar"><i style="width:' + Math.min(100, ep / EPIC_PITY * 100) + '%;background:' + TIER.epic.c + '"></i></div></div></div>';
+        '<div class="gcPb"><span><b style="color:' + TIER.epic.c + '">Epic+</b><em>' + ep + '/' + EPIC_PITY + '</em></span><div class="bar"><i style="width:' + Math.min(100, ep / EPIC_PITY * 100) + '%;background:' + TIER.epic.c + '"></i></div></div><div class="gcPb" style="grid-column:1/-1"><span><b style="color:' + TIER.mythic.c + '">Mythic</b><em>' + mp + '/' + MYTH_PITY + '</em></span><div class="bar"><i style="width:' + Math.min(100, mp / MYTH_PITY * 100) + '%;background:' + TIER.mythic.c + '"></i></div></div></div>';
       if (st.anim) {
         h += '<div class="gcInfo"><b>Mengundi...</b> ketuk panggung buat lewati</div>';
       } else if (st.last) {
@@ -7066,7 +7209,7 @@ const PMFish = (function () {
         h += '<div class="gcRate" style="--rc:' + t.c + '"><b>' + t.n + '</b><span class="p">' + (Math.round(rt[key] * 10) / 10) + '%</span><span class="d">' + t.d + '</span></div>';
       });
       h += '</div>';
-      h += '<div class="gcInfo">Soft pity Legendary mulai pull ke-' + SOFT_START + ' (peluang naik tiap pull), dijamin di pull ke-' + PITY_MAX + '. Epic atau lebih dijamin tiap ' + EPIC_PITY + ' pull. Gacha 10x: pull ke-10 minimal Rare. Skin duplikat jadi koin (Rare ' + DUP.rare + ', Epic ' + DUP.epic + ', Legendary ' + DUP.legendary + ').</div>';
+      h += '<div class="gcInfo">Soft pity Legendary mulai pull ke-' + SOFT_START + ' (peluang naik tiap pull), dijamin di pull ke-' + PITY_MAX + '. Epic atau lebih dijamin tiap ' + EPIC_PITY + ' pull. Gacha 10x: pull ke-10 minimal Rare. Skin duplikat jadi koin (Rare ' + DUP.rare + ', Epic ' + DUP.epic + ', Legendary ' + DUP.legendary + ', Mythic ' + DUP.mythic + '). Mythic (Eternal Dragon) dijamin di pull ke-' + MYTH_PITY + '.</div>';
       a = '<div class="gcBtns"><button class="gcPull" type="button" data-act="p1"' + ((busy || s.coins < COST1) ? ' disabled' : '') + '>Gacha 1x<small>' + fmt(COST1) + ' koin</small></button>' +
         '<button class="gcPull gold" type="button" data-act="p10"' + ((busy || s.coins < COST10) ? ' disabled' : '') + '>Gacha 10x<small>' + fmt(COST10) + ' koin \u2022 Hemat</small></button></div>' +
         '<button class="gcSkipBtn' + (s.gachaSkip ? ' on' : '') + '" type="button" data-act="sk">Lewati animasi: ' + (s.gachaSkip ? 'ON' : 'OFF') + '</button>';
@@ -7283,8 +7426,8 @@ const PMFish = (function () {
     emit(0, 0.1, 0, 50 + ti * 30, 3.2 + ti * 0.8, 4.5, col);
     if (ti >= 2) emit(0, 0.1, 0, 30, 4, 5, new T.Color(0xffffff));
     S3.shake = 0.15 + ti * 0.08;
-    C.Sfx.catchFish(res.tier);
-    C.vibe(res.tier === 'legendary' ? [100, 50, 100, 50, 160] : (res.tier === 'epic' ? [60, 40, 60] : [30]));
+    C.Sfx.catchFish(sfxKey(res.tier));
+    C.vibe(vibeFor(res.tier));
     var n = $('gcRName'); n.textContent = TIER[res.tier].n.toUpperCase() + ' \u2022 ' + rewardName(res); n.style.color = TIER[res.tier].c;
   }
   function backOut(u) { var c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2); }
@@ -7336,6 +7479,7 @@ const PMFish = (function () {
       S3.shock.material.opacity = Math.max(0, 0.9 - b * 1.1); S3.shock.scale.setScalar(0.2 + b * 8);
       S3.rays.material.opacity = (0.12 + 0.12 * ti) * Math.min(1, b * 3); S3.rays.rotation.z += dt * 0.35;
       if (S3.res.tier === 'legendary') { S3.rays.material.color.setHSL((t * 0.2) % 1, 0.8, 0.6); S3.glow.material.color.setHSL((t * 0.2 + 0.1) % 1, 0.9, 0.6); }
+      else if (S3.res.tier === 'mythic') { S3.rays.material.color.setHSL(0.07 + 0.05 * Math.sin(t * 3), 1, 0.55); S3.glow.material.color.setHSL(0.09 + 0.04 * Math.sin(t * 4), 1, 0.6); }
       S3.glow.material.opacity = 0.55; S3.glow.scale.setScalar(2.8 + Math.sin(t * 3) * 0.3);
       S3.pl.intensity = Math.max(0.6, 2.5 - b * 2);
       if (b < 0.5) { var sh = (0.5 - b) * S3.shake; cam.position.x += (Math.random() - 0.5) * sh; cam.position.y += (Math.random() - 0.5) * sh; }
@@ -7475,7 +7619,8 @@ const PMFish = (function () {
     s_merah: ['solid', '#d8302a'], s_hijau: ['solid', '#1fae5a'], s_ungu: ['solid', '#7a3fc4'],
     s_oranye: ['solid', '#f08a2a'], s_hitam: ['solid', '#23262b'], s_putih: ['solid', '#eef2f5'],
     e_biru: ['glow', '#2fd8ff'], e_pink: ['glow', '#ff4fd8'], e_hijau: ['glow', '#5bff7a'], e_emas: ['glow', '#ffd45a'],
-    l_pelangi: ['rainbow', '#ff7ad9'], l_api: ['fire', '#ff6a1a'], l_galaksi: ['galaxy', '#7a5cff']
+    l_pelangi: ['rainbow', '#ff7ad9'], l_api: ['fire', '#ff6a1a'], l_galaksi: ['galaxy', '#7a5cff'],
+    m_naga: ['dragon', '#ffb020']
   };
   var HSL = { h: 0, s: 0, l: 0 };
   function vivid(col, minL) {
@@ -7510,6 +7655,7 @@ const PMFish = (function () {
     var k = sk.k, tw;
     if (k === 'rainbow') return out.setHSL((u * 0.9 + t * 0.35) % 1, 1, 0.6);
     if (k === 'fire') return out.setHSL(Math.max(0, 0.14 - 0.13 * u + 0.015 * Math.sin(t * 13 + u * 9)), 1, 0.52 + 0.12 * Math.sin(t * 15 + u * 11));
+    if (k === 'dragon') return out.setHSL(Math.max(0, 0.11 - 0.09 * u + 0.015 * Math.sin(t * 9 + u * 13)), 1, 0.55 + 0.1 * Math.sin(t * 6 + u * 10));
     if (k === 'galaxy') {
       tw = Math.sin(t * 4 + u * 24);
       return out.setHSL(0.6 + 0.17 * (0.5 + 0.5 * Math.sin(u * 7 - t * 1.6)), 0.9, 0.55 + 0.25 * tw * tw);
@@ -7679,6 +7825,10 @@ const PMFish = (function () {
         f = (t * 0.9 + u * 7.13) % 1; w = 1 - f; a = i * 2.4 + t * 2; r = 0.05 + 0.05 * f;
         swPos[p] = Math.cos(a) * r; swPos[p + 1] = -0.45 + f * 1.4; swPos[p + 2] = Math.sin(a) * r;
         swCol[p] = 1.3 * w; swCol[p + 1] = 0.9 * w * w; swCol[p + 2] = 0.2 * w * w * w;
+      } else if (k === 'dragon') {
+        f = (t * 0.7 + u * 5.31) % 1; w = 1 - f; a = i * 2.4 + t * 2.6 + f * 6; r = 0.07 + 0.06 * f;
+        swPos[p] = Math.cos(a) * r; swPos[p + 1] = -0.45 + f * 1.45; swPos[p + 2] = Math.sin(a) * r;
+        swCol[p] = 1.4 * w; swCol[p + 1] = 0.85 * w * w; swCol[p + 2] = 0.15 * w * w * w;
       } else if (k === 'rainbow') {
         a = t * 3 + u * PI * 6; y = -0.5 + ((u * 3 + t * 0.2) % 1) * 1.5;
         swPos[p] = Math.cos(a) * 0.1; swPos[p + 1] = y; swPos[p + 2] = Math.sin(a) * 0.1;
@@ -7714,7 +7864,7 @@ const PMFish = (function () {
     if (!sk) return;
     for (i = 0; i < halos.length; i++) {
       colorAt(i / 2, t, sk, tmpc); halos[i].material.color.copy(tmpc);
-      gs = (0.6 + 0.12 * Math.sin(t * 3 + i * 2)) * (sk.k === 'fire' ? 1 + 0.25 * Math.sin(t * 13 + i) : 1);
+      gs = (0.6 + 0.12 * Math.sin(t * 3 + i * 2)) * ((sk.k === 'fire' || sk.k === 'dragon') ? 1 + 0.25 * Math.sin(t * 13 + i) : 1);
       halos[i].scale.set(gs, gs, 1);
     }
     swarmTick(t, sk);
