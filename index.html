@@ -1261,7 +1261,7 @@ function pmBuildBoat(id) {
   });
 
   /* --- papan peringkat 3D di samping Akuarium --- */
-  var LBB = { x: AQ.x - 4.3, z: AQ.z + 0.2 };
+  var LBB = { x: 9, z: 10.4 };
   var lbCv = document.createElement('canvas'); lbCv.width = 1024; lbCv.height = 640;
   var lbTex = new T.CanvasTexture(lbCv); lbTex.minFilter = T.LinearFilter; lbTex.magFilter = T.LinearFilter; lbTex.generateMipmaps = false;
   try { lbTex.anisotropy = 8; } catch (e) {}
@@ -1316,14 +1316,14 @@ function pmBuildBoat(id) {
     });
     lbTex.needsUpdate = true;
   }
-  var lbBoard = new T.Group(); lbBoard.position.set(LBB.x, C.DECK_Y, LBB.z); C.town.add(lbBoard);
+  var lbBoard = new T.Group(); lbBoard.position.set(LBB.x, Math.sin(LBB.x * 0.15) * Math.cos(LBB.z * 0.15) * 0.7 * (1 - Math.min(1, Math.sqrt(LBB.x * LBB.x + LBB.z * LBB.z) / C.ISLAND_RADIUS)) + 0.02, LBB.z); lbBoard.rotation.y = -Math.PI / 2; C.town.add(lbBoard);
   var lbWood = new T.MeshLambertMaterial({ color: 0x5a3a1e });
   [-1.55, 1.55].forEach(function (px) { var p = new T.Mesh(new T.BoxGeometry(0.2, 2.0, 0.2), lbWood); p.position.set(px, 1.0, -0.05); lbBoard.add(p); });
   var lbFrame = new T.Mesh(new T.BoxGeometry(3.7, 2.35, 0.14), lbWood); lbFrame.position.set(0, 1.9, 0); lbBoard.add(lbFrame);
   var lbFace = new T.Mesh(new T.PlaneGeometry(3.5, 2.19), new T.MeshBasicMaterial({ map: lbTex })); lbFace.position.set(0, 1.9, 0.075); lbBoard.add(lbFace);
   var lbRoof = new T.Mesh(new T.BoxGeometry(3.95, 0.12, 0.42), lbWood); lbRoof.position.set(0, 3.12, 0.05); lbBoard.add(lbRoof);
   C.TOWN_COLLIDERS.push({ x: LBB.x, z: LBB.z, r: 1.75 });
-  C.TOWN_SHOPS.push({ id: 'lboard', name: 'PERINGKAT', label: 'Lihat Peringkat', x: LBB.x, z: LBB.z + 0.6, action: function () { openLB(); mLB.open(); } });
+  C.TOWN_SHOPS.push({ id: 'lboard', name: 'PERINGKAT', label: 'Lihat Peringkat', x: LBB.x - 0.6, z: LBB.z, action: function () { openLB(); mLB.open(); } });
   var lbKey = '';
   function lbBoardTick() {
     var k = (netUp() ? '1' : '0') + (lbData && lbData.c ? JSON.stringify(lbData.c.slice(0, 5)) : '-');
@@ -2546,6 +2546,7 @@ function pmBuildBoat(id) {
   const treeRng = makeRng(2024);
   const trees = new THREE.Group();
   function addPalm(x, z, lean) {
+    if (x > 4.5 && x < 13 && z > 6.5 && z < 16.5) return; // v4.23: area samping Jual Ikan dikosongkan
     const y = islandHeightAt(x, z);
     const trunk = new THREE.Mesh(trunkGeo, trunkMat);
     trunk.position.set(x, y + 1.6, z);
@@ -5110,8 +5111,12 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.22', DATE = '5 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.23', DATE = '7 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v4.23", [
+      "Mesin Gacha Rod dan Papan Peringkat Ikan Ditangkap dipindah ke samping Jual Ikan, sejajar menghadap plaza.",
+      "Pohon palem di samping Jual Ikan dihapus untuk memberi tempat."
+    ]],
     ["Update v4.22", [
       "Paus biru yang berenang dihapus.",
       "Pulau Karang diperluas: pantai dan area rumput lebih lebar, lebih banyak pohon palem, dermaga dan peti harta digeser.",
@@ -7358,8 +7363,9 @@ const PMFish = (function () {
   window.PMGacha = { open: openG };
 
   /* ---------- Mesin Gacha 3D di plaza ---------- */
-  var MX = 4.5, MZ = 19;
-  var mach = new T.Group(); mach.position.set(MX, C.DECK_Y, MZ);
+  var MX = 9, MZ = 14.2;
+  function gy423(x, z) { return Math.sin(x * 0.15) * Math.cos(z * 0.15) * 0.7 * (1 - Math.min(1, Math.sqrt(x * x + z * z) / C.ISLAND_RADIUS)) + 0.02; }
+  var mach = new T.Group(); mach.position.set(MX, gy423(MX, MZ), MZ); mach.rotation.y = -PI / 2; // hadap -x (ke plaza), sejajar Jual Ikan
   function MS(c, o) { o = o || {}; o.color = c; if (o.roughness === undefined) o.roughness = 0.45; return new T.MeshStandardMaterial(o); }
   function mb(geo, mat, x, y, z) { var mm = new T.Mesh(geo, mat); mm.position.set(x, y, z); mm.castShadow = true; mm.receiveShadow = true; mach.add(mm); return mm; }
   var mRed = MS(0xd8352a, { roughness: 0.35, metalness: 0.2 }), mSteel = MS(0xcfd6dc, { metalness: 0.8, roughness: 0.28 }),
@@ -7403,7 +7409,7 @@ const PMFish = (function () {
   mSign.scale.set(2, 0.5, 1); mSign.position.set(0, 3.55, 0); mach.add(mSign);
   C.town.add(mach);
   C.TOWN_COLLIDERS.push({ x: MX, z: MZ, r: 1.25 });
-  C.TOWN_SHOPS.push({ id: 'gacha', name: 'GACHA', label: 'Main Gacha Rod', x: MX, z: MZ + 0.2, action: function () { openG(); } });
+  C.TOWN_SHOPS.push({ id: 'gacha', name: 'GACHA', label: 'Main Gacha Rod', x: MX - 0.2, z: MZ, action: function () { openG(); } });
   C.hookAnim(function (t) {
     var i, c, a;
     for (i = 0; i < capsIn.length; i++) {
@@ -7836,7 +7842,7 @@ const PMFish = (function () {
     if (o.isMesh && o.geometry && o.geometry.type === 'CylinderGeometry' && o.geometry.parameters.height === 3.2 && o.geometry.parameters.radiusTop === 0.18) palms.push(o.position);
   });
   function nearPalm(x, z, r) { for (var i = 0; i < palms.length; i++) if (Math.hypot(x - palms[i].x, z - palms[i].z) < r) return true; return false; }
-  function inTown(x, z) { return z > 14.2 && Math.abs(x) < 18; }
+  function inTown(x, z) { return (z > 14.2 && Math.abs(x) < 18) || (x > 4.5 && x < 13.5 && z > 6.5 && z < 16.5); }
 
   /* ---------- layout ---------- */
   var HX = -6, HZ = -6, cx = 3, cz = 3, ci;
