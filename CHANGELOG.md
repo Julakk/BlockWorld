@@ -1,3 +1,21 @@
+# Update v4.25 (7 Okt 2026)
+
+- Rumah Rod Shop, Bait Shop, dan Jual Ikan dihapus, diganti kios (lapak) terbuka dengan atap garis-garis, meja jualan, dan papan nama.
+- Tiap kios ada NPC penjaga: Bang Joko (Rod Shop), Mas Dimas (Bait Shop), Bu Tini (Jual Ikan). Mereka menoleh dan melambai kalau pemain mendekat.
+- Etalase sesuai jualannya: Rod Shop memajang joran dan reel, Bait Shop memajang toples umpan dan lure, Jual Ikan memajang ikan di baki es, timbangan, dan jemuran ikan.
+- Tombol interaksi kini menampilkan nama penjaga, misalnya "Bang Joko - Buka Rod Shop".
+
+# Update v4.24 (7 Okt 2026)
+
+- Tier baru di Gacha: Mythic. Skin Mythic pertama: Eternal Dragon (Dragon Aura + Eternal Energy), joran hitam beraksen emas dengan naga api emas melilit dari gagang sampai ujung, mutiara api di ujung joran, bara dan cincin energi mengorbit.
+- Peluang Mythic 0,4% per pull, dijamin di pull ke-150. Skin duplikat jadi 1.500 koin.
+- Panggung gacha dapat efek khusus Mythic (cahaya api emas).
+
+# Update v4.23 (7 Okt 2026)
+
+- Mesin Gacha Rod dan Papan Peringkat Ikan Ditangkap dipindah ke samping Jual Ikan, sejajar menghadap plaza.
+- Pohon palem di samping Jual Ikan dihapus untuk memberi tempat.
+
 # Update v4.22 (5 Okt 2026)
 
 - Paus biru yang berenang dihapus.
