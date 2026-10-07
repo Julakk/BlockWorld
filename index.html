@@ -2764,17 +2764,218 @@ function pmBuildBoat(id) {
     return g;
   }
   const TOWN_SHOPS = [
-    { id: 'bait', name: 'BAIT SHOP', label: 'Buka Bait Shop', x: 9, z: 26, face: -1, wall: 0x3aa89a, roof: 0x2a6f7a, awning: 0x2fd0c0, glow: 0xffe9a8, signBg: '#1f7d72', action: () => openShopTab('bait') },
-    { id: 'rod', name: 'ROD SHOP', label: 'Buka Rod Shop', x: -9, z: 26, face: 1, wall: 0xc4453c, roof: 0x7a2a2a, awning: 0xff6a5a, glow: 0xffe9a8, signBg: '#9c2f2a', action: () => openShopTab('rod') },
-    { id: 'sell', name: 'JUAL IKAN', label: 'Buka Tas / Jual Ikan', x: 9, z: 18, face: -1, wall: 0xd2b07a, roof: 0x6b4a8a, awning: 0xb07be0, glow: 0xffe9a8, signBg: '#6b4a8a', action: () => openModal('modalInventory') },
+    { id: 'bait', name: 'BAIT SHOP', label: 'Mas Dimas - Buka Bait Shop', x: 9, z: 26, face: -1, wall: 0x3aa89a, roof: 0x2a6f7a, awning: 0x2fd0c0, glow: 0xffe9a8, signBg: '#1f7d72', action: () => openShopTab('bait') },
+    { id: 'rod', name: 'ROD SHOP', label: 'Bang Joko - Buka Rod Shop', x: -9, z: 26, face: 1, wall: 0xc4453c, roof: 0x7a2a2a, awning: 0xff6a5a, glow: 0xffe9a8, signBg: '#9c2f2a', action: () => openShopTab('rod') },
+    { id: 'sell', name: 'JUAL IKAN', label: 'Bu Tini - Jual Ikan / Tas', x: 9, z: 18, face: -1, wall: 0xd2b07a, roof: 0x6b4a8a, awning: 0xb07be0, glow: 0xffe9a8, signBg: '#6b4a8a', action: () => openModal('modalInventory') },
   ];
-  for (const sh of TOWN_SHOPS) {
-    const m = makeShop(sh);
-    m.position.set(sh.x, DECK_Y, sh.z);
-    m.rotation.y = sh.face * Math.PI / 2;
-    town.add(m);
-    TOWN_COLLIDERS.push({ x: sh.x, z: sh.z, r: 2.5 });
-  }
+  /* ===== v4.25: rumah toko diganti kios (lapak) + NPC penjaga + etalase sesuai jualan ===== */
+  (function () {
+    const GB = new THREE.BoxGeometry(1, 1, 1), GS = new THREE.SphereGeometry(1, 12, 9);
+    const GC = new THREE.CylinderGeometry(1, 1, 1, 12), GK = new THREE.ConeGeometry(1, 1, 8);
+    const MC = {};
+    function mt(col) { return MC[col] || (MC[col] = new THREE.MeshLambertMaterial({ color: col })); }
+    const glassM = new THREE.MeshLambertMaterial({ color: 0xcfe8f0, transparent: true, opacity: 0.42 });
+    function put(par, geo, col, x, y, z, sx, sy, sz, rx, ry, rz) {
+      const m = new THREE.Mesh(geo, typeof col === 'object' ? col : mt(col));
+      m.position.set(x, y, z); m.scale.set(sx, sy, sz);
+      if (rx) m.rotation.x = rx;
+      if (ry) m.rotation.y = ry;
+      if (rz) m.rotation.z = rz;
+      par.add(m); return m;
+    }
+    const FISHC = [0x4aa3d8, 0xe8734a, 0xd9c24a, 0x7fcf8a, 0xb8c4d0, 0xd24a6a];
+    function fish(par, x, y, z, col, len, ry, rz) {
+      const f = new THREE.Group(); f.position.set(x, y, z); f.rotation.set(0, ry || 0, rz || 0);
+      put(f, GS, col, 0, 0, 0, len, len * 0.34, len * 0.2);
+      put(f, GK, col, -len * 1.05, 0, 0, len * 0.34, len * 0.5, len * 0.08, 0, 0, -Math.PI / 2);
+      put(f, GK, col, 0, len * 0.3, 0, len * 0.2, len * 0.28, len * 0.05);
+      put(f, GS, 0x111111, len * 0.62, len * 0.07, len * 0.14, len * 0.07, len * 0.07, len * 0.07);
+      par.add(f); return f;
+    }
+
+    /* ---------- NPC penjaga ---------- */
+    function plaqueTex(name) {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+      const g = c.getContext('2d');
+      g.fillStyle = 'rgba(10,25,40,0.78)'; g.fillRect(4, 8, 248, 48);
+      g.strokeStyle = 'rgba(255,255,255,0.6)'; g.lineWidth = 3; g.strokeRect(4, 8, 248, 48);
+      g.font = 'bold 28px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffffff';
+      g.fillText(name, 128, 33);
+      return new THREE.CanvasTexture(c);
+    }
+    const SKIN = 0xe3ab7e;
+    function makeKeeper(c) {
+      const n = new THREE.Group();
+      put(n, GC, c.pants, -0.14, 0.4, 0, 0.11, 0.7, 0.11);
+      put(n, GC, c.pants, 0.14, 0.4, 0, 0.11, 0.7, 0.11);
+      [-0.14, 0.14].forEach(function (sx) { put(n, GS, 0x3a2616, sx, 0.06, 0.06, 0.13, 0.08, 0.2); });
+      put(n, GC, c.shirt, 0, 1.08, 0, 0.31, 0.74, 0.23);
+      put(n, GB, c.apron, 0, 0.98, 0.215, 0.46, 0.6, 0.035);
+      put(n, GC, 0x5a3a22, 0, 0.76, 0, 0.325, 0.06, 0.245);
+      put(n, GC, SKIN, 0, 1.5, 0, 0.075, 0.12, 0.075);
+      function arm(sx) {
+        const pv = new THREE.Group(); pv.position.set(sx, 1.36, 0); n.add(pv);
+        put(pv, GS, c.shirt, 0, 0, 0, 0.11, 0.11, 0.11);
+        put(pv, GC, c.shirt, 0, -0.27, 0, 0.09, 0.5, 0.09);
+        put(pv, GS, SKIN, 0, -0.6, 0, 0.085, 0.085, 0.085);
+        return pv;
+      }
+      const armR = arm(0.4), armL = arm(-0.4);
+      const head = new THREE.Group(); head.position.y = 1.72; n.add(head);
+      put(head, GS, SKIN, 0, 0, 0, 0.24, 0.26, 0.24);
+      [-1, 1].forEach(function (s) {
+        put(head, GS, 0x161616, s * 0.09, 0.04, 0.215, 0.028, 0.032, 0.02);
+        put(head, GS, SKIN, s * 0.24, 0, 0, 0.04, 0.05, 0.04);
+      });
+      put(head, GS, 0xc98d62, 0, -0.02, 0.24, 0.04, 0.045, 0.04);
+      put(head, GB, 0xb02a2a, 0, -0.1, 0.225, 0.08, 0.013, 0.01);
+      if (c.hat === 'bucket') {
+        put(head, GC, c.hatCol, 0, 0.17, 0, 0.42, 0.03, 0.42);
+        put(head, GC, c.hatCol, 0, 0.27, 0, 0.25, 0.17, 0.25);
+      } else if (c.hat === 'cap') {
+        put(head, GS, c.hatCol, 0, 0.1, -0.01, 0.255, 0.21, 0.255);
+        put(head, GB, c.hatCol, 0, 0.1, 0.27, 0.3, 0.02, 0.2, 0.12);
+      } else {
+        put(head, GS, 0x2a1a14, 0, 0.06, -0.04, 0.26, 0.25, 0.25);
+        put(head, GS, 0x2a1a14, 0, 0.3, -0.12, 0.1, 0.1, 0.1);
+        put(head, GC, c.hatCol, 0, 0.17, 0, 0.255, 0.05, 0.255);
+      }
+      n.scale.setScalar(0.92);
+      return { g: n, head: head, armR: armR, armL: armL, torso: n.children[3] };
+    }
+
+    /* ---------- etalase ---------- */
+    function goodsRod(g) {
+      const RC = [0xd94f3a, 0x3aa0e0, 0xe0b43a, 0x4cc46a, 0x9a5ae0, 0xf08a2a];
+      put(g, GB, 0x4a3420, 0, 0.62, -1.39, 3.7, 0.07, 0.12);
+      put(g, GB, 0x4a3420, 0, 2.2, -1.39, 3.7, 0.07, 0.12);
+      RC.forEach(function (col, i) {
+        const x = -1.5 + i * 0.6, tl = (i % 2 ? 0.07 : -0.06);
+        put(g, GC, col, x, 1.42, -1.38, 0.02, 1.62, 0.02, 0, 0, tl);
+        put(g, GC, 0x2a2a2a, x + tl * 0.7, 0.86, -1.38, 0.04, 0.34, 0.04, 0, 0, tl);
+        put(g, GS, 0xc0c8d0, x + tl * 0.5, 1.12, -1.33, 0.055, 0.055, 0.04);
+      });
+      for (let j = 0; j < 3; j++) {
+        put(g, GC, RC[(j + 2) % 6], -0.85, 1.07, 0.74 + j * 0.15, 0.02, 1.45, 0.02, 0, (j - 1) * 0.08, Math.PI / 2);
+        put(g, GC, 0x2a2a2a, -0.2 - j * 0.0, 1.07, 0.74 + j * 0.15, 0.036, 0.3, 0.036, 0, (j - 1) * 0.08, Math.PI / 2);
+      }
+      [0, 1, 2].forEach(function (j) {
+        put(g, GC, 0xc0c8d0, 0.85 + j * 0.34, 1.1, 0.95, 0.13, 0.06, 0.13, Math.PI / 2);
+        put(g, GC, 0x2a2a2a, 0.85 + j * 0.34, 1.1, 0.95, 0.04, 0.09, 0.04, Math.PI / 2);
+      });
+    }
+    function goodsBait(g) {
+      const JC = [0xc77b5a, 0xff8a4a, 0xc9d6e0, 0x6bff9a, 0xe8d36a];
+      put(g, GB, 0x4a3420, 0, 1.0, -1.38, 3.9, 0.07, 0.34);
+      put(g, GB, 0x4a3420, 0, 1.7, -1.38, 3.9, 0.07, 0.34);
+      JC.forEach(function (col, i) {
+        const x = -1.55 + i * 0.775;
+        put(g, GC, glassM, x, 1.17, 1.0, 0.17, 0.34, 0.17);
+        put(g, GC, col, x, 1.12, 1.0, 0.14, 0.22, 0.14);
+        put(g, GC, 0x7a4e2b, x, 1.36, 1.0, 0.18, 0.04, 0.18);
+      });
+      for (let i = 0; i < 6; i++) {
+        const x = -1.65 + i * 0.66, col = JC[i % 5];
+        put(g, GC, glassM, x, 1.2, -1.36, 0.12, 0.3, 0.12);
+        put(g, GC, col, x, 1.15, -1.36, 0.1, 0.19, 0.1);
+        put(g, GC, 0x7a4e2b, x, 1.36, -1.36, 0.13, 0.035, 0.13);
+      }
+      put(g, GB, 0xe8c86a, -1.0, 1.9, -1.38, 0.5, 0.18, 0.3);
+      put(g, GB, 0x3aa0e0, -0.3, 1.89, -1.38, 0.42, 0.16, 0.28);
+      put(g, GB, 0xd94f3a, 0.4, 1.9, -1.38, 0.5, 0.18, 0.3);
+      put(g, GB, 0x4cc46a, 1.1, 1.89, -1.38, 0.42, 0.16, 0.28);
+      put(g, GB, 0x3a2a1a, 0, 2.18, 1.62, 3.7, 0.03, 0.03);
+      const LC = [0xff5a5a, 0xffd84a, 0x6bff9a, 0x4acfff, 0xd87aff, 0xff9a3a, 0xffffff];
+      LC.forEach(function (col, i) {
+        const x = -1.8 + i * 0.6;
+        put(g, GC, 0xcccccc, x, 2.08, 1.62, 0.006, 0.2, 0.006);
+        put(g, GS, col, x, 1.96, 1.62, 0.055, 0.075, 0.055);
+      });
+    }
+    function goodsSell(g) {
+      put(g, GB, 0xdfeef6, -0.7, 1.07, 0.97, 1.8, 0.1, 0.78);
+      put(g, GB, 0xbcd6e4, -0.7, 1.14, 0.97, 1.9, 0.05, 0.86);
+      const R = [[-1.38, 0.82, 0.3], [-1.05, 1.1, -0.4], [-0.72, 0.85, 0.15], [-0.4, 1.1, 0.5], [-0.08, 0.84, -0.2], [-0.95, 0.96, 0.9]];
+      R.forEach(function (r, i) { fish(g, r[0], 1.2, r[1] - 0.0, FISHC[i % 6], 0.26, r[2]); });
+      for (let i = 0; i < 7; i++) put(g, GB, 0xffffff, -1.5 + i * 0.28, 1.18, 0.7 + (i * 0.37 % 0.5), 0.09, 0.06, 0.09, 0, i, 0);
+      put(g, GB, 0x3a3a3a, 1.05, 1.06, 0.97, 0.55, 0.07, 0.34);
+      put(g, GC, 0x888888, 1.05, 1.2, 0.97, 0.03, 0.22, 0.03);
+      put(g, GC, 0xd0d6dc, 1.05, 1.33, 0.97, 0.22, 0.025, 0.22);
+      put(g, GC, 0x2a7fd0, 1.72, 1.17, 0.97, 0.2, 0.3, 0.2);
+      fish(g, 1.72, 1.4, 0.97, 0xe8734a, 0.16, 0.6, 1.1);
+      put(g, GB, 0x4a3420, 0, 2.05, -1.34, 3.8, 0.05, 0.05);
+      for (let i = 0; i < 7; i++) {
+        const x = -1.65 + i * 0.55;
+        put(g, GC, 0xcccccc, x, 1.95, -1.34, 0.006, 0.2, 0.006);
+        fish(g, x, 1.62, -1.34, FISHC[i % 6], 0.3, 0, Math.PI / 2);
+      }
+    }
+    const KIND = {
+      rod: { keeper: 'Bang Joko', shirt: 0x2d6fa8, pants: 0x2a3a58, apron: 0xf2efe6, hat: 'bucket', hatCol: 0x3f9b57, goods: goodsRod },
+      bait: { keeper: 'Mas Dimas', shirt: 0x2f9d8f, pants: 0x3a3a48, apron: 0xe8c86a, hat: 'cap', hatCol: 0x1f6f78, goods: goodsBait },
+      sell: { keeper: 'Bu Tini', shirt: 0xb07be0, pants: 0x4a3a6a, apron: 0xffffff, hat: 'scarf', hatCol: 0xe0568a, goods: goodsSell }
+    };
+
+    /* ---------- kios ---------- */
+    function toWorld(cfg, lx, lz) {
+      const th = cfg.face * Math.PI / 2, c = Math.cos(th), s = Math.sin(th);
+      return { x: cfg.x + lx * c + lz * s, z: cfg.z - lx * s + lz * c };
+    }
+    function makeStall(cfg) {
+      const K = KIND[cfg.id], g = new THREE.Group();
+      put(g, GB, 0x9a7040, 0, 0.04, 0, 4.5, 0.08, 3.4);
+      [[-2.05, -1.4], [2.05, -1.4], [-2.05, 1.5], [2.05, 1.5]].forEach(function (p) { put(g, GC, 0x5a3a22, p[0], 1.3, p[1], 0.07, 2.6, 0.07); });
+      put(g, GB, cfg.wall, 0, 1.25, -1.5, 4.2, 2.3, 0.1);
+      put(g, GB, 0x7a4e2b, 0, 0.48, 0.97, 3.9, 0.96, 0.82);
+      put(g, GB, 0xc9a06a, 0, 1.0, 0.97, 4.1, 0.07, 1.0);
+      put(g, GB, cfg.awning, 0, 0.55, 1.39, 3.7, 0.68, 0.03);
+      for (let i = 0; i < 7; i++) put(g, GB, 0xffffff, -1.5 + i * 0.5, 0.55, 1.405, 0.22, 0.68, 0.01);
+      for (let i = 0; i < 8; i++) {
+        const col = i % 2 ? 0xffffff : cfg.awning, x = -2.03 + i * 0.58;
+        put(g, GB, col, x, 2.62, 0.05, 0.58, 0.08, 3.7, 0.14);
+        put(g, GB, col, x, 2.3, 1.78, 0.58, 0.24, 0.04);
+      }
+      [-1.3, 1.3].forEach(function (x) { put(g, GC, 0x5a3a22, x, 2.9, 0.2, 0.05, 0.7, 0.05); });
+      put(g, GB, 0x4a3420, 0, 3.22, 0.17, 3.0, 0.82, 0.07);
+      const sg = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.7), new THREE.MeshBasicMaterial({ map: makeSignTexture(cfg.name, cfg.signBg) }));
+      sg.position.set(0, 3.22, 0.215); g.add(sg);
+      const pq = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.28), new THREE.MeshBasicMaterial({ map: plaqueTex(K.keeper) }));
+      pq.position.set(0, 0.72, 1.42); g.add(pq);
+      K.goods(g);
+      const kp = makeKeeper(K); kp.g.position.set(0, 0.08, -0.2); g.add(kp.g);
+      return { group: g, keeper: kp };
+    }
+    const KEEPERS = [];
+    for (const sh of TOWN_SHOPS) {
+      if (!KIND[sh.id]) continue;
+      const st = makeStall(sh);
+      st.group.position.set(sh.x, DECK_Y, sh.z);
+      st.group.rotation.y = sh.face * Math.PI / 2;
+      town.add(st.group);
+      [[-1.3, 0.97], [0, 0.97], [1.3, 0.97], [-1.3, -1.1], [0, -1.1], [1.3, -1.1], [-1.95, -0.4], [-1.95, 0.4], [1.95, -0.4], [1.95, 0.4]].forEach(function (p) {
+        const w = toWorld(sh, p[0], p[1]);
+        TOWN_COLLIDERS.push({ x: w.x, z: w.z, r: 0.75 });
+      });
+      const nw = toWorld(sh, 0, -0.2);
+      KEEPERS.push({ k: st.keeper, wx: nw.x, wz: nw.z, th: sh.face * Math.PI / 2, ph: KEEPERS.length * 1.7 });
+    }
+    const _utaKios = updateTownAnim;
+    updateTownAnim = function (t) {
+      _utaKios(t);
+      const px = player.position.x, pz = player.position.z;
+      for (let i = 0; i < KEEPERS.length; i++) {
+        const e = KEEPERS[i], k = e.k, dx = px - e.wx, dz = pz - e.wz;
+        const near = dx * dx + dz * dz < 36, c = Math.cos(e.th), s = Math.sin(e.th);
+        let tgt = 0;
+        if (near) tgt = Math.max(-1.1, Math.min(1.1, Math.atan2(dx * c - dz * s, dx * s + dz * c)));
+        k.g.rotation.y += (tgt - k.g.rotation.y) * 0.08;
+        const br = Math.sin(t * 2 + e.ph);
+        k.torso.scale.y = 1 + br * 0.012; k.head.position.y = 1.72 + br * 0.008; k.head.rotation.z = Math.sin(t * 0.9 + e.ph) * 0.03;
+        k.armR.rotation.z = near ? 2.55 + Math.sin(t * 7 + e.ph) * 0.28 : 0.09 + Math.sin(t * 1.4 + e.ph) * 0.03;
+        k.armL.rotation.z = -0.09 - Math.sin(t * 1.4 + e.ph + 1) * 0.03;
+      }
+    };
+  })();
 
   // barel, peti, pelampung
   const barrelMat = new THREE.MeshLambertMaterial({ color: 0x8a5a2b });
@@ -5111,8 +5312,13 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.24', DATE = '7 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.25', DATE = '7 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v4.25", [
+      "Rumah Rod Shop, Bait Shop, dan Jual Ikan dihapus, diganti jadi kios (lapak) terbuka dengan atap garis-garis, meja jualan, dan papan nama.",
+      "Tiap kios ada NPC penjaga: Bang Joko (Rod Shop), Mas Dimas (Bait Shop), Bu Tini (Jual Ikan). Mereka menoleh dan melambai kalau kamu mendekat.",
+      "Etalase sesuai jualannya: Rod Shop memajang joran dan reel, Bait Shop memajang toples umpan dan lure, Jual Ikan memajang ikan di baki es, timbangan, dan jemuran ikan."
+    ]],
     ["Update v4.24", [
       "Tier baru di Gacha: MYTHIC. Skin Mythic pertama: Eternal Dragon (Dragon Aura + Eternal Energy), joran hitam beraksen emas dengan naga api emas melilit dari gagang sampai ujung, mutiara api di ujung joran, bara dan cincin energi mengorbit.",
       "Peluang Mythic 0,4% per pull, dijamin di pull ke-150. Skin duplikat jadi 1.500 koin.",
