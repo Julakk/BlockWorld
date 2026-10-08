@@ -1,3 +1,11 @@
+# Update v4.26 (9 Okt 2026)
+
+- Skin Mythic Eternal Dragon dibuat ulang jadi lebih HD dan 3D, mirip ilustrasinya: naga emas melilit joran hitam dengan lekukan lebar, badan tebal di tengah dan ramping di ekor.
+- Kepala naga baru: tanduk melengkung dua ruas, surai api, kumis emas yang bergoyang, rahang bercahaya, dan mata menyala.
+- Detail badan: 30 duri emas-merah, cakar, sirip ekor api, lapisan cahaya, dan bara api yang naik dari badan naga.
+- Mutiara api di ujung joran kini dikelilingi 2 cincin energi yang mengorbit.
+- Di preview Gacha dan panggung, reel dapat emblem naga spiral bercincin emas, dan pangkal joran dapat tutup emas runcing.
+
 # Update v4.25 (7 Okt 2026)
 
 - Rumah Rod Shop, Bait Shop, dan Jual Ikan dihapus, diganti kios (lapak) terbuka dengan atap garis-garis, meja jualan, dan papan nama.
