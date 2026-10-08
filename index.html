@@ -6947,61 +6947,177 @@ const PMFish = (function () {
     g.setIndex(idx); g.computeVertexNormals();
     return g;
   }
-  function makeDragon(shaft, tip, reg) {
-    var Y = new T.Vector3(0, 1, 0), pts = [], i, j, u, y, ang, R, rs, curve, p, rad, dir, sp, m;
-    var TURNS = 3.3, Y0 = -0.44, Y1 = 0.55, BR0 = 0.005, BR1 = 0.019;
-    for (i = 0; i <= 64; i++) {
-      u = i / 64; y = Y0 + u * (Y1 - Y0); ang = u * TURNS * PI * 2 - PI / 2;
-      rs = 0.0325 - 0.017 * (y + 0.55) / 1.1; R = rs + BR0 + (BR1 - BR0) * u + 0.003 + 0.004 * Math.sin(u * 20);
+  function varTube(curve, segs, rfn, uRep, grow) {
+    var RR = 10, fr = curve.computeFrenetFrames(segs, false), pos = [], uv = [], idx = [], i, k, p, N, B, r, a, cs, sn, a0, b0;
+    for (i = 0; i <= segs; i++) {
+      p = curve.getPointAt(i / segs); N = fr.normals[i]; B = fr.binormals[i]; r = rfn(i / segs) + (grow || 0);
+      for (k = 0; k <= RR; k++) {
+        a = k / RR * PI * 2; cs = Math.cos(a); sn = Math.sin(a);
+        pos.push(p.x + (N.x * cs + B.x * sn) * r, p.y + (N.y * cs + B.y * sn) * r, p.z + (N.z * cs + B.z * sn) * r);
+        uv.push(i / segs * uRep, k / RR);
+      }
+    }
+    for (i = 0; i < segs; i++) for (k = 0; k < RR; k++) {
+      a0 = i * (RR + 1) + k; b0 = a0 + RR + 1;
+      idx.push(a0, b0, a0 + 1, b0, b0 + 1, a0 + 1);
+    }
+    var g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx); g.computeVertexNormals();
+    return g;
+  }
+  function dragonEmblemCanvas() {
+    return cvas('dr_emblem', 128, 128, function (g, w, h) {
+      var gr = g.createRadialGradient(64, 64, 4, 64, 64, 62), t, pt, hx, hy, ang;
+      gr.addColorStop(0, '#4a0c06'); gr.addColorStop(0.7, '#170404'); gr.addColorStop(1, '#060202');
+      g.fillStyle = gr; g.beginPath(); g.arc(64, 64, 62, 0, PI * 2); g.fill();
+      function sp(q) { var an = q * PI * 3.4 + 0.6, rr = 10 + q * 38; return [64 + Math.cos(an) * rr, 64 + Math.sin(an) * rr, an]; }
+      g.strokeStyle = '#ffcf4a'; g.lineCap = 'round'; g.lineJoin = 'round'; g.shadowColor = '#ff9a10'; g.shadowBlur = 8;
+      g.lineWidth = 9; g.beginPath();
+      for (t = 0; t <= 1.001; t += 0.02) { pt = sp(t); if (t === 0) g.moveTo(pt[0], pt[1]); else g.lineTo(pt[0], pt[1]); }
+      g.stroke();
+      pt = sp(1); hx = pt[0]; hy = pt[1]; ang = pt[2];
+      g.fillStyle = '#ffe27a'; g.beginPath(); g.arc(hx, hy, 10, 0, PI * 2); g.fill();
+      g.lineWidth = 4;
+      [-0.7, 0.7].forEach(function (d) {
+        g.beginPath(); g.moveTo(hx, hy); g.lineTo(hx + Math.cos(ang + d) * 20, hy + Math.sin(ang + d) * 20); g.stroke();
+      });
+      g.shadowBlur = 0; g.fillStyle = '#ff2a10'; g.beginPath(); g.arc(hx, hy, 3, 0, PI * 2); g.fill();
+      g.strokeStyle = '#ffcf4a'; g.lineWidth = 5; g.beginPath(); g.arc(64, 64, 59, 0, PI * 2); g.stroke();
+    });
+  }
+  function makeDragon(shaft, tip, reg, full) {
+    var Y = new T.Vector3(0, 1, 0), i, j, u, y, ang, R, rs, p, tg, rd, dir, m;
+    function G(x) { reg.geos.push(x); return x; }
+    function Mt(x) { reg.mats.push(x); return x; }
+    function sm(a, b, x) { x = Math.max(0, Math.min(1, (x - a) / (b - a))); return x * x * (3 - 2 * x); }
+    function rf(q) { return q < 0.5 ? 0.0035 + 0.01 * (q / 0.5) : 0.0135 - 0.003 * ((q - 0.5) / 0.5); }
+    function glowSprite(par, yy, col) {
+      var s = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: col, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6, fog: false }));
+      s.position.set(0, yy, 0); par.add(s); reg.mats.push(s.material); return s;
+    }
+    var TURNS = 2.7, Y0 = -0.42, Y1 = 0.58, pts = [];
+    for (i = 0; i <= 110; i++) {
+      u = i / 110; y = Y0 + u * (Y1 - Y0); ang = u * TURNS * PI * 2 - PI / 2;
+      rs = 0.0325 - 0.017 * (y + 0.55) / 1.1;
+      R = rs + 0.014 + 0.05 * Math.pow(Math.abs(Math.sin(u * PI * 4.5)), 1.4) * (0.3 + 0.7 * Math.sin(u * PI)) + 0.05 * sm(0.88, 1, u);
       pts.push(new T.Vector3(Math.cos(ang) * R, y, Math.sin(ang) * R));
     }
-    curve = new T.CatmullRomCurve3(pts);
+    var curve = new T.CatmullRomCurve3(pts);
     var g = new T.Group(); shaft.add(g);
-    var tex = mkTex(dragonScaleCanvas(), 7, 1); reg.texes.push(tex);
-    var bodyM = new T.MeshStandardMaterial({ color: 0xffffff, map: tex, emissive: 0xff8a14, emissiveMap: tex, emissiveIntensity: 0.55, metalness: 0.6, roughness: 0.38 }); reg.mats.push(bodyM);
-    var geo = taperTube(curve, 120, BR0, BR1, 7); reg.geos.push(geo);
-    g.add(new T.Mesh(geo, bodyM));
-    /* duri punggung merah */
-    var spG = new T.ConeGeometry(0.0045, 0.022, 5); reg.geos.push(spG);
-    var spM = new T.MeshStandardMaterial({ color: 0xd8301a, emissive: 0xff2a08, emissiveIntensity: 0.6, roughness: 0.4 }); reg.mats.push(spM);
-    for (j = 0; j < 17; j++) {
-      u = 0.12 + j * 0.052; p = curve.getPointAt(u); rad = Math.hypot(p.x, p.z) || 1;
-      dir = new T.Vector3(p.x / rad, 0, p.z / rad);
-      sp = new T.Mesh(spG, spM); sp.position.set(p.x + dir.x * (BR0 + (BR1 - BR0) * u), p.y, p.z + dir.z * (BR0 + (BR1 - BR0) * u));
-      sp.quaternion.setFromUnitVectors(Y, dir); sp.scale.setScalar(0.6 + 0.7 * u); g.add(sp);
+    var tex = mkTex(dragonScaleCanvas(), 9, 1); reg.texes.push(tex);
+    var bodyM = Mt(new T.MeshStandardMaterial({ color: 0xffffff, map: tex, emissive: 0xff8a14, emissiveMap: tex, emissiveIntensity: 0.6, metalness: 0.6, roughness: 0.36 }));
+    g.add(new T.Mesh(G(varTube(curve, 180, rf, 9, 0)), bodyM));
+    var shellM = Mt(new T.MeshBasicMaterial({ color: 0xff8a1a, transparent: true, opacity: 0.16, blending: T.AdditiveBlending, depthWrite: false }));
+    g.add(new T.Mesh(G(varTube(curve, 90, rf, 1, 0.007)), shellM));
+    /* duri punggung emas-merah */
+    var spG = G(new T.ConeGeometry(0.0048, 0.034, 4).translate(0, 0.017, 0));
+    var spM = Mt(new T.MeshStandardMaterial({ color: 0xd8301a, emissive: 0xff2a08, emissiveIntensity: 0.7, roughness: 0.4 }));
+    var goldM = Mt(new T.MeshStandardMaterial({ color: 0xffc23a, emissive: 0xff9a10, emissiveIntensity: 0.5, metalness: 0.7, roughness: 0.3 }));
+    for (j = 0; j < 30; j++) {
+      u = 0.1 + j * 0.03; p = curve.getPointAt(u); tg = curve.getTangentAt(u);
+      rd = new T.Vector3(p.x, 0, p.z); if (rd.lengthSq() < 1e-8) rd.set(1, 0, 0); rd.normalize();
+      dir = rd.clone().addScaledVector(tg, -0.55).normalize();
+      m = new T.Mesh(spG, j % 2 ? spM : goldM);
+      m.position.copy(p).addScaledVector(rd, rf(u) * 0.85);
+      m.quaternion.setFromUnitVectors(Y, dir); m.scale.setScalar(0.9 + 0.9 * Math.sin(u * PI)); g.add(m);
     }
+    /* cakar */
+    var clG = G(new T.ConeGeometry(0.0032, 0.03, 4).translate(0, 0.015, 0));
+    [0.28, 0.46, 0.64, 0.8].forEach(function (cu) {
+      var cp = curve.getPointAt(cu), cr = new T.Vector3(cp.x, 0, cp.z); if (cr.lengthSq() < 1e-8) cr.set(1, 0, 0); cr.normalize();
+      [-1, 1].forEach(function (sd) {
+        var cd = cr.clone().multiplyScalar(0.5).add(new T.Vector3(0, -0.85, 0)).addScaledVector(curve.getTangentAt(cu), sd * 0.35).normalize();
+        var c = new T.Mesh(clG, goldM); c.position.copy(cp).addScaledVector(cd, rf(cu) * 0.5);
+        c.quaternion.setFromUnitVectors(Y, cd); c.scale.setScalar(1.2); g.add(c);
+      });
+    });
+    /* sirip ekor api */
+    var tp = curve.getPointAt(0), tt = curve.getTangentAt(0).negate();
+    var tf = new T.Mesh(G(new T.ConeGeometry(0.012, 0.07, 5).translate(0, 0.035, 0)), spM);
+    tf.position.copy(tp); tf.quaternion.setFromUnitVectors(Y, tt); g.add(tf);
+    var tailGlow = glowSprite(g, 0, '#ff9a1a'); tailGlow.position.copy(tp); tailGlow.scale.set(0.12, 0.12, 1);
     /* kepala */
     var hd = new T.Group(), pe = curve.getPointAt(1), te = curve.getTangentAt(1), re = new T.Vector3(pe.x, 0, pe.z).normalize();
-    hd.position.copy(pe); hd.scale.setScalar(1.5); hd.quaternion.setFromUnitVectors(Y, te.clone().addScaledVector(re, 0.35).normalize()); g.add(hd);
-    var skG = new T.SphereGeometry(0.022, 10, 8), snG = new T.CylinderGeometry(0.011, 0.019, 0.05, 8), jwG = new T.ConeGeometry(0.012, 0.045, 6),
-        hnG = new T.ConeGeometry(0.0055, 0.075, 6), eyG = new T.SphereGeometry(0.0042, 6, 6), whG = new T.CylinderGeometry(0.0011, 0.0011, 0.1, 4);
-    [skG, snG, jwG, hnG, eyG, whG].forEach(function (x) { reg.geos.push(x); });
-    var eyM = new T.MeshBasicMaterial({ color: 0xfff6c0 }); reg.mats.push(eyM);
-    m = new T.Mesh(skG, bodyM); m.scale.set(1, 1.25, 1.1); hd.add(m);
-    m = new T.Mesh(snG, bodyM); m.position.y = 0.04; hd.add(m);
-    m = new T.Mesh(jwG, spM); m.position.set(0, 0.022, -0.012); m.rotation.x = 2.55; hd.add(m);
+    hd.position.copy(pe); hd.scale.setScalar(1.7);
+    hd.quaternion.setFromUnitVectors(Y, te.clone().addScaledVector(re, 0.35).normalize()); g.add(hd);
+    var eyM = Mt(new T.MeshBasicMaterial({ color: 0xffe060 }));
+    var skG = G(new T.SphereGeometry(0.022, 12, 10)), snG = G(new T.CylinderGeometry(0.010, 0.018, 0.05, 8)),
+        jwG = G(new T.CylinderGeometry(0.006, 0.0135, 0.044, 8)), eyG = G(new T.SphereGeometry(0.0048, 8, 8)),
+        hn1 = G(new T.ConeGeometry(0.0058, 0.05, 6).translate(0, 0.025, 0)), hn2 = G(new T.ConeGeometry(0.0038, 0.05, 6).translate(0, 0.025, 0));
+    m = new T.Mesh(skG, bodyM); m.scale.set(1, 1.3, 1.1); hd.add(m);
+    m = new T.Mesh(snG, bodyM); m.position.set(0, 0.045, 0.003); hd.add(m);
+    m = new T.Mesh(jwG, bodyM); m.position.set(0, 0.038, -0.012); m.rotation.x = -0.22; hd.add(m);
+    var mouth = glowSprite(hd, 0.05, '#ff7a1a'); mouth.position.z = -0.004; mouth.scale.set(0.05, 0.05, 1);
     [-1, 1].forEach(function (sd) {
-      m = new T.Mesh(hnG, spM); m.position.set(sd * 0.013, -0.004, 0.006); m.rotation.z = -sd * 2.5; hd.add(m);
-      m = new T.Mesh(eyG, eyM); m.position.set(sd * 0.014, 0.012, 0.011); hd.add(m);
-      m = new T.Mesh(whG, bodyM); m.position.set(sd * 0.02, 0.05, 0); m.rotation.z = -sd * 1.15; hd.add(m);
+      var hp = new T.Vector3(sd * 0.012, -0.006, 0.014), d1 = new T.Vector3(sd * 0.3, -0.75, 0.55).normalize(), d2 = new T.Vector3(sd * 0.15, -0.35, 0.9).normalize();
+      m = new T.Mesh(hn1, goldM); m.position.copy(hp); m.quaternion.setFromUnitVectors(Y, d1); hd.add(m);
+      m = new T.Mesh(hn2, goldM); m.position.copy(hp).addScaledVector(d1, 0.05); m.quaternion.setFromUnitVectors(Y, d2); hd.add(m);
+      m = new T.Mesh(eyG, eyM); m.position.set(sd * 0.014, 0.012, 0.012); hd.add(m);
     });
-    function glowSprite(par, y, col) {
-      var s = new T.Sprite(new T.SpriteMaterial({ map: dotTex(), color: col, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6, fog: false }));
-      s.position.set(0, y, 0); par.add(s); reg.mats.push(s.material); return s;
-    }
+    /* surai api di belakang kepala */
+    var manG = G(new T.ConeGeometry(0.0075, 0.08, 5).translate(0, 0.04, 0));
+    var manM = Mt(new T.MeshStandardMaterial({ color: 0xff5a1a, emissive: 0xff3a08, emissiveIntensity: 0.9, roughness: 0.5 }));
+    [[-0.9, -1, 0.1], [-0.5, -1, 0.45], [0, -1, 0.7], [0.5, -1, 0.45], [0.9, -1, 0.1]].forEach(function (d) {
+      m = new T.Mesh(manG, manM); m.position.set(0, -0.012, 0.004);
+      m.quaternion.setFromUnitVectors(Y, new T.Vector3(d[0], d[1], d[2]).normalize()); hd.add(m);
+    });
+    /* kumis emas */
+    var whM = Mt(new T.MeshBasicMaterial({ color: 0xffc23a })), whs = [];
+    [-1, 1].forEach(function (sd) {
+      var wp = [], q, wg = new T.Group();
+      for (q = 0; q <= 6; q++) wp.push(new T.Vector3(sd * (0.004 + 0.016 * q), 0.012 * q + 0.004 * Math.sin(q * 1.6), 0.006 * Math.sin(q * 1.1)));
+      wg.position.set(sd * 0.012, 0.05, 0.002); hd.add(wg);
+      wg.add(new T.Mesh(G(new T.TubeGeometry(new T.CatmullRomCurve3(wp), 24, 0.0011, 4, false)), whM));
+      whs.push({ g: wg, sd: sd });
+    });
     var mane = glowSprite(hd, 0.0, '#ffb020');
-    /* mutiara api di ujung joran */
-    var orbG = new T.SphereGeometry(0.0145, 12, 10); reg.geos.push(orbG);
-    var orbM = new T.MeshStandardMaterial({ color: 0xfff0a0, emissive: 0xffa414, emissiveIntensity: 1, roughness: 0.2 }); reg.mats.push(orbM);
+    /* bara api sepanjang badan */
+    var embers = [];
+    for (j = 0; j < 18; j++) {
+      var eu = 0.06 + j * 0.052, ep = curve.getPointAt(eu), er = new T.Vector3(ep.x, 0, ep.z); if (er.lengthSq() < 1e-8) er.set(1, 0, 0); er.normalize();
+      var es = new T.Sprite(Mt(new T.SpriteMaterial({ map: dotTex(), color: j % 3 ? '#ff9a1a' : '#ffd24a', blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6, fog: false })));
+      g.add(es); embers.push({ s: es, b: ep.clone().addScaledVector(er, rf(eu)), r: er, ph: j * 0.37 });
+    }
+    /* mutiara api + cincin energi di ujung joran */
+    var orbG = G(new T.SphereGeometry(0.0145, 12, 10));
+    var orbM = Mt(new T.MeshStandardMaterial({ color: 0xfff0a0, emissive: 0xffa414, emissiveIntensity: 1, roughness: 0.2 }));
     var orb = new T.Mesh(orbG, orbM); orb.position.set(0, 0.435, 0); tip.add(orb);
     var orbGlow = glowSprite(tip, 0.435, '#ffc030');
+    var oc = new T.Group(); oc.position.set(0, 0.435, 0); tip.add(oc);
+    var rgG = G(new T.TorusGeometry(0.032, 0.0013, 6, 28));
+    var rgM = Mt(new T.MeshBasicMaterial({ color: 0xffc23a, transparent: true, opacity: 0.8, blending: T.AdditiveBlending, depthWrite: false }));
+    m = new T.Mesh(rgG, rgM); m.rotation.x = 1.2; oc.add(m);
+    m = new T.Mesh(rgG, rgM); m.rotation.x = 1.2; m.rotation.y = 1.5; m.scale.setScalar(1.25); oc.add(m);
+    /* reel berlogo naga + tutup pangkal joran (hanya tampilan penuh) */
+    if (full) {
+      var embT = mkTex(dragonEmblemCanvas(), 1, 1); reg.texes.push(embT);
+      var embM = Mt(new T.MeshBasicMaterial({ map: embT, transparent: true }));
+      var embG = G(new T.CircleGeometry(0.044, 24)), rng = G(new T.TorusGeometry(0.047, 0.004, 6, 24));
+      [-1, 1].forEach(function (sd) {
+        var e = new T.Mesh(embG, embM); e.position.set(0.05 + sd * 0.0312, -0.2, 0); e.rotation.y = sd * PI / 2; shaft.add(e);
+        var rg = new T.Mesh(rng, goldM); rg.position.set(0.05 + sd * 0.031, -0.2, 0); rg.rotation.y = PI / 2; shaft.add(rg);
+      });
+      var cap = new T.Mesh(G(new T.ConeGeometry(0.034, 0.09, 6)), goldM); cap.rotation.x = PI; cap.position.y = -0.585; shaft.add(cap);
+    }
     function update(t, dt) {
-      var f = 1 + 0.2 * Math.sin(t * 6.5) * Math.sin(t * 2.3), f2 = 1 + 0.25 * Math.sin(t * 5);
+      var f = 1 + 0.2 * Math.sin(t * 6.5) * Math.sin(t * 2.3), f2 = 1 + 0.25 * Math.sin(t * 5), q, e, fl, sc;
       tex.offset.x -= 0.12 * dt;
-      bodyM.emissiveIntensity = 0.5 + 0.18 * Math.sin(t * 3.1) + 0.08 * Math.sin(t * 9.7);
-      g.rotation.y = 0.12 * Math.sin(t * 0.9);
+      bodyM.emissiveIntensity = 0.55 + 0.18 * Math.sin(t * 3.1) + 0.08 * Math.sin(t * 9.7);
+      shellM.opacity = 0.14 + 0.07 * Math.sin(t * 4.2);
+      g.rotation.y = 0.08 * Math.sin(t * 0.9);
       orbM.emissiveIntensity = 0.9 + 0.5 * Math.sin(t * 5);
-      mane.scale.set(0.2 * f, 0.2 * f, 1); orbGlow.scale.set(0.16 * f2, 0.16 * f2, 1);
+      mane.scale.set(0.24 * f, 0.24 * f, 1); orbGlow.scale.set(0.16 * f2, 0.16 * f2, 1);
+      tailGlow.scale.set(0.12 * f, 0.12 * f, 1); mouth.scale.set(0.05 * f2, 0.05 * f2, 1);
+      oc.rotation.y = t * 1.6; oc.rotation.x = 0.4 * Math.sin(t * 0.7);
+      for (q = 0; q < embers.length; q++) {
+        e = embers[q]; fl = (t * 0.9 + e.ph) % 1;
+        e.s.position.copy(e.b).addScaledVector(e.r, 0.025 * fl); e.s.position.y += 0.07 * fl;
+        e.s.material.opacity = 0.75 * (1 - fl);
+        sc = 0.075 * (1 - 0.5 * fl) * (1 + 0.2 * Math.sin(t * 9 + e.ph * 5)); e.s.scale.set(sc, sc, 1);
+      }
+      for (q = 0; q < whs.length; q++) { whs[q].g.rotation.z = whs[q].sd * 0.12 * Math.sin(t * 3.2); whs[q].g.rotation.x = 0.1 * Math.sin(t * 2.4 + q); }
     }
     return { update: update };
   }
@@ -7040,7 +7156,7 @@ const PMFish = (function () {
       });
     }
 
-    var dragon = k === 'dragon' ? makeDragon(shaft, tip, { geos: geos, mats: mats, texes: texes }) : null;
+    var dragon = k === 'dragon' ? makeDragon(shaft, tip, { geos: geos, mats: mats, texes: texes }, full) : null;
     var auT = null, sleeveM = null, halos = [], flare = null, fs = isL ? 0.45 : 0.32, pg = null, pp = null, pc = null;
     var baseCol = new T.Color(sk.c), tc = new T.Color();
     if (!noAura) {
