@@ -1,10 +1,14 @@
-# Update v4.27 (11 Okt 2026)
+# Changelog
+
+Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
+
+## v4.27 - 11 Okt 2026
 
 - Skin Mythic kedua: Azure Phoenix, burung api biru yang melilit joran dengan aura, bara, dan cincin energi biru.
 - Gacha Mythic sekarang punya 2 skin: Eternal Dragon dan Azure Phoenix. Pity Mythic tetap dijamin di pull ke-150.
 - Ikon, preview Gacha, panggung, dan joran di tangan ikut tampil biru untuk Azure Phoenix.
 
-# Update v4.26 (9 Okt 2026)
+## v4.26 - 9 Okt 2026
 
 - Skin Mythic Eternal Dragon dibuat ulang jadi lebih HD dan 3D, mirip ilustrasinya: naga emas melilit joran hitam dengan lekukan lebar, badan tebal di tengah dan ramping di ekor.
 - Kepala naga baru: tanduk melengkung dua ruas, surai api, kumis emas yang bergoyang, rahang bercahaya, dan mata menyala.
@@ -12,25 +16,25 @@
 - Mutiara api di ujung joran kini dikelilingi 2 cincin energi yang mengorbit.
 - Di preview Gacha dan panggung, reel dapat emblem naga spiral bercincin emas, dan pangkal joran dapat tutup emas runcing.
 
-# Update v4.25 (7 Okt 2026)
+## v4.25 - 7 Okt 2026
 
 - Rumah Rod Shop, Bait Shop, dan Jual Ikan dihapus, diganti kios (lapak) terbuka dengan atap garis-garis, meja jualan, dan papan nama.
 - Tiap kios ada NPC penjaga: Bang Joko (Rod Shop), Mas Dimas (Bait Shop), Bu Tini (Jual Ikan). Mereka menoleh dan melambai kalau pemain mendekat.
 - Etalase sesuai jualannya: Rod Shop memajang joran dan reel, Bait Shop memajang toples umpan dan lure, Jual Ikan memajang ikan di baki es, timbangan, dan jemuran ikan.
 - Tombol interaksi kini menampilkan nama penjaga, misalnya "Bang Joko - Buka Rod Shop".
 
-# Update v4.24 (7 Okt 2026)
+## v4.24 - 7 Okt 2026
 
 - Tier baru di Gacha: Mythic. Skin Mythic pertama: Eternal Dragon (Dragon Aura + Eternal Energy), joran hitam beraksen emas dengan naga api emas melilit dari gagang sampai ujung, mutiara api di ujung joran, bara dan cincin energi mengorbit.
 - Peluang Mythic 0,4% per pull, dijamin di pull ke-150. Skin duplikat jadi 1.500 koin.
 - Panggung gacha dapat efek khusus Mythic (cahaya api emas).
 
-# Update v4.23 (7 Okt 2026)
+## v4.23 - 7 Okt 2026
 
 - Mesin Gacha Rod dan Papan Peringkat Ikan Ditangkap dipindah ke samping Jual Ikan, sejajar menghadap plaza.
 - Pohon palem di samping Jual Ikan dihapus untuk memberi tempat.
 
-# Update v4.22 (5 Okt 2026)
+## v4.22 - 5 Okt 2026
 
 - Paus biru yang berenang dihapus.
 - Pulau Karang diperluas (pantai dan rumput lebih lebar, lebih banyak palem).
@@ -39,7 +43,7 @@
 - Turun dari perahu hanya di dekat dermaga (utama atau Karang).
 - Perbaikan: dinding tak terlihat sepanjang jalur dermaga utama yang membelah laut kini hanya selebar dermaga.
 
-# Update v4.21 (5 Okt 2026)
+## v4.21 - 5 Okt 2026
 
 - Laut Dalam dan penanda zonanya (ring pelampung, papan, air gelap, badge) dihapus.
 - Pulau Karang bisa didarat: dermaga karang di sisi utara, tombol Mendarat dari perahu, tombol Pulang ke Pulau Utama.
@@ -48,7 +52,7 @@
 - Bisa mancing dari tepi pulau dan dermaga; bonus luck dekat Pulau Karang.
 - Paus biru tetap berenang di laut lepas.
 
-# Update v4.20 (5 Okt 2026)
+## v4.20 - 5 Okt 2026
 
 - Laut Dalam: area di luar ring pelampung, 10 ikan zona baru (Layur, Kembung, Lentera, Todak, Pari Manta, Hiu Martil, Ikan Bulan, Cumi Raksasa, Paus Biru, Megalodon). Peluang ikan langka +15%.
 - Pulau Karang + mercusuar dengan sinar berputar di sebelah selatan; spot mancing dengan luck ekstra. Perahu tidak bisa menembus pulau.
@@ -57,7 +61,7 @@
 - Indeks Ikan: tab lokasi Laut Dalam. Bonus 500 koin untuk pertama kali dapat ikan zona dalam.
 - Trofi Ensiklopedia kini menghitung 25 spesies ikan.
 
-# Update v4.19 (5 Okt 2026)
+## v4.19 - 5 Okt 2026
 
 - Pet tampil 3D dan ikut jalan di belakang karakter: Camar, Kepiting, Kucing Dermaga, Penyu, Lumba-lumba, dan Naga Laut.
 - Makin tinggi bintang pet, makin besar modelnya, lengkap dengan label nama dan bintang.
@@ -65,7 +69,7 @@
 - Pet loncat kecil saat ikan nyambar. Saat naik perahu, pet darat disembunyikan dan pet terbang tetap ikut.
 - Slot pet ke-2 ikut tampil setelah Rebirth 3.
 
-# Update v4.18 (4 Okt 2026)
+## v4.18 - 4 Okt 2026
 
 - Area api unggun di tengah pulau: api 3D HD dengan nyala, percikan, dan asap, plus kuali di tripod, 3 bangku batu, tenda bergaris, dan tumpukan kayu. Malam hari api menyala hangat dan menerangi sekitarnya.
 - Jalan setapak batu dari plaza ke api unggun, Rumah Nelayan, sampai pantai belakang (ada papan PANTAI di ujung, bisa dipakai mancing).
@@ -73,10 +77,6 @@
 - Kunang-kunang muncul malam hari, kupu-kupu terbang siang hari.
 - Bunga, semak, dan rumput tinggi yang bergoyang tersebar di pulau, terutama di pinggir jalan setapak.
 
-
-# Changelog
-
-Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
 ## v4.16 - 4 Okt 2026
 
@@ -117,7 +117,7 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 - Layar Buat Karakter sekarang punya tombol Atur Warna Karakter.
 - Username dicek langsung saat diketik: kelihatan tersedia atau sudah dipakai sebelum menekan Lanjut.
 
-## 2026-10-04 (v4.8)
+## v4.8 - 4 Okt 2026
 
 - Tombol Grafis (Mode HD) di Menu dihapus. HD selalu aktif, dan turun otomatis ke Normal kalau FPS drop (cuma selama sesi itu).
 - Karakter duduk di perahu dan menghadap sesuai arah perahu. Di Sampan karakter mendayung dengan dayung yang ikut bergerak, di perahu lain duduk sambil pegang kemudi.
@@ -125,7 +125,7 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 - Joran disimpan waktu berlayar, keluar lagi pas perahu berhenti.
 - Info Update lama diganti dengan yang baru, versi naik ke v4.8.
 
-## 2026-10-04 (v4.7)
+## v4.7 - 4 Okt 2026
 
 - Rod jadi 12 tier dan Bait jadi 8 tier dengan stat Luck/Speed/Weight sesuai tabel baru (Starter, Luck, Carbon, Grass, Damascus, Ice, Lucky, Midnight, Steampunk, Chrome, Astral, Angler).
 - Bait punya efek tambahan: Bonus XP (Nature +4%, Dark Matter +5%), Shiny (Dark Matter +5%, Corrupt +10%, Aether +5%), Mutasi (Corrupt +10%, Aether +15%).
@@ -133,13 +133,13 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 - Berat ikan menyesuaikan kapasitas rod dan makin berat kalau luck rod + bait tinggi.
 - Info Update lama diganti dengan yang baru, versi naik ke v4.7.
 
-## 2026-10-04 (v4.6)
+## v4.6 - 4 Okt 2026
 
 - Semua perahu dibuat model 3D HD dengan bentuk lambung, dek, dan detail masing-masing (dayung, cadik, layar, mesin tempel, tiang, lampu, pagar).
 - Gambar perahu di Toko Pak Karto diganti render 3D asli (dibuat otomatis saat toko dibuka).
 - Info Update lama diganti dengan yang baru, versi naik ke v4.6.
 
-## 2026-10-04 (v4.5)
+## v4.5 - 4 Okt 2026
 
 - Perahu di dermaga dihapus, diganti NPC Pak Karto di samping Rod Shop yang menjual perahu.
 - 5 tipe perahu (Sampan, Jukung, Perahu Motor, Speedboat, Kapal Layar Mewah) dengan harga dan kecepatan berbeda. Sampan gratis.
@@ -147,37 +147,37 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 - Model Pak Karto dibuat 3D lebih detail dan dipindah ke samping Rod Shop.
 - Info Update lama diganti dengan yang baru, versi naik ke v4.5.
 
-## 2026-10-03 (v4.4)
+## v4.4 - 3 Okt 2026
 
 - Papan Peringkat baru di samping Akuarium, menu Peringkat dihapus.
 - Indeks Ikan didesain ulang: pilih lokasi di kiri, kartu ikan di kanan, plus bar progres.
 - Fitur Boss Raja Laut dihapus.
 
-## 2026-10-03 (v4.3)
+## v4.3 - 3 Okt 2026
 
 - Akuarium: koin pasif dihitung server pakai jam server, ambil koin butuh online.
 - Pasar Pemain: batas listing per username, nggak bisa beli barang sendiri, kotak surat penuh nggak buang barang.
 - Boss Fish: batas serangan token bucket (rata-rata 6/dtk), pemain yang ditandai curang nggak dihitung.
 - Peringkat: berat ikan dicek ke tabel ikan, laporan maksimal sekali per 20 detik, nilai awal pemain baru dibatasi.
 
-## 2026-10-03 (v4.2)
+## v4.2 - 3 Okt 2026
 
 - Peringkat Online: pemain dengan tangkapan terbanyak, ikan terberat, dan prestise tertinggi.
 - Boss Fish: boss raksasa muncul berkala untuk semua pemain online. Hadiah dibagi sesuai jumlah serangan dan MVP dapat bonus.
 - Pasar Pemain: jual-beli ikan antar pemain, biaya pasar 5%, maksimal 5 listing per pemain, barang disimpan di server sampai terjual.
 
-## 2026-10-03 (v4.1)
+## v4.1 - 3 Okt 2026
 
 - Akuarium menghasilkan koin pasif, tersimpan sampai 8 jam, diambil lewat tombol di Akuarium.
 - 16 trofi baru dan gelar berdasarkan jumlah trofi.
 
-## 2026-10-03 (v4.0)
+## v4.0 - 3 Okt 2026
 
 - Rebirth: reset level dan progres untuk bonus permanen Luck, Speed, Harga Jual, dan XP, plus gelar baru.
 - Pet pendamping: Telur Pet, 6 jenis pet, bonus naik bintang kalau dapat duplikat, slot ke-2 terbuka di Rebirth 3.
 - Nama pulau di atas pulau dan pesan selamat datang saat tiba. Pulau pertama bernama Pulau Utama.
 
-## 2026-10-03 (v3.9)
+## v3.9 - 3 Okt 2026
 
 - Tampilan ikan tangkapan dikecilkan dan dipindah ke atas.
 - Altar Enchant tampil lebih HD: tekstur batu, lingkaran rune berputar, kristal berkilau, serpihan, dan partikel.
@@ -185,21 +185,21 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 - Malam dan hujan lebih terang: ada cahaya bulan, redaman hujan dikurangi.
 - Info Update lama dihapus, hanya menampilkan update terbaru.
 
-## 2026-10-03 (v3.8)
+## v3.8 - 3 Okt 2026
 
 - Altar Enchant dirombak: 14 enchant dengan 5 tier (Common, Rare, Epic, Legendary, Mythic).
 - Efek baru Harga Jual dan XP, enchant Mythic Tycoon, Godhand, dan Omniscient.
 - Animasi undian enchant, sistem Pity tiap 20 roll, dan Roll Kunci Tier.
 - Peluang tiap tier ditampilkan langsung di altar.
 
-## 2026-10-02 (v3.7)
+## v3.7 - 2 Okt 2026
 
 - **Cek kecepatan gerak di server**: jalan kaki 4,2 u/s dikasih ruang 1,5x ditambah cadangan 20 unit buat lag. Gerak yang melebihi itu ditahan, 10 pelanggaran dalam 10 dtk = peringatan ke developer, 25 = pemain di-kick. Developer dikecualikan. Titik dermaga/perahu/spawn boleh dituju (naik-turun perahu), posisi pertama tiap sesi diterima apa adanya (reconnect).
 - **Tahan restart**: daftar ban, riwayat Info Secret, dan status maintenance disimpan di `server/data.json` (bisa diubah lewat env `DATA_FILE`). File ini di-gitignore.
 - **Endpoint admin baru**: `/admin/bans` (daftar) dan `/admin/unban?name=...` (lepas ban), pakai header `x-dev-token`.
 - **Layar maintenance**: latar penuh, pesan lebih besar, dicek otomatis tiap 10 dtk dan hilang sendiri saat server buka lagi.
 
-## 2026-10-02 (v3.6)
+## v3.6 - 2 Okt 2026
 
 - **Anti-curang Secret**: server mengecek event Secret (butuh event `cast` sebelumnya, jeda 3 dtk sampai 10 menit, mutasi dan berat sesuai tabel ikan, maks 12 per jam). Yang ditolak dicatat di log dan 3x tolak = pemain ditandai dan developer dapat peringatan. Klien lama (tanpa `cv`) tetap dicek mutasi/berat/jam tapi tidak wajib `cast`.
 - **Fix tombol Download update**: link lama `app-debug.apk` sudah tidak ada sejak APK diganti nama; sekarang server mengirim link APK asli dari release lewat `/status`.
@@ -207,32 +207,32 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 - **Maintenance dari terminal**: `curl -H "x-dev-token: TOKEN" "http://localhost:3010/admin/maint?on=1&msg=Teks"` (on=0 untuk mematikan).
 - Kontras label waktu/cuaca, nomor versi, dan FPS. Batas berat Secret 99.999 kg di server dihapus.
 
-## 2026-10-02 (v3.5)
+## v3.5 - 2 Okt 2026
 
 - **HUD lebih ringkas**: baris joran/umpan dan statistik (Luck, Speed, Weight) digabung jadi satu baris dengan ikon, angka besar disingkat (19,6K%, 1B kg). Panel kiri atas jadi 2 baris.
 - **Fix teks numpuk**: label waktu/cuaca di bawah tengah tidak lagi tertimpa badge versi (label dinaikkan, area tap badge dikecilkan).
 - **Fix badge versi**: sebelumnya teks tertulis manual `v3.1`; sekarang otomatis mengikuti versi game.
 
-## 2026-10-02 (v3.4)
+## v3.4 - 2 Okt 2026
 
 - **Animasi ikan Secret lebih hidup**: badan ikan meliuk (gelombang S), ekor menyabet, kraken berdenyut seperti jet, lompatan mengikuti gravitasi dengan slow-motion di puncak, dan di fase melawan muncul sirip di permukaan air dengan percikan yang makin ganas.
 - **Pamer ikan**: ikan menggantung kepala di atas, bergoyang seperti bandul, makin lemas, air menetes. Kamera bergetar saat ikan melawan dan zoom pelan saat melompat.
 - **Notifikasi Secret**: toast pelangi muncul buat semua pemain termasuk diri sendiri, dan tampil di atas layar sinematik. Event yang dikirim saat koneksi putus diantri lalu dikirim ulang. Jeda server per pemain 30 detik jadi 4 detik.
 
-## 2026-10-02 (v3.3)
+## v3.3 - 2 Okt 2026
 
 - **Animasi ikan Secret**: saat dapat ikan Secret (Kraken Purba / Megalodon) ada adegan sinematik: ikan melawan tarikan, melompat dari air dengan percikan dan cincin ombak, lalu dipamerkan karakter di bawah sorot cahaya. Kamera berpindah-pindah, bisa dilewati dengan ketuk layar.
 - **Notifikasi publik**: server mengumumkan ke semua pemain online kalau ada yang dapat ikan Secret (dibatasi 1x per 30 detik per pemain, cuma ID ikan Secret yang diterima).
 - **Chat publik 2 tab**: Live Chat dan Info Secret. Riwayat 30 Info Secret terakhir disimpan di server dan dikirim ke pemain yang baru masuk.
 
-## 2026-10-02
+## 2 Okt 2026
 
 - **v3.2 - Logo baru**: logo Pancing Mania dipakai di ikon aplikasi (launcher), splash screen, ikon web, layar loading, dan layar awal.
 - **v3.2 - Grafis HD realistis**: tone mapping ACES Filmic, tekstur pulau resolusi tinggi dengan bump (rumput berbercak, pasir berombak, pantai basah), air bergelombang dengan kilau matahari, air dangkal tosca, dan buih ombak. Cuma aktif di mode Grafis: HD, dan otomatis mati kalau FPS drop.
 - **v3.2 - Server publik**: game langsung tersambung ke `wss://game.ahmadfivem.my.id` tanpa pemain perlu ngisi alamat server.
 - **v3.2 - Nama APK**: hasil build sekarang `PancingMania-v<versi>.apk` (bukan `app-debug.apk`), artifact bernama `PancingMania-apk`, dan nama Release ikut versi game.
 
-## 2026-09-30
+## 30 Sep 2026
 
 - **Fix build & APK**: Three.js sekarang disimpan lokal (`three.min.js`) dan ikut di dalam APK, jadi game jalan tanpa internet (CDN cuma jadi cadangan). `versionCode` otomatis naik tiap build dan `versionName` ngikutin versi game, jadi APK baru bisa nimpa yang lama. Game dan audio otomatis pause saat app di-minimize. Workflow pakai JDK 17. `sw.js` dan workflow auto-bump dihapus karena nggak dipakai, `www/index.html` sekarang di-gitignore.
 - **v2.3 - Ikan baru & Koleksi**: 17 ikan baru, jadi total 30 ikan di Koleksi. Koleksi sekarang nunjukin zona tiap ikan. Ada ikan Perairan Dangkal (Kerapu, Ubur-ubur Bening, Kuda Laut Kristal, Penyu Hijau, dan lainnya) dan ikan Laut Dalam.
@@ -248,7 +248,7 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 - **HUD**: chip rod & bait dengan border warna rarity, baris stat Luck/Speed/Weight, bar lempar dengan zona warna, dan popup hasil tangkapan untuk semua rarity (berat, harga, tag Mutasi). Tampilan Tas jadi grid kartu.
 - **Info Update**: popup daftar perubahan di dalam game. Muncul otomatis sekali tiap ada versi baru dan bisa dibuka lagi dari Menu.
 
-## 2026-09-29
+## 29 Sep 2026
 
 - HUD kiri atas dibikin ringkas jadi satu baris (koin, level, XP mini, joran/umpan digabung), gak makan tempat lagi.
 - Restyle HUD reeling & casting bergaya Fish It: bar hijau candy-stripe yang berubah warna (hijau → kuning → merah) sesuai bahaya, plus counter tap "(000)".
@@ -256,7 +256,7 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 - Upgrade kualitas render: antialias selalu aktif, resolusi tekstur (pulau, air, papan dermaga) dan ikon ikan didobelin, geometry bulat (pohon, tiang, pelampung) dihaluskan.
 - Fix kota dermaga: posisi Toko Umpan/Toko Joran yang kebalik kiri-kanan, pindahkan Toko Jual Ikan biar gak nempel HUD, sesuaikan gradasi senja.
 
-## 2026-09-28
+## 28 Sep 2026
 
 - **Kota dermaga**: plaza kayu, dermaga yang menjorok ke laut, 3 toko (Umpan, Joran, Jual Ikan), lampu jalan, perahu kecil, pohon kelapa baru, dan langit senja.
 - **HUD v3**: titik spawn dipindah menghadap laut, fitur Koleksi Ikan (index dengan siluet `???` untuk ikan belum ditemukan), animasi *reveal* kartu untuk tangkapan Epic/Legendary/Mythical, suara & getar (WebAudio + `navigator.vibrate`), Auto Mancing, info umpan aktif di HUD.
@@ -270,7 +270,7 @@ Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang
 - Fix arah drag vertikal kamera yang kebalik.
 - Fix analog gerak yang kebalik & drag kamera yang tidak jalan.
 
-## 2026-09-27
+## 27 Sep 2026
 
 - **Rombak total jadi Pancing Mania** — proyek yang awalnya game voxel eksplorasi (BlockWorld) diubah jadi game mancing 3D bertema kota dermaga, terinspirasi Fish It (Roblox). Nama repo, package, dan pipeline CI/APK tetap dipertahankan.
 

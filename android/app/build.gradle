@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.ahmadstore.blockworld"
+    namespace "com.pancingmania"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.ahmadstore.blockworld"
+        applicationId "com.pancingmania"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Diisi CI (VERSION_CODE = run number, VERSION_NAME = versi game); default buat build lokal
