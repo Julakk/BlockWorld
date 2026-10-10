@@ -1,3 +1,9 @@
+# Update v4.27 (11 Okt 2026)
+
+- Skin Mythic kedua: Azure Phoenix, burung api biru yang melilit joran dengan aura, bara, dan cincin energi biru.
+- Gacha Mythic sekarang punya 2 skin: Eternal Dragon dan Azure Phoenix. Pity Mythic tetap dijamin di pull ke-150.
+- Ikon, preview Gacha, panggung, dan joran di tangan ikut tampil biru untuk Azure Phoenix.
+
 # Update v4.26 (9 Okt 2026)
 
 - Skin Mythic Eternal Dragon dibuat ulang jadi lebih HD dan 3D, mirip ilustrasinya: naga emas melilit joran hitam dengan lekukan lebar, badan tebal di tengah dan ramping di ekor.

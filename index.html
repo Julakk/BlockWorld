@@ -5312,8 +5312,13 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.26', DATE = '9 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.27', DATE = '11 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v4.27", [
+      "Skin Mythic kedua: Azure Phoenix, burung api biru yang melilit joran dengan aura, bara, dan cincin energi biru.",
+      "Gacha Mythic sekarang punya 2 skin: Eternal Dragon dan Azure Phoenix. Pity Mythic tetap dijamin di pull ke-150.",
+      "Ikon, preview Gacha, panggung, dan joran di tangan ikut tampil biru untuk Azure Phoenix."
+    ]],
     ["Update v4.26", [
       "Skin Mythic Eternal Dragon dibuat ulang jadi lebih HD dan 3D, mirip ilustrasinya: naga emas melilit joran hitam dengan lekukan lebar, badan tebal di tengah dan ramping di ekor.",
       "Kepala naga baru: tanduk melengkung dua ruas, surai api, kumis emas yang bergoyang, rahang bercahaya, dan mata menyala.",
@@ -6700,6 +6705,7 @@ const PMFish = (function () {
 <!--PM-GACHA-START-->
 <script>
 /* PM-GACHA v3 (v4.13) - Mesin Gacha 3D, panggung HD, skin rod 3D beraura */
+window.__skHue = function (sk) { return sk && sk.k === 'dragon' && sk.c === '#3fd0ff' ? 0.5 : 0; };
 (function () {
   'use strict';
   var C = window.__PMC, T = window.THREE;
@@ -6715,11 +6721,11 @@ const PMFish = (function () {
     rare: { n: 'Rare', c: '#4aa8ff', w: 25, d: '100-300 koin / Skin Rod Biasa' },
     epic: { n: 'Epic', c: '#b56bff', w: 12, d: '500 koin / Skin Rod Efek Cahaya' },
     legendary: { n: 'Legendary', c: '#ffc233', w: 3, d: '2.000 koin / Skin Rod Animasi Unik' },
-    mythic: { n: 'Mythic', c: '#ff5a36', w: 0.4, d: 'Skin Rod Mythic: Eternal Dragon' }
+    mythic: { n: 'Mythic', c: '#ff5a36', w: 0.4, d: 'Skin Rod Mythic: Eternal Dragon / Azure Phoenix' }
   };
   var COIN_CHANCE = { rare: 0.30, epic: 0.25, legendary: 0.15, mythic: 0 };
   var DUP = { rare: 30, epic: 75, legendary: 200, mythic: 1500 };
-  var KIND_LABEL = { solid: 'Skin Biasa', glow: 'Efek Cahaya', rainbow: 'Animasi Unik', fire: 'Animasi Unik', galaxy: 'Animasi Unik', dragon: 'Dragon Aura + Eternal Energy' };
+  var KIND_LABEL = { solid: 'Skin Biasa', glow: 'Efek Cahaya', rainbow: 'Animasi Unik', fire: 'Animasi Unik', galaxy: 'Animasi Unik', dragon: 'Mythic Aura + Eternal Energy' };
   function sfxKey(t) { return t === 'mythic' ? 'mythical' : t; }
   function vibeFor(t) { return t === 'mythic' ? [150, 60, 150, 60, 260] : (t === 'legendary' ? [100, 50, 100, 50, 160] : (t === 'epic' ? [60, 40, 60] : [30])); }
   var MYTH_PITY = 150;
@@ -6738,7 +6744,8 @@ const PMFish = (function () {
     { id: 'l_pelangi', n: 'Pelangi Abadi', t: 'legendary', k: 'rainbow', c: '#ff7ad9' },
     { id: 'l_api', n: 'Api Naga', t: 'legendary', k: 'fire', c: '#ff6a1a' },
     { id: 'l_galaksi', n: 'Galaksi', t: 'legendary', k: 'galaxy', c: '#7a5cff' },
-    { id: 'm_naga', n: 'Eternal Dragon', t: 'mythic', k: 'dragon', c: '#ffb020' }
+    { id: 'm_naga', n: 'Eternal Dragon', t: 'mythic', k: 'dragon', c: '#ffb020' },
+    { id: 'm_phoenix', n: 'Azure Phoenix', t: 'mythic', k: 'dragon', c: '#3fd0ff' }
   ];
   var NOSKIN = { id: 'none', n: 'Tanpa Skin', t: 'none', k: 'solid', c: '#8a929a' };
   var OP = { solid: 0.22, glow: 0.4, rainbow: 0.45, fire: 0.55, galaxy: 0.5, dragon: 0.6 };
@@ -6757,6 +6764,7 @@ const PMFish = (function () {
     if (sk.k === 'glow') return 'background:radial-gradient(circle at 40% 35%,#fff,' + c + ' 55%,#0a1e2c);box-shadow:0 0 12px ' + c;
     if (sk.k === 'rainbow') return 'background:conic-gradient(#ff5a5a,#ffd45a,#5affb0,#5ab4ff,#c05aff,#ff5a5a);box-shadow:0 0 12px #ff7ad9';
     if (sk.k === 'fire') return 'background:radial-gradient(circle at 50% 70%,#ffe27a,#ff6a1a 55%,#7a1200);box-shadow:0 0 12px #ff6a1a';
+    if (sk.k === 'dragon' && sk.c === '#3fd0ff') return 'background:radial-gradient(circle at 50% 60%,#e8fbff,#3fd0ff 45%,#0a4a8a 80%,#04101c);box-shadow:0 0 14px #2fa8ff';
     if (sk.k === 'dragon') return 'background:radial-gradient(circle at 50% 60%,#fff2a8,#ffb020 45%,#b3260a 80%,#1a0808);box-shadow:0 0 14px #ff7a1a';
     return 'background:linear-gradient(135deg,#1a1050,#7a5cff 55%,#2fd8ff);box-shadow:0 0 12px #7a5cff';
   }
@@ -6809,6 +6817,41 @@ const PMFish = (function () {
   }
   function mkTex(c, rx, ry) {
     var t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(rx || 1, ry || 1); t.needsUpdate = true; return t;
+  }
+
+  /* ---------- Azure Phoenix (v4.27): geser hue rig naga ---------- */
+  function skHueV(sk) { return window.__skHue ? window.__skHue(sk) : 0; }
+  function pxHue2rgb(p, q, t) { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; }
+  function hueCanvas(src, shift, key) {
+    return cvas('hue_' + key + '_' + src.width + 'x' + src.height, src.width, src.height, function (g, w, h) {
+      g.drawImage(src, 0, 0);
+      var im = g.getImageData(0, 0, w, h), d = im.data, i, r, gg, b, mx, mn, l, dl, s, hh, q, p2;
+      for (i = 0; i < d.length; i += 4) {
+        if (d[i + 3] === 0) continue;
+        r = d[i] / 255; gg = d[i + 1] / 255; b = d[i + 2] / 255;
+        mx = Math.max(r, gg, b); mn = Math.min(r, gg, b); dl = mx - mn;
+        if (dl < 0.004) continue;
+        l = (mx + mn) / 2; s = l > 0.5 ? dl / (2 - mx - mn) : dl / (mx + mn);
+        hh = mx === r ? (gg - b) / dl + (gg < b ? 6 : 0) : (mx === gg ? (b - r) / dl + 2 : (r - gg) / dl + 4);
+        hh = (hh / 6 + shift) % 1;
+        q = l < 0.5 ? l * (1 + s) : l + s - l * s; p2 = 2 * l - q;
+        d[i] = Math.round(pxHue2rgb(p2, q, hh + 1 / 3) * 255); d[i + 1] = Math.round(pxHue2rgb(p2, q, hh) * 255); d[i + 2] = Math.round(pxHue2rgb(p2, q, hh - 1 / 3) * 255);
+      }
+      g.putImageData(im, 0, 0);
+    });
+  }
+  function phoenixTint(mats, from, sh) {
+    var hsl = { h: 0, s: 0, l: 0 }, seen = [], i, m;
+    function sc(c) { if (!c || !c.getHSL) return; c.getHSL(hsl); if (hsl.s < 0.02) return; c.setHSL((hsl.h + sh) % 1, hsl.s, hsl.l); }
+    for (i = from; i < mats.length; i++) {
+      m = mats[i]; if (!m) continue;
+      sc(m.color); sc(m.emissive);
+      if (!m.isSpriteMaterial && m.map && m.map.image && seen.indexOf(m.map) < 0) {
+        seen.push(m.map);
+        m.map.image = hueCanvas(m.map.image, sh, 'mat');
+        m.map.needsUpdate = true;
+      }
+    }
   }
 
   /* ---------- tekstur batang & aura per skin ---------- */
@@ -7137,7 +7180,7 @@ const PMFish = (function () {
     var texes = [], geos = [], mats = [], i;
     function tx(c, rx, ry) { var t = mkTex(c, rx, ry); texes.push(t); return t; }
 
-    var shT = tx(shaftCanvas(sk), 1, 1);
+    var shT = tx(skHueV(sk) ? hueCanvas(shaftCanvas(sk), skHueV(sk), 'shaft') : shaftCanvas(sk), 1, 1);
     var m = new T.MeshStandardMaterial({ color: 0xffffff, map: shT, roughness: 0.28, metalness: 0.55 }); mats.push(m);
     if (k === 'solid') { m.emissive.set(sk.c); m.emissiveIntensity = 0.08; }
     else if (k === 'glow') { m.emissive.set(sk.c); m.emissiveIntensity = 0.35; m.roughness = 0.22; }
@@ -7163,11 +7206,13 @@ const PMFish = (function () {
       });
     }
 
+    var _m0 = mats.length;
     var dragon = k === 'dragon' ? makeDragon(shaft, tip, { geos: geos, mats: mats, texes: texes }, full) : null;
+    if (dragon && skHueV(sk)) phoenixTint(mats, _m0, skHueV(sk));
     var auT = null, sleeveM = null, halos = [], flare = null, fs = isL ? 0.45 : 0.32, pg = null, pp = null, pc = null;
     var baseCol = new T.Color(sk.c), tc = new T.Color();
     if (!noAura) {
-      auT = tx(auraCanvas(sk), 1, 2);
+      auT = tx(skHueV(sk) ? hueCanvas(auraCanvas(sk), skHueV(sk), 'aura') : auraCanvas(sk), 1, 2);
       sleeveM = new T.MeshBasicMaterial({ map: auT, transparent: true, opacity: OP[k], blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, fog: false }); mats.push(sleeveM);
       var s1 = new T.Mesh(new T.CylinderGeometry(0.05, 0.082, 1.1, 18, 1, true), sleeveM);
       var s2 = new T.Mesh(new T.CylinderGeometry(0.032, 0.05, 0.42, 12, 1, true).translate(0, 0.21, 0), sleeveM);
@@ -7225,11 +7270,11 @@ const PMFish = (function () {
           if (i % 3 === 0) {
             a = t * 1.3 + i * 2.1; r = 0.13 + 0.025 * Math.sin(t * 2.4 + i); tw = 0.5 + 0.5 * Math.sin(t * 6 + i * 1.9);
             pp[p] = Math.cos(a) * r; pp[p + 1] = 0.05 + 0.45 * Math.sin(t * 0.8 + i * 0.9); pp[p + 2] = Math.sin(a) * r;
-            pc[p] = 1.1 * tw; pc[p + 1] = 0.9 * tw; pc[p + 2] = 0.45 * tw;
+            pc[p] = 1.1 * tw; pc[p + 1] = 0.9 * tw; pc[p + 2] = 0.45 * tw; if (skHueV(sk)) { pc[p] = 0.45 * tw; pc[p + 2] = 1.1 * tw; }
           } else {
             f = (t * 0.55 + u * 3.7) % 1; w = 1 - f; a = i * 2.4 + t * 2.4 + f * 5; r = 0.08 + 0.05 * f;
             pp[p] = Math.cos(a) * r; pp[p + 1] = -0.45 + f * 1.4; pp[p + 2] = Math.sin(a) * r;
-            pc[p] = 1.3 * w; pc[p + 1] = 0.8 * w * w; pc[p + 2] = 0.12 * w * w * w;
+            pc[p] = 1.3 * w; pc[p + 1] = 0.8 * w * w; pc[p + 2] = 0.12 * w * w * w; if (skHueV(sk)) { pc[p] = 0.12 * w * w * w; pc[p + 2] = 1.3 * w; }
           }
         } else if (k === 'galaxy') {
           a = t * (0.6 + (i % 4) * 0.35) + u * PI * 2; r = 0.06 + (i % 5) * 0.02; tw = 0.5 + 0.5 * Math.sin(t * 5 + i * 1.7);
@@ -7538,7 +7583,7 @@ const PMFish = (function () {
         h += '<div class="gcRate" style="--rc:' + t.c + '"><b>' + t.n + '</b><span class="p">' + (Math.round(rt[key] * 10) / 10) + '%</span><span class="d">' + t.d + '</span></div>';
       });
       h += '</div>';
-      h += '<div class="gcInfo">Soft pity Legendary mulai pull ke-' + SOFT_START + ' (peluang naik tiap pull), dijamin di pull ke-' + PITY_MAX + '. Epic atau lebih dijamin tiap ' + EPIC_PITY + ' pull. Gacha 10x: pull ke-10 minimal Rare. Skin duplikat jadi koin (Rare ' + DUP.rare + ', Epic ' + DUP.epic + ', Legendary ' + DUP.legendary + ', Mythic ' + DUP.mythic + '). Mythic (Eternal Dragon) dijamin di pull ke-' + MYTH_PITY + '.</div>';
+      h += '<div class="gcInfo">Soft pity Legendary mulai pull ke-' + SOFT_START + ' (peluang naik tiap pull), dijamin di pull ke-' + PITY_MAX + '. Epic atau lebih dijamin tiap ' + EPIC_PITY + ' pull. Gacha 10x: pull ke-10 minimal Rare. Skin duplikat jadi koin (Rare ' + DUP.rare + ', Epic ' + DUP.epic + ', Legendary ' + DUP.legendary + ', Mythic ' + DUP.mythic + '). Mythic (Eternal Dragon / Azure Phoenix) dijamin di pull ke-' + MYTH_PITY + '.</div>';
       a = '<div class="gcBtns"><button class="gcPull" type="button" data-act="p1"' + ((busy || s.coins < COST1) ? ' disabled' : '') + '>Gacha 1x<small>' + fmt(COST1) + ' koin</small></button>' +
         '<button class="gcPull gold" type="button" data-act="p10"' + ((busy || s.coins < COST10) ? ' disabled' : '') + '>Gacha 10x<small>' + fmt(COST10) + ' koin \u2022 Hemat</small></button></div>' +
         '<button class="gcSkipBtn' + (s.gachaSkip ? ' on' : '') + '" type="button" data-act="sk">Lewati animasi: ' + (s.gachaSkip ? 'ON' : 'OFF') + '</button>';
@@ -7949,7 +7994,8 @@ const PMFish = (function () {
     s_oranye: ['solid', '#f08a2a'], s_hitam: ['solid', '#23262b'], s_putih: ['solid', '#eef2f5'],
     e_biru: ['glow', '#2fd8ff'], e_pink: ['glow', '#ff4fd8'], e_hijau: ['glow', '#5bff7a'], e_emas: ['glow', '#ffd45a'],
     l_pelangi: ['rainbow', '#ff7ad9'], l_api: ['fire', '#ff6a1a'], l_galaksi: ['galaxy', '#7a5cff'],
-    m_naga: ['dragon', '#ffb020']
+    m_naga: ['dragon', '#ffb020'],
+    m_phoenix: ['dragon', '#3fd0ff']
   };
   var HSL = { h: 0, s: 0, l: 0 };
   function vivid(col, minL) {
@@ -7984,7 +8030,7 @@ const PMFish = (function () {
     var k = sk.k, tw;
     if (k === 'rainbow') return out.setHSL((u * 0.9 + t * 0.35) % 1, 1, 0.6);
     if (k === 'fire') return out.setHSL(Math.max(0, 0.14 - 0.13 * u + 0.015 * Math.sin(t * 13 + u * 9)), 1, 0.52 + 0.12 * Math.sin(t * 15 + u * 11));
-    if (k === 'dragon') return out.setHSL(Math.max(0, 0.11 - 0.09 * u + 0.015 * Math.sin(t * 9 + u * 13)), 1, 0.55 + 0.1 * Math.sin(t * 6 + u * 10));
+    if (k === 'dragon') return out.setHSL((Math.max(0, 0.11 - 0.09 * u + 0.015 * Math.sin(t * 9 + u * 13)) + (window.__skHue ? window.__skHue(sk) : 0)) % 1, 1, 0.55 + 0.1 * Math.sin(t * 6 + u * 10));
     if (k === 'galaxy') {
       tw = Math.sin(t * 4 + u * 24);
       return out.setHSL(0.6 + 0.17 * (0.5 + 0.5 * Math.sin(u * 7 - t * 1.6)), 0.9, 0.55 + 0.25 * tw * tw);
@@ -8157,7 +8203,7 @@ const PMFish = (function () {
       } else if (k === 'dragon') {
         f = (t * 0.7 + u * 5.31) % 1; w = 1 - f; a = i * 2.4 + t * 2.6 + f * 6; r = 0.07 + 0.06 * f;
         swPos[p] = Math.cos(a) * r; swPos[p + 1] = -0.45 + f * 1.45; swPos[p + 2] = Math.sin(a) * r;
-        swCol[p] = 1.4 * w; swCol[p + 1] = 0.85 * w * w; swCol[p + 2] = 0.15 * w * w * w;
+        swCol[p] = 1.4 * w; swCol[p + 1] = 0.85 * w * w; swCol[p + 2] = 0.15 * w * w * w; if (window.__skHue && window.__skHue(typeof sk !== 'undefined' ? sk : null)) { swCol[p] = 0.15 * w * w * w; swCol[p + 2] = 1.4 * w; }
       } else if (k === 'rainbow') {
         a = t * 3 + u * PI * 6; y = -0.5 + ((u * 3 + t * 0.2) % 1) * 1.5;
         swPos[p] = Math.cos(a) * 0.1; swPos[p + 1] = y; swPos[p + 2] = Math.sin(a) * 0.1;
