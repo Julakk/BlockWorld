@@ -1844,7 +1844,9 @@ function pmBuildBoat(id) {
     bandeng: [0.3, 2], belanak: [0.2, 1.5], baronang: [0.4, 3], kerapu: [3, 60], ubur: [0.5, 12], kuda_laut: [0.02, 0.3], penyu: [60, 400],
     layur: [0.1, 2], kembung: [0.1, 0.9], lentera: [0.2, 3], todak: [20, 180], pari_manta: [200, 1500], hiu_martil: [150, 900],
     cumi_raksasa: [500, 3000], ikan_bulan: [800, 5000], paus_biru: [8000, 80000], megalodon: [25000, 150000],
-    u_gabus: [0.5, 4], u_toman: [2, 20] };
+    u_gabus: [0.5, 4], u_toman: [2, 20],
+    pelita: [0.1, 1.5], gurita_biru: [0.5, 8], hiu_bayangan: [60, 500], cumi_bintang: [300, 2500],
+    belut_petir: [1, 15], ikan_badai: [10, 90], pari_badai: [200, 1800] };
   const ROD_WEIGHT = { bambu: 10, luckrod: 15, kayu: 20, grass: 250, karbon: 400, ice: 750, perak: 5000, midrod: 10000, steampunk: 25000, emas: 90000, legendaris: 160000, angler: 125000, dev: 1e9 };
   function hudAb(n) { // 19600 -> 19,6K ; 1000000000 -> 1B
     n = Math.round(+n) || 0;
@@ -5312,8 +5314,14 @@ const PMFish = (function () {
 </style>
 <script>
 (function () {
-  var VER = 'v4.27', DATE = '11 Okt 2026', KEY = 'pm_seen_ver';
+  var VER = 'v4.28', DATE = '11 Okt 2026', KEY = 'pm_seen_ver';
   var LOG = [
+    ["Update v4.28", [
+      "Pulau Karang punya ikan khusus malam dan hujan: Ikan Pelita Malam, Gurita Biru Cincin, Hiu Bayangan, dan Cumi Bintang muncul saat malam.",
+      "Belut Petir, Ikan Badai, dan Pari Badai muncul saat hujan. Semuanya ada di Indeks Ikan tab Pulau Karang.",
+      "ID aplikasi berubah jadi com.pancingmania. Instal APK baru, Backup save dari app lama dulu lalu restore di app baru.",
+      "CHANGELOG dirapikan jadi satu format."
+    ]],
     ["Update v4.27", [
       "Skin Mythic kedua: Azure Phoenix, burung api biru yang melilit joran dengan aura, bara, dan cincin energi biru.",
       "Gacha Mythic sekarang punya 2 skin: Eternal Dragon dan Azure Phoenix. Pity Mythic tetap dijamin di pull ke-150.",
@@ -9221,6 +9229,41 @@ window.__skHue = function (sk) { return sk && sk.k === 'dragon' && sk.c === '#3f
 
   /* ---------- util ---------- */
   var hemi = null;
+  /* ---------- ikan malam & hujan Pulau Karang (v4.28) ---------- */
+  var SPECIAL = [
+    { id: 'pelita', name: 'Ikan Pelita Malam', rarity: 'uncommon', value: 70, cond: 'night' },
+    { id: 'gurita_biru', name: 'Gurita Biru Cincin', rarity: 'rare', value: 260, cond: 'night' },
+    { id: 'hiu_bayangan', name: 'Hiu Bayangan', rarity: 'epic', value: 900, cond: 'night' },
+    { id: 'cumi_bintang', name: 'Cumi Bintang', rarity: 'legendary', value: 3800, cond: 'night' },
+    { id: 'belut_petir', name: 'Belut Petir', rarity: 'rare', value: 240, cond: 'rain' },
+    { id: 'ikan_badai', name: 'Ikan Badai', rarity: 'epic', value: 850, cond: 'rain' },
+    { id: 'pari_badai', name: 'Pari Badai', rarity: 'legendary', value: 3500, cond: 'rain' }
+  ];
+  SPECIAL.forEach(function (f) {
+    f.zone = 'karang';
+    if (!C.FISH_TABLE.some(function (x) { return x.id === f.id; })) C.FISH_TABLE.push(f);
+  });
+  var _rain = null;
+  function raining() {
+    if (!_rain) scene.children.forEach(function (o) {
+      if (!_rain && o.isLineSegments && o.material && o.material.color && o.material.color.getHex() === 0xbcd0ea) _rain = o;
+    });
+    return !!(_rain && _rain.visible && _rain.material.opacity > 0.25);
+  }
+  C.hookRoll(function (orig, boost) {
+    var r = orig(boost), p = P.position;
+    if (Math.hypot(p.x - IX, p.z - IZ) >= FISH_R) return r;
+    var nt = night() > 0.5, rn = raining();
+    if (!nt && !rn) return r;
+    var pool = SPECIAL.filter(function (f) {
+      return f.rarity === r.fish.rarity && ((f.cond === 'night' && nt) || (f.cond === 'rain' && rn));
+    });
+    if (pool.length && Math.random() < 0.6) {
+      r.fish = pool[Math.floor(Math.random() * pool.length)];
+      r.value = Math.round(r.fish.value * r.mutation.mult);
+    }
+    return r;
+  });
   scene.children.forEach(function (o) { if (o.isHemisphereLight && !hemi) hemi = o; });
   function night() { var hi = hemi ? hemi.intensity : 1; return Math.max(0, Math.min(1, (0.75 - hi) / 0.4)); }
   function cv(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }

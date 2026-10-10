@@ -2,6 +2,12 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini. Diurutkan dari yang terbaru.
 
+## v4.28 - 11 Okt 2026
+
+- Pulau Karang punya ikan khusus malam dan hujan. Malam: Ikan Pelita Malam, Gurita Biru Cincin, Hiu Bayangan, Cumi Bintang. Hujan: Belut Petir, Ikan Badai, Pari Badai. Semuanya ada di Indeks Ikan tab Pulau Karang.
+- ID aplikasi diganti dari com.ahmadstore.blockworld menjadi com.pancingmania. APK baru terpasang sebagai aplikasi terpisah, jadi Backup save dari app lama lalu restore di app baru.
+- CHANGELOG dirapikan jadi satu format (## vX.Y - tanggal).
+
 ## v4.27 - 11 Okt 2026
 
 - Skin Mythic kedua: Azure Phoenix, burung api biru yang melilit joran dengan aura, bara, dan cincin energi biru.
